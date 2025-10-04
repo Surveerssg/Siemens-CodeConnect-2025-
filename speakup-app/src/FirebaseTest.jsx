@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebase';
 import { debugFirebaseConfig } from './debug-firebase';
+import { testFirestoreConnection } from './test-firestore';
 
 const FirebaseTest = () => {
   const [email, setEmail] = useState('test@example.com');
@@ -14,6 +15,17 @@ const FirebaseTest = () => {
       
       // First, debug the configuration
       debugFirebaseConfig();
+      
+      // Test Firestore connection first
+      setResult('Testing Firestore connection...');
+      const firestoreSuccess = await testFirestoreConnection();
+      
+      if (!firestoreSuccess) {
+        setResult('❌ Firestore connection failed. Check console for details.');
+        return;
+      }
+      
+      setResult('✅ Firestore connection successful! Testing Authentication...');
       
       // Try to create a test user
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
