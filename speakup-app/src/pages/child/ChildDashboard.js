@@ -28,13 +28,21 @@ import {
 } from 'lucide-react';
 
 const ChildDashboard = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, logout } = useAuth();
   const { gameProgress } = useGame();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // Add logout logic here
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      console.log('Logging out...');
+      await logout();
+      console.log('Logout successful, navigating to login...');
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still navigate to login even if logout fails
+      navigate('/login');
+    }
   };
 
   const quickActions = [
@@ -115,14 +123,41 @@ const ChildDashboard = () => {
             <Button
               startIcon={<Settings size={20} />}
               onClick={() => navigate('/settings')}
-              sx={{ color: '#4ECDC4' }}
+              variant="outlined"
+              sx={{ 
+                color: '#4ECDC4',
+                borderColor: '#4ECDC4',
+                '&:hover': {
+                  backgroundColor: '#4ECDC4',
+                  color: 'white',
+                  borderColor: '#4ECDC4'
+                },
+                position: 'relative',
+                zIndex: 20,
+                pointerEvents: 'auto',
+                cursor: 'pointer',
+                mr: 2
+              }}
             >
               Settings
             </Button>
             <Button
               startIcon={<LogOut size={20} />}
               onClick={handleLogout}
-              sx={{ color: '#FF6B6B' }}
+              variant="outlined"
+              sx={{ 
+                color: '#FF6B6B',
+                borderColor: '#FF6B6B',
+                '&:hover': {
+                  backgroundColor: '#FF6B6B',
+                  color: 'white',
+                  borderColor: '#FF6B6B'
+                },
+                position: 'relative',
+                zIndex: 20,
+                pointerEvents: 'auto',
+                cursor: 'pointer'
+              }}
             >
               Logout
             </Button>
