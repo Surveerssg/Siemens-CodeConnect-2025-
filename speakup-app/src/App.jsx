@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './context/AuthContext';
 import { GameProvider } from './context/GameContext';
 import AppRoutes from './routes';
+import FirebaseTest from './FirebaseTest';
 import './styles/globals.css';
 
 const theme = createTheme({
