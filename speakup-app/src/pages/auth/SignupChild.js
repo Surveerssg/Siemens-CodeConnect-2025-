@@ -107,7 +107,7 @@ const SignupChild = () => {
         display: 'flex', 
         alignItems: 'center',
         position: 'relative',
-        zIndex: 2,
+        zIndex: 10,
         py: 4
       }}>
         <Paper elevation={10} sx={{ 
@@ -115,7 +115,9 @@ const SignupChild = () => {
           width: '100%',
           borderRadius: 4,
           background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
-          backdropFilter: 'blur(10px)'
+          backdropFilter: 'blur(10px)',
+          position: 'relative',
+          zIndex: 15
         }}>
           <Box textAlign="center" mb={4}>
             <Typography variant="h3" component="h1" gutterBottom sx={{ 
@@ -150,9 +152,14 @@ const SignupChild = () => {
                     startAdornment: <User size={20} style={{ marginRight: 8, color: '#FF6B6B' }} />
                   }}
                   sx={{
+                    position: 'relative',
+                    zIndex: 20,
+                    pointerEvents: 'auto',
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 3,
-                      backgroundColor: 'rgba(255,255,255,0.8)'
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                      position: 'relative',
+                      zIndex: 25
                     }
                   }}
                 />
@@ -167,7 +174,10 @@ const SignupChild = () => {
                     label="Your Age"
                     sx={{
                       borderRadius: 3,
-                      backgroundColor: 'rgba(255,255,255,0.8)'
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                      position: 'relative',
+                      zIndex: 25,
+                      pointerEvents: 'auto'
                     }}
                   >
                     {[...Array(12)].map((_, i) => (
@@ -191,9 +201,14 @@ const SignupChild = () => {
                     startAdornment: <Mail size={20} style={{ marginRight: 8, color: '#FF6B6B' }} />
                   }}
                   sx={{
+                    position: 'relative',
+                    zIndex: 20,
+                    pointerEvents: 'auto',
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 3,
-                      backgroundColor: 'rgba(255,255,255,0.8)'
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                      position: 'relative',
+                      zIndex: 25
                     }
                   }}
                 />
@@ -210,9 +225,14 @@ const SignupChild = () => {
                     startAdornment: <Mail size={20} style={{ marginRight: 8, color: '#4ECDC4' }} />
                   }}
                   sx={{
+                    position: 'relative',
+                    zIndex: 20,
+                    pointerEvents: 'auto',
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 3,
-                      backgroundColor: 'rgba(255,255,255,0.8)'
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                      position: 'relative',
+                      zIndex: 25
                     }
                   }}
                 />
@@ -230,9 +250,14 @@ const SignupChild = () => {
                     startAdornment: <Lock size={20} style={{ marginRight: 8, color: '#FF6B6B' }} />
                   }}
                   sx={{
+                    position: 'relative',
+                    zIndex: 20,
+                    pointerEvents: 'auto',
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 3,
-                      backgroundColor: 'rgba(255,255,255,0.8)'
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                      position: 'relative',
+                      zIndex: 25
                     }
                   }}
                 />
@@ -250,9 +275,14 @@ const SignupChild = () => {
                     startAdornment: <Lock size={20} style={{ marginRight: 8, color: '#FF6B6B' }} />
                   }}
                   sx={{
+                    position: 'relative',
+                    zIndex: 20,
+                    pointerEvents: 'auto',
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 3,
-                      backgroundColor: 'rgba(255,255,255,0.8)'
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                      position: 'relative',
+                      zIndex: 25
                     }
                   }}
                 />
@@ -271,6 +301,10 @@ const SignupChild = () => {
                 height: 56,
                 fontSize: '1.2rem',
                 background: 'linear-gradient(45deg, #FF6B6B, #4ECDC4)',
+                position: 'relative',
+                zIndex: 20,
+                pointerEvents: 'auto',
+                cursor: 'pointer',
                 '&:hover': {
                   background: 'linear-gradient(45deg, #FF8E8E, #7EDDD6)',
                 }
@@ -280,7 +314,7 @@ const SignupChild = () => {
             </Button>
           </Box>
 
-          <Box textAlign="center" mt={3}>
+          <Box textAlign="center" mt={3} sx={{ position: 'relative', zIndex: 20 }}>
             <Button
               component={Link}
               to="/role-selector"
@@ -288,7 +322,11 @@ const SignupChild = () => {
               sx={{ 
                 color: '#4ECDC4', 
                 textDecoration: 'none',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                position: 'relative',
+                zIndex: 25,
+                pointerEvents: 'auto',
+                cursor: 'pointer'
               }}
             >
               Back to Role Selection
