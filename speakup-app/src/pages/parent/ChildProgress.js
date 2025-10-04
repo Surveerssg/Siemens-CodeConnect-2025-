@@ -19,8 +19,7 @@ import {
   TrendingUp, 
   Calendar,
   Star,
-  Target,
-  Award
+  Target
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
@@ -112,296 +111,259 @@ const ChildProgress = () => {
   ];
 
   return (
-    <div className="floating-letters">
-      {[...Array(10)].map((_, i) => (
-        <div
-          key={i}
-          className="floating-letter"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 6}s`,
-            fontSize: `${Math.random() * 1.5 + 0.8}rem`
-          }}
+    <Container maxWidth="lg" sx={{ 
+      minHeight: '100vh',
+      position: 'relative',
+      zIndex: 2,
+      py: 4
+    }}>
+      <Box display="flex" alignItems="center" mb={4}>
+        <Button
+          startIcon={<ArrowLeft size={20} />}
+          onClick={() => navigate('/parent')}
+          sx={{ color: '#4ECDC4', mr: 2 }}
         >
-          {String.fromCharCode(65 + Math.floor(Math.random() * 26))}
-        </div>
-      ))}
-      
-      <Container maxWidth="lg" sx={{ 
-        minHeight: '100vh',
-        position: 'relative',
-        zIndex: 2,
-        py: 4
-      }}>
-        <Box display="flex" alignItems="center" mb={4}>
-          <Button
-            startIcon={<ArrowLeft size={20} />}
-            onClick={() => navigate('/parent')}
-            sx={{ color: '#4ECDC4', mr: 2 }}
-          >
-            Back to Dashboard
-          </Button>
-          <Typography variant="h4" sx={{ 
-            color: '#2C3E50',
-            fontWeight: 'bold'
-          }}>
-            Progress Tracking 📈
-          </Typography>
-        </Box>
-
-        <Grid container spacing={3} mb={4}>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Select Child</InputLabel>
-              <Select
-                value={selectedChild}
-                onChange={(e) => setSelectedChild(e.target.value)}
-                label="Select Child"
-                sx={{ borderRadius: 3 }}
-              >
-                {children.map((child) => (
-                  <MenuItem key={child.value} value={child.value}>
-                    {child.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Time Range</InputLabel>
-              <Select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                label="Time Range"
-                sx={{ borderRadius: 3 }}
-              >
-                {timeRanges.map((range) => (
-                  <MenuItem key={range.value} value={range.value}>
-                    {range.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={4} mb={4}>
-          <Grid item xs={12} md={3}>
-            <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: '#FF6B6B' }}>
-                <Target size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                Total Words
-              </Typography>
-              <Typography variant="h2" sx={{ color: '#FF6B6B', fontWeight: 'bold' }}>
-                {currentStats.totalWords}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Words practiced
-              </Typography>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: '#4ECDC4' }}>
-                <TrendingUp size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                Average Score
-              </Typography>
-              <Typography variant="h2" sx={{ color: '#4ECDC4', fontWeight: 'bold' }}>
-                {currentStats.averageScore}%
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Overall accuracy
-              </Typography>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: '#9B59B6' }}>
-                <Calendar size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                Total Time
-              </Typography>
-              <Typography variant="h2" sx={{ color: '#9B59B6', fontWeight: 'bold' }}>
-                {Math.floor(currentStats.totalTime / 60)}h
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Practice time
-              </Typography>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: '#F39C12' }}>
-                <Star size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                Current Streak
-              </Typography>
-              <Typography variant="h2" sx={{ color: '#F39C12', fontWeight: 'bold' }}>
-                {currentStats.streak}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Days in a row
-              </Typography>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={4} mb={4}>
-          <Grid item xs={12} md={8}>
-            <Card className="game-card">
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ 
-                  color: '#2C3E50',
-                  mb: 3
-                }}>
-                  Score Progress
-                </Typography>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={currentData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey={timeRange === 'week' ? 'day' : 'week'} />
-                    <YAxis />
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="score" 
-                      stroke="#4ECDC4" 
-                      strokeWidth={3}
-                      dot={{ fill: '#4ECDC4', strokeWidth: 2, r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <Card className="game-card">
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ 
-                  color: '#2C3E50',
-                  mb: 3
-                }}>
-                  Score Distribution
-                </Typography>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={4} mb={4}>
-          <Grid item xs={12} md={6}>
-            <Card className="game-card">
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ 
-                  color: '#2C3E50',
-                  mb: 3
-                }}>
-                  Words Per Day
-                </Typography>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={currentData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey={timeRange === 'week' ? 'day' : 'week'} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="words" fill="#FF6B6B" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Card className="game-card">
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ 
-                  color: '#2C3E50',
-                  mb: 3
-                }}>
-                  Practice Time
-                </Typography>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={currentData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey={timeRange === 'week' ? 'day' : 'week'} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="time" fill="#9B59B6" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Typography variant="h4" gutterBottom sx={{ 
+          Back to Dashboard
+        </Button>
+        <Typography variant="h4" sx={{ 
           color: '#2C3E50',
-          fontWeight: 'bold',
-          mb: 3
+          fontWeight: 'bold'
         }}>
-          Achievements
+          Progress Tracking 📈
         </Typography>
+      </Box>
 
-        <Grid container spacing={2}>
-          {achievements.map((achievement, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card 
-                className="game-card"
-                sx={{ 
-                  opacity: achievement.earned ? 1 : 0.6,
-                  background: achievement.earned 
-                    ? 'linear-gradient(135deg, #FFD700, #FFA500)' 
-                    : 'linear-gradient(135deg, #E0E0E0, #BDBDBD)',
-                  color: 'white'
-                }}
-              >
-                <CardContent sx={{ textAlign: 'center', p: 2 }}>
-                  <Typography variant="h3" sx={{ mb: 1 }}>
-                    {achievement.earned ? '🏆' : '🔒'}
-                  </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    {achievement.name}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
-                    {achievement.description}
-                  </Typography>
-                  {achievement.earned && achievement.date && (
-                    <Typography variant="caption" sx={{ 
-                      display: 'block', 
-                      mt: 1,
-                      fontWeight: 'bold'
-                    }}>
-                      Earned: {new Date(achievement.date).toLocaleDateString()}
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+      <Grid container spacing={3} mb={4}>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>Select Child</InputLabel>
+            <Select
+              value={selectedChild}
+              onChange={(e) => setSelectedChild(e.target.value)}
+              label="Select Child"
+              sx={{ borderRadius: 3 }}
+            >
+              {children.map((child) => (
+                <MenuItem key={child.value} value={child.value}>
+                  {child.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Grid>
-      </Container>
-    </div>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>Time Range</InputLabel>
+            <Select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              label="Time Range"
+              sx={{ borderRadius: 3 }}
+            >
+              {timeRanges.map((range) => (
+                <MenuItem key={range.value} value={range.value}>
+                  {range.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={4} mb={4}>
+        <Grid item xs={12} md={3}>
+          <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ color: '#FF6B6B' }}>
+              <Target size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              Total Words
+            </Typography>
+            <Typography variant="h2" sx={{ color: '#FF6B6B', fontWeight: 'bold' }}>
+              {currentStats.totalWords}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Words practiced
+            </Typography>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ color: '#4ECDC4' }}>
+              <TrendingUp size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              Average Score
+            </Typography>
+            <Typography variant="h2" sx={{ color: '#4ECDC4', fontWeight: 'bold' }}>
+              {currentStats.averageScore}%
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Overall accuracy
+            </Typography>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ color: '#9B59B6' }}>
+              <Calendar size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              Total Time
+            </Typography>
+            <Typography variant="h2" sx={{ color: '#9B59B6', fontWeight: 'bold' }}>
+              {Math.floor(currentStats.totalTime / 60)}h
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Practice time
+            </Typography>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ color: '#F39C12' }}>
+              <Star size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              Current Streak
+            </Typography>
+            <Typography variant="h2" sx={{ color: '#F39C12', fontWeight: 'bold' }}>
+              {currentStats.streak}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Days in a row
+            </Typography>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={4} mb={4}>
+        <Grid item xs={12} md={8}>
+          <Card className="game-card">
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#2C3E50', mb: 3 }}>
+                Score Progress
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={currentData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey={timeRange === 'week' ? 'day' : 'week'} />
+                  <YAxis />
+                  <Tooltip />
+                  <Line 
+                    type="monotone" 
+                    dataKey="score" 
+                    stroke="#4ECDC4" 
+                    strokeWidth={3}
+                    dot={{ fill: '#4ECDC4', strokeWidth: 2, r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <Card className="game-card">
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#2C3E50', mb: 3 }}>
+                Score Distribution
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={4} mb={4}>
+        <Grid item xs={12} md={6}>
+          <Card className="game-card">
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#2C3E50', mb: 3 }}>
+                Words Per Day
+              </Typography>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={currentData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey={timeRange === 'week' ? 'day' : 'week'} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="words" fill="#FF6B6B" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card className="game-card">
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#2C3E50', mb: 3 }}>
+                Practice Time
+              </Typography>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={currentData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey={timeRange === 'week' ? 'day' : 'week'} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="time" fill="#9B59B6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Typography variant="h4" gutterBottom sx={{ color: '#2C3E50', fontWeight: 'bold', mb: 3 }}>
+        Achievements
+      </Typography>
+
+      <Grid container spacing={2}>
+        {achievements.map((achievement, index) => (
+          <Grid item xs={12} sm={6} md={4} key={index}>
+            <Card 
+              className="game-card"
+              sx={{ 
+                opacity: achievement.earned ? 1 : 0.6,
+                background: achievement.earned 
+                  ? 'linear-gradient(135deg, #FFD700, #FFA500)' 
+                  : 'linear-gradient(135deg, #E0E0E0, #BDBDBD)',
+                color: 'white'
+              }}
+            >
+              <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                <Typography variant="h3" sx={{ mb: 1 }}>
+                  {achievement.earned ? '🏆' : '🔒'}
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  {achievement.name}
+                </Typography>
+                <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
+                  {achievement.description}
+                </Typography>
+                {achievement.earned && achievement.date && (
+                  <Typography variant="caption" sx={{ display: 'block', mt: 1, fontWeight: 'bold' }}>
+                    Earned: {new Date(achievement.date).toLocaleDateString()}
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </Container>
   );
 };
 

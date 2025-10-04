@@ -2,7 +2,6 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { ROLES } from './constants';
-import FirebaseTest from './FirebaseTest';
 
 import Login from './pages/auth/Login';
 import RoleSelector from './pages/auth/RoleSelector';
@@ -73,9 +72,6 @@ const AppRoutes = () => {
       <Route path="/signup/child" element={user ? <RoleBasedRedirect /> : <SignupChild />} />
       <Route path="/signup/parent" element={user ? <RoleBasedRedirect /> : <SignupParent />} />
       <Route path="/signup/therapist" element={user ? <RoleBasedRedirect /> : <SignupTherapist />} />
-      
-      {/* Firebase Test Route - Remove this after debugging */}
-      <Route path="/firebase-test" element={<FirebaseTest />} />
       
       {/* Root path - redirect based on authentication */}
       <Route path="/" element={

@@ -4,11 +4,11 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import { ROLES } from '../../constants';
-import { 
+import {
   Container, Paper, TextField, Button, Typography, Box, Alert,
   CircularProgress, FormControl, InputLabel, Select, MenuItem, Grid
 } from '@mui/material';
-import { ArrowLeft, User, Mail, Lock } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 const SignupChild = () => {
   const [formData, setFormData] = useState({
@@ -32,11 +32,19 @@ const SignupChild = () => {
     e.preventDefault();
     setError('');
 
-    // Basic validation
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword || !formData.age) {
+    // All fields now required (including parentEmail)
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.password ||
+      !formData.confirmPassword ||
+      !formData.age ||
+      !formData.parentEmail
+    ) {
       setError('Please fill all required fields');
       return;
     }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -52,7 +60,7 @@ const SignupChild = () => {
         email: formData.email,
         role: ROLES.CHILD,
         age: Number(formData.age),
-        parentEmail: formData.parentEmail || null,
+        parentEmail: formData.parentEmail,
         createdAt: new Date(),
         avatar: '👶',
         level: 1,
@@ -84,6 +92,7 @@ const SignupChild = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                required
               />
             </Grid>
 
@@ -95,28 +104,31 @@ const SignupChild = () => {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
+                required
               />
             </Grid>
 
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Parent's Email (Optional)"
+                label="Parent's Email"
                 name="parentEmail"
                 type="email"
                 value={formData.parentEmail}
                 onChange={handleChange}
+                required
               />
             </Grid>
 
             <Grid item xs={12}>
-              <FormControl fullWidth>
+              <FormControl fullWidth required>
                 <InputLabel>Age</InputLabel>
                 <Select
                   name="age"
                   value={formData.age}
                   onChange={handleChange}
                   label="Age"
+                  required
                 >
                   {[...Array(12)].map((_, i) => (
                     <MenuItem key={i + 4} value={i + 4}>{i + 4} years</MenuItem>
@@ -133,6 +145,7 @@ const SignupChild = () => {
                 type="password"
                 value={formData.password}
                 onChange={handleChange}
+                required
               />
             </Grid>
 
@@ -144,6 +157,7 @@ const SignupChild = () => {
                 type="password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                required
               />
             </Grid>
           </Grid>

@@ -19,11 +19,12 @@ import {
   TrendingUp,
   Calendar,
   Star,
-  AlertCircle,
-  CheckCircle,
   BarChart3
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  BarChart, Bar, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar 
+} from 'recharts';
 
 const ChildAnalytics = () => {
   const navigate = useNavigate();
@@ -119,344 +120,197 @@ const ChildAnalytics = () => {
   };
 
   return (
-    <div className="floating-letters">
-      {[...Array(10)].map((_, i) => (
-        <div
-          key={i}
-          className="floating-letter"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 6}s`,
-            fontSize: `${Math.random() * 1.5 + 0.8}rem`
-          }}
+    <Container maxWidth="lg" sx={{ minHeight: '100vh', py: 4 }}>
+      <Box display="flex" alignItems="center" mb={4}>
+        <Button
+          startIcon={<ArrowLeft size={20} />}
+          onClick={() => navigate('/therapist')}
+          sx={{ color: '#4ECDC4', mr: 2 }}
         >
-          {String.fromCharCode(65 + Math.floor(Math.random() * 26))}
-        </div>
-      ))}
-      
-      <Container maxWidth="lg" sx={{ 
-        minHeight: '100vh',
-        position: 'relative',
-        zIndex: 2,
-        py: 4
-      }}>
-        <Box display="flex" alignItems="center" mb={4}>
-          <Button
-            startIcon={<ArrowLeft size={20} />}
-            onClick={() => navigate('/therapist')}
-            sx={{ color: '#4ECDC4', mr: 2 }}
-          >
-            Back to Dashboard
-          </Button>
-          <Typography variant="h4" sx={{ 
-            color: '#2C3E50',
-            fontWeight: 'bold'
-          }}>
-            Child Analytics 📊
-          </Typography>
-        </Box>
-
-        <Grid container spacing={3} mb={4}>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Select Child</InputLabel>
-              <Select
-                value={selectedChild}
-                onChange={(e) => setSelectedChild(e.target.value)}
-                label="Select Child"
-                sx={{ borderRadius: 3 }}
-              >
-                {children.map((child) => (
-                  <MenuItem key={child.value} value={child.value}>
-                    {child.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Time Range</InputLabel>
-              <Select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                label="Time Range"
-                sx={{ borderRadius: 3 }}
-              >
-                {timeRanges.map((range) => (
-                  <MenuItem key={range.value} value={range.value}>
-                    {range.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={4} mb={4}>
-          <Grid item xs={12} md={3}>
-            <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: '#FF6B6B' }}>
-                <TrendingUp size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                Average Score
-              </Typography>
-              <Typography variant="h2" sx={{ color: '#FF6B6B', fontWeight: 'bold' }}>
-                {currentStats.averageScore}%
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                +{currentStats.improvement}% from last period
-              </Typography>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: '#4ECDC4' }}>
-                <Calendar size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                Total Words
-              </Typography>
-              <Typography variant="h2" sx={{ color: '#4ECDC4', fontWeight: 'bold' }}>
-                {currentStats.totalWords}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Words practiced
-              </Typography>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: '#9B59B6' }}>
-                <Star size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                Current Level
-              </Typography>
-              <Typography variant="h2" sx={{ color: '#9B59B6', fontWeight: 'bold' }}>
-                {currentStats.level}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Level {currentStats.level}
-              </Typography>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: '#F39C12' }}>
-                <BarChart3 size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                Improvement
-              </Typography>
-              <Typography variant="h2" sx={{ color: '#F39C12', fontWeight: 'bold' }}>
-                +{currentStats.improvement}%
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Since last period
-              </Typography>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={4} mb={4}>
-          <Grid item xs={12} md={8}>
-            <Card className="game-card">
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ 
-                  color: '#2C3E50',
-                  mb: 3
-                }}>
-                  Progress Over Time
-                </Typography>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={currentData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey={timeRange === 'week' ? 'day' : 'week'} />
-                    <YAxis />
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="score" 
-                      stroke="#4ECDC4" 
-                      strokeWidth={3}
-                      name="Overall Score"
-                      dot={{ fill: '#4ECDC4', strokeWidth: 2, r: 6 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="vowels" 
-                      stroke="#FF6B6B" 
-                      strokeWidth={2}
-                      name="Vowels"
-                      dot={{ fill: '#FF6B6B', strokeWidth: 2, r: 4 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="consonants" 
-                      stroke="#9B59B6" 
-                      strokeWidth={2}
-                      name="Consonants"
-                      dot={{ fill: '#9B59B6', strokeWidth: 2, r: 4 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="blends" 
-                      stroke="#F39C12" 
-                      strokeWidth={2}
-                      name="Blends"
-                      dot={{ fill: '#F39C12', strokeWidth: 2, r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <Card className="game-card">
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ 
-                  color: '#2C3E50',
-                  mb: 3
-                }}>
-                  Phoneme Accuracy
-                </Typography>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RadarChart data={phonemeData}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="subject" />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                    <Radar
-                      name="Current"
-                      dataKey="A"
-                      stroke="#4ECDC4"
-                      fill="#4ECDC4"
-                      fillOpacity={0.3}
-                    />
-                    <Radar
-                      name="Target"
-                      dataKey="B"
-                      stroke="#FF6B6B"
-                      fill="#FF6B6B"
-                      fillOpacity={0.3}
-                    />
-                    <Tooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={4} mb={4}>
-          <Grid item xs={12} md={6}>
-            <Card className="game-card">
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ 
-                  color: '#2C3E50',
-                  mb: 3
-                }}>
-                  Difficulty Distribution
-                </Typography>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={difficultyData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      dataKey="value"
-                    >
-                      {difficultyData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Card className="game-card">
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ 
-                  color: '#2C3E50',
-                  mb: 3
-                }}>
-                  Words Per Session
-                </Typography>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={currentData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey={timeRange === 'week' ? 'day' : 'week'} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="words" fill="#4ECDC4" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Typography variant="h4" gutterBottom sx={{ 
-          color: '#2C3E50',
-          fontWeight: 'bold',
-          mb: 3
-        }}>
-          AI-Powered Recommendations
+          Back to Dashboard
+        </Button>
+        <Typography variant="h4" sx={{ color: '#2C3E50', fontWeight: 'bold' }}>
+          Child Analytics 📊
         </Typography>
+      </Box>
 
-        <Grid container spacing={3}>
-          {recommendations.map((rec, index) => (
-            <Grid item xs={12} md={4} key={index}>
-              <Card 
-                className="game-card"
-                sx={{ 
-                  border: `2px solid ${getPriorityColor(rec.priority)}30`,
-                  background: `linear-gradient(135deg, ${getPriorityColor(rec.priority)}15, ${getPriorityColor(rec.priority)}05)`
-                }}
-              >
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <Typography variant="h6" sx={{ 
-                      color: '#2C3E50',
-                      fontWeight: 'bold',
-                      flexGrow: 1
-                    }}>
-                      {rec.category}
-                    </Typography>
-                    <Chip
-                      label={rec.priority}
-                      size="small"
-                      sx={{ 
-                        background: getPriorityColor(rec.priority),
-                        color: 'white',
-                        fontWeight: 'bold'
-                      }}
-                    />
-                  </Box>
-                  
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {rec.description}
-                  </Typography>
-                  
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    Recommended Exercises:
-                  </Typography>
-                  {rec.exercises.map((exercise, idx) => (
-                    <Typography key={idx} variant="caption" display="block" sx={{ mb: 0.5 }}>
-                      • {exercise}
-                    </Typography>
-                  ))}
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+      <Grid container spacing={3} mb={4}>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>Select Child</InputLabel>
+            <Select
+              value={selectedChild}
+              onChange={(e) => setSelectedChild(e.target.value)}
+              label="Select Child"
+              sx={{ borderRadius: 3 }}
+            >
+              {children.map((child) => (
+                <MenuItem key={child.value} value={child.value}>
+                  {child.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Grid>
-      </Container>
-    </div>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>Time Range</InputLabel>
+            <Select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              label="Time Range"
+              sx={{ borderRadius: 3 }}
+            >
+              {timeRanges.map((range) => (
+                <MenuItem key={range.value} value={range.value}>
+                  {range.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
+
+      {/* Stats Cards */}
+      <Grid container spacing={4} mb={4}>
+        {[
+          { title: 'Average Score', value: `${currentStats.averageScore}%`, icon: <TrendingUp size={24} />, color: '#FF6B6B', subtitle: `+${currentStats.improvement}% from last period` },
+          { title: 'Total Words', value: currentStats.totalWords, icon: <Calendar size={24} />, color: '#4ECDC4', subtitle: 'Words practiced' },
+          { title: 'Current Level', value: currentStats.level, icon: <Star size={24} />, color: '#9B59B6', subtitle: `Level ${currentStats.level}` },
+          { title: 'Improvement', value: `+${currentStats.improvement}%`, icon: <BarChart3 size={24} />, color: '#F39C12', subtitle: 'Since last period' }
+        ].map((stat, idx) => (
+          <Grid item xs={12} md={3} key={idx}>
+            <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ color: stat.color }}>
+                {stat.icon} {stat.title}
+              </Typography>
+              <Typography variant="h2" sx={{ color: stat.color, fontWeight: 'bold' }}>
+                {stat.value}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">{stat.subtitle}</Typography>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Charts */}
+      <Grid container spacing={4} mb={4}>
+        <Grid item xs={12} md={8}>
+          <Card className="game-card">
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#2C3E50', mb: 3 }}>
+                Progress Over Time
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={currentData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey={timeRange === 'week' ? 'day' : 'week'} />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="score" stroke="#4ECDC4" strokeWidth={3} name="Overall Score" dot={{ fill: '#4ECDC4', strokeWidth: 2, r: 6 }} />
+                  <Line type="monotone" dataKey="vowels" stroke="#FF6B6B" strokeWidth={2} name="Vowels" dot={{ fill: '#FF6B6B', strokeWidth: 2, r: 4 }} />
+                  <Line type="monotone" dataKey="consonants" stroke="#9B59B6" strokeWidth={2} name="Consonants" dot={{ fill: '#9B59B6', strokeWidth: 2, r: 4 }} />
+                  <Line type="monotone" dataKey="blends" stroke="#F39C12" strokeWidth={2} name="Blends" dot={{ fill: '#F39C12', strokeWidth: 2, r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <Card className="game-card">
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#2C3E50', mb: 3 }}>
+                Phoneme Accuracy
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <RadarChart data={phonemeData}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="subject" />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                  <Radar name="Current" dataKey="A" stroke="#4ECDC4" fill="#4ECDC4" fillOpacity={0.3} />
+                  <Radar name="Target" dataKey="B" stroke="#FF6B6B" fill="#FF6B6B" fillOpacity={0.3} />
+                  <Tooltip />
+                </RadarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={4} mb={4}>
+        <Grid item xs={12} md={6}>
+          <Card className="game-card">
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#2C3E50', mb: 3 }}>
+                Difficulty Distribution
+              </Typography>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie data={difficultyData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} dataKey="value">
+                    {difficultyData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card className="game-card">
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#2C3E50', mb: 3 }}>
+                Words Per Session
+              </Typography>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={currentData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey={timeRange === 'week' ? 'day' : 'week'} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="words" fill="#4ECDC4" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Typography variant="h4" gutterBottom sx={{ color: '#2C3E50', fontWeight: 'bold', mb: 3 }}>
+        AI-Powered Recommendations
+      </Typography>
+
+      <Grid container spacing={3}>
+        {recommendations.map((rec, index) => (
+          <Grid item xs={12} md={4} key={index}>
+            <Card className="game-card" sx={{ border: `2px solid ${getPriorityColor(rec.priority)}30`, background: `linear-gradient(135deg, ${getPriorityColor(rec.priority)}15, ${getPriorityColor(rec.priority)}05)` }}>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <Typography variant="h6" sx={{ color: '#2C3E50', fontWeight: 'bold', flexGrow: 1 }}>
+                    {rec.category}
+                  </Typography>
+                  <Chip label={rec.priority} size="small" sx={{ background: getPriorityColor(rec.priority), color: 'white', fontWeight: 'bold' }} />
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {rec.description}
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Recommended Exercises:
+                </Typography>
+                {rec.exercises.map((exercise, idx) => (
+                  <Typography key={idx} variant="caption" display="block" sx={{ mb: 0.5 }}>
+                    • {exercise}
+                  </Typography>
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </Container>
   );
 };
 

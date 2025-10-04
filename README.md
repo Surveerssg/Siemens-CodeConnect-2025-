@@ -31,7 +31,6 @@ An innovative React-based web application designed to help hearing-impaired chil
 
 ## 🎨 **UI/UX Highlights**
 - **Child-Friendly Design** - Bright colors, Comic Sans font, and engaging animations
-- **Floating Letter Animations** - Interactive elements throughout the app
 - **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
 - **Accessibility Features** - Designed with hearing-impaired users in mind
 - **Gamification Elements** - Badges, streaks, stars, and XP system
