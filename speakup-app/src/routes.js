@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { ROLES } from './constants';
+import FirebaseTest from './FirebaseTest';
 
 import Login from './pages/auth/Login';
 import RoleSelector from './pages/auth/RoleSelector';
@@ -45,23 +46,45 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
+// Add this new component to handle role-based redirection
+const RoleBasedRedirect = () => {
+  const { userRole } = useAuth();
+  
+  switch (userRole) {
+    case ROLES.CHILD:
+      return <Navigate to="/dashboard" replace />;
+    case ROLES.PARENT:
+      return <Navigate to="/parent" replace />;
+    case ROLES.THERAPIST:
+      return <Navigate to="/therapist" replace />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
+};
+
 const AppRoutes = () => {
+  const { user } = useAuth();
+  
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/role-selector" element={<RoleSelector />} />
-      <Route path="/signup/child" element={<SignupChild />} />
-      <Route path="/signup/parent" element={<SignupParent />} />
-      <Route path="/signup/therapist" element={<SignupTherapist />} />
+      {/* Public routes */}
+      <Route path="/login" element={user ? <RoleBasedRedirect /> : <Login />} />
+      <Route path="/role-selector" element={user ? <RoleBasedRedirect /> : <RoleSelector />} />
+      <Route path="/signup/child" element={user ? <RoleBasedRedirect /> : <SignupChild />} />
+      <Route path="/signup/parent" element={user ? <RoleBasedRedirect /> : <SignupParent />} />
+      <Route path="/signup/therapist" element={user ? <RoleBasedRedirect /> : <SignupTherapist />} />
       
+      {/* Firebase Test Route - Remove this after debugging */}
+      <Route path="/firebase-test" element={<FirebaseTest />} />
+      
+      {/* Root path - redirect based on authentication */}
       <Route path="/" element={
-        <ProtectedRoute>
-          <Navigate to="/dashboard" replace />
-        </ProtectedRoute>
+        user ? <RoleBasedRedirect /> : <Navigate to="/login" replace />
       } />
       
+      {/* Child routes */}
       <Route path="/dashboard" element={
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={[ROLES.CHILD]}>
           <ChildDashboard />
         </ProtectedRoute>
       } />
@@ -108,6 +131,7 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
+      {/* Parent routes */}
       <Route path="/parent" element={
         <ProtectedRoute allowedRoles={[ROLES.PARENT]}>
           <ParentDashboard />
@@ -132,6 +156,7 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
+      {/* Therapist routes */}
       <Route path="/therapist" element={
         <ProtectedRoute allowedRoles={[ROLES.THERAPIST]}>
           <TherapistDashboard />
@@ -156,6 +181,7 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
+      {/* Common routes */}
       <Route path="/profile" element={
         <ProtectedRoute>
           <Profile />
