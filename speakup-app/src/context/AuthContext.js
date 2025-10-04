@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 import { ROLES } from '../constants';
 
 const AuthContext = createContext();
@@ -19,10 +20,22 @@ export const AuthProvider = ({ children }) => {
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        setUserRole(user.role || ROLES.CHILD);
+        try {
+          // Fetch user role from Firestore
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUserRole(userData.role || ROLES.CHILD);
+          } else {
+            setUserRole(ROLES.CHILD);
+          }
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+          setUserRole(ROLES.CHILD);
+        }
       } else {
         setUserRole(null);
       }
@@ -32,11 +45,20 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   const value = {
     user,
     userRole,
     loading,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    logout
   };
 
   return (

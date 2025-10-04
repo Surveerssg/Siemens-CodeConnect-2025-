@@ -66,7 +66,7 @@ const RoleSelector = () => {
         display: 'flex', 
         alignItems: 'center',
         position: 'relative',
-        zIndex: 2,
+        zIndex: 10,
         py: 4
       }}>
         <Box width="100%">
@@ -83,9 +83,9 @@ const RoleSelector = () => {
             </Typography>
           </Box>
 
-          <Grid container spacing={4} justifyContent="center">
+          <Grid container spacing={4} justifyContent="center" sx={{ position: 'relative', zIndex: 15 }}>
             {roles.map((role) => (
-              <Grid item xs={12} sm={6} md={4} key={role.id}>
+              <Grid item xs={12} sm={6} md={4} key={role.id} sx={{ display: 'flex' }}>
                 <Card 
                   className="game-card"
                   sx={{ 
@@ -95,6 +95,9 @@ const RoleSelector = () => {
                     background: `linear-gradient(135deg, ${role.color}15, ${role.color}05)`,
                     border: `2px solid ${role.color}30`,
                     transition: 'all 0.3s ease',
+                    position: 'relative',
+                    zIndex: 15,
+                    pointerEvents: 'auto',
                     '&:hover': {
                       transform: 'translateY(-8px) scale(1.02)',
                       border: `3px solid ${role.color}`,
@@ -135,6 +138,10 @@ const RoleSelector = () => {
                         fontWeight: 'bold',
                         background: `linear-gradient(45deg, ${role.color}, ${role.color}CC)`,
                         borderRadius: 3,
+                        position: 'relative',
+                        zIndex: 20,
+                        pointerEvents: 'auto',
+                        cursor: 'pointer',
                         '&:hover': {
                           background: `linear-gradient(45deg, ${role.color}CC, ${role.color})`,
                           transform: 'translateY(-2px)',

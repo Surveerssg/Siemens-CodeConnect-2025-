@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../../firebase';
+import { ROLES } from '../../constants';
 import { 
   Container, 
   Paper, 
@@ -23,13 +25,38 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Form submitted!', { email, password }); // Debug log
     setLoading(true);
     setError('');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/dashboard');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Fetch user role from Firestore
+      const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+      let userRole = ROLES.CHILD;
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        userRole = userData.role || ROLES.CHILD;
+      }
+
+      // Navigate based on user role
+      switch (userRole) {
+        case ROLES.CHILD:
+          navigate('/dashboard');
+          break;
+        case ROLES.PARENT:
+          navigate('/parent');
+          break;
+        case ROLES.THERAPIST:
+          navigate('/therapist');
+          break;
+        default:
+          navigate('/dashboard');
+      }
     } catch (error) {
+      console.error('Login error:', error); // Debug log
       setError(error.message);
     } finally {
       setLoading(false);
@@ -58,14 +85,16 @@ const Login = () => {
         display: 'flex', 
         alignItems: 'center',
         position: 'relative',
-        zIndex: 2
+        zIndex: 10
       }}>
         <Paper elevation={10} sx={{ 
           p: 4, 
           width: '100%',
           borderRadius: 4,
           background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
-          backdropFilter: 'blur(10px)'
+          backdropFilter: 'blur(10px)',
+          position: 'relative',
+          zIndex: 15
         }}>
           <Box textAlign="center" mb={4}>
             <Typography variant="h3" component="h1" gutterBottom sx={{ 
@@ -86,19 +115,36 @@ const Login = () => {
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          <Box 
+            component="form" 
+            onSubmit={handleSubmit} 
+            sx={{ 
+              mt: 2,
+              '& *': {
+                pointerEvents: 'auto'
+              }
+            }}
+          >
             <TextField
               fullWidth
               label="Email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                console.log('Email changed:', e.target.value); // Debug log
+                setEmail(e.target.value);
+              }}
               margin="normal"
               required
               sx={{
+                position: 'relative',
+                zIndex: 20,
+                pointerEvents: 'auto',
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 3,
-                  backgroundColor: 'rgba(255,255,255,0.8)'
+                  backgroundColor: 'rgba(255,255,255,0.8)',
+                  position: 'relative',
+                  zIndex: 25
                 }
               }}
             />
@@ -107,13 +153,21 @@ const Login = () => {
               label="Password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                console.log('Password changed:', e.target.value); // Debug log
+                setPassword(e.target.value);
+              }}
               margin="normal"
               required
               sx={{
+                position: 'relative',
+                zIndex: 20,
+                pointerEvents: 'auto',
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 3,
-                  backgroundColor: 'rgba(255,255,255,0.8)'
+                  backgroundColor: 'rgba(255,255,255,0.8)',
+                  position: 'relative',
+                  zIndex: 25
                 }
               }}
             />
@@ -123,6 +177,11 @@ const Login = () => {
               variant="contained"
               disabled={loading}
               className="child-friendly-button"
+              onClick={(e) => {
+                console.log('Button clicked!', e); // Debug log
+                e.preventDefault();
+                handleSubmit(e);
+              }}
               sx={{ 
                 mt: 3, 
                 mb: 2,
@@ -135,17 +194,24 @@ const Login = () => {
               }}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
-            </Button>
+            </Button>         
           </Box>
 
-          <Box textAlign="center" mt={3}>
+          <Box textAlign="center" mt={3} sx={{ position: 'relative', zIndex: 20 }}>
             <Typography variant="body2" color="text.secondary">
               Don't have an account?{' '}
-              <Link to="/role-selector" style={{ 
-                color: '#4ECDC4', 
-                textDecoration: 'none',
-                fontWeight: 'bold'
-              }}>
+              <Link 
+                to="/role-selector" 
+                style={{ 
+                  color: '#4ECDC4', 
+                  textDecoration: 'none',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  pointerEvents: 'auto',
+                  position: 'relative',
+                  zIndex: 25
+                }}
+              >
                 Sign up here!
               </Link>
             </Typography>
