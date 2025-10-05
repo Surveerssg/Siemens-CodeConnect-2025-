@@ -21,6 +21,7 @@ import TreasureHunt from './pages/child/games/TreasureHunt';
 import ParentDashboard from './pages/parent/ParentDashboard';
 import ChildProgress from './pages/parent/ChildProgress';
 import AssignGoals from './pages/parent/AssignGoals';
+import ChildDetail from './pages/parent/ChildDetail';
 import Notes from './pages/parent/Notes';
 
 import TherapistDashboard from './pages/therapist/TherapistDashboard';
@@ -143,6 +144,11 @@ const AppRoutes = () => {
       <Route path="/parent/goals" element={
         <ProtectedRoute allowedRoles={[ROLES.PARENT]}>
           <AssignGoals />
+        </ProtectedRoute>
+      } />
+      <Route path="/parent/child/:childId" element={
+        <ProtectedRoute allowedRoles={[ROLES.PARENT]}>
+          <ChildDetail />
         </ProtectedRoute>
       } />
       

@@ -207,3 +207,17 @@ export default {
   games: gamesAPI,
   goals: goalsAPI,
 };
+
+// Parent helpers
+export const parentAPI = {
+  linkChild: (childId) => apiRequest('/parent/children/link', {
+    method: 'POST',
+    body: JSON.stringify({ childId }),
+  }),
+  linkChildByEmail: (email) => apiRequest('/parent/children/link-email', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  }),
+  listChildren: () => apiRequest('/parent/children'),
+  getChildSummary: (childId) => apiRequest(`/parent/children/${childId}/summary`),
+};
