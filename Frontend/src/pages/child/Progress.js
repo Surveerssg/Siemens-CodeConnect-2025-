@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
+import { progressAPI } from '../../services/api';
 import { 
   Container, 
   Typography, 
@@ -34,23 +35,49 @@ import {
 const Progress = () => {
   const { gameProgress } = useGame();
   const navigate = useNavigate();
+  const [progressData, setProgressData] = useState(null);
+  const [progressHistory, setProgressHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const mockProgressData = [
-    { day: 'Mon', score: 75, words: 3 },
-    { day: 'Tue', score: 82, words: 4 },
-    { day: 'Wed', score: 68, words: 2 },
-    { day: 'Thu', score: 91, words: 5 },
-    { day: 'Fri', score: 88, words: 4 },
-    { day: 'Sat', score: 95, words: 6 },
-    { day: 'Sun', score: 78, words: 3 }
-  ];
+  useEffect(() => {
+    loadProgressData();
+  }, []);
 
-  const weeklyStats = {
-    totalWords: 27,
-    averageScore: 82,
-    bestScore: 95,
-    practiceDays: 7
+  const loadProgressData = async () => {
+    try {
+      setLoading(true);
+      const [currentProgress, history] = await Promise.all([
+        progressAPI.getProgress(),
+        progressAPI.getHistory(7, 0)
+      ]);
+
+      setProgressData(currentProgress.data);
+      setProgressHistory(history.data);
+    } catch (error) {
+      console.error('Error loading progress data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const weeklyStats = progressData ? {
+    totalWords: progressData.Words_This_Week || 0,
+    averageScore: Math.round(progressData.Average_Score || 0),
+    bestScore: Math.round(progressData.Best_Score || 0),
+    practiceDays: progressData.Practice_Days || 0
+  } : {
+    totalWords: 0,
+    averageScore: 0,
+    bestScore: 0,
+    practiceDays: 0
+  };
+
+  // Convert history data to chart format
+  const mockProgressData = progressHistory.slice(0, 7).map((session, index) => ({
+    day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][index] || `Day ${index + 1}`,
+    score: session.score || 0,
+    words: session.wordsPracticed || 0
+  }));
 
   const achievements = [
     { name: 'First Word Master', description: 'Completed your first word!', icon: '🌟', earned: true, date: '2024-01-15' },
