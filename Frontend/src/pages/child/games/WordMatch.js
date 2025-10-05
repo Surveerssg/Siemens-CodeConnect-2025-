@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 const WordMatch = () => {
-  const { addXP, updateStreak } = useGame();
+  const { addXP, updateStreak, recordPracticeSession, endGame } = useGame();
   const navigate = useNavigate();
   
   const [currentWord, setCurrentWord] = useState('');
@@ -57,37 +57,52 @@ const WordMatch = () => {
     simulateSpeechAnalysis();
   };
 
-  const simulateSpeechAnalysis = () => {
+  const simulateSpeechAnalysis = async () => {
     const randomScore = Math.floor(Math.random() * 100);
-    setTimeout(() => {
+    setTimeout(async () => {
       setShowFeedback(true);
       if (randomScore >= 70) {
         setScore(prev => prev + 1);
-        addXP(25);
-        updateStreak(true);
-      } else updateStreak(false);
+        await addXP(25);
+        await updateStreak(true);
+        // Record practice session
+        await recordPracticeSession(randomScore, 1, 'word-match');
+      } else {
+        await updateStreak(false);
+        await recordPracticeSession(randomScore, 1, 'word-match');
+      }
     }, 2000);
   };
 
-  const handleOptionSelect = (option) => {
+  const handleOptionSelect = async (option) => {
     if (showFeedback) return;
     setSelectedOption(option);
     const isCorrect = option === correctAnswer;
-    setTimeout(() => {
+    setTimeout(async () => {
       setShowFeedback(true);
       if (isCorrect) {
         setScore(prev => prev + 1);
-        addXP(25);
-        updateStreak(true);
-      } else updateStreak(false);
+        await addXP(25);
+        await updateStreak(true);
+        await recordPracticeSession(100, 1, 'word-match');
+      } else {
+        await updateStreak(false);
+        await recordPracticeSession(0, 1, 'word-match');
+      }
     }, 1000);
   };
 
-  const nextRound = () => {
+  const nextRound = async () => {
     if (round < maxRounds) {
       setRound(prev => prev + 1);
       generateNewRound();
-    } else setGameCompleted(true);
+    } else {
+      setGameCompleted(true);
+      // Record game completion
+      const finalScore = (score / maxRounds) * 100;
+      const xpEarned = Math.floor(finalScore / 10) * 10; // XP based on final score
+      await endGame(finalScore, xpEarned);
+    }
   };
 
   const restartGame = () => {
