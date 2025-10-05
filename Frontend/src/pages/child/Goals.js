@@ -30,6 +30,18 @@ const Goals = () => {
   
   const [goals, setGoals] = useState([]);
 
+  const toDateAny = (v) => {
+    if (!v) return null;
+    if (v instanceof Date) return v;
+    if (typeof v === 'string' || typeof v === 'number') {
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (v.seconds) return new Date(v.seconds * 1000);
+    if (v._seconds) return new Date(v._seconds * 1000);
+    return null;
+  };
+
   useEffect(() => {
     const loadAssignedGoals = async () => {
       try {
@@ -42,7 +54,9 @@ const Goals = () => {
           current: g.progress || 0,
           type: 'daily',
           completed: g.status === 'completed',
-          xp: g.xpReward || 0
+          xp: g.xpReward || 0,
+          dueDate: toDateAny(g.dueDate),
+          createdAt: toDateAny(g.createdAt)
         }));
         setGoals(mapped);
       } catch (e) {
@@ -61,6 +75,18 @@ const Goals = () => {
       setGoals(goals.map(g => g.id === goalId ? { ...g, completed: newCompleted, current: newCompleted ? g.target : g.current } : g));
     } catch (e) {
       console.error('Failed to update goal progress:', e);
+    }
+  };
+
+  const formatDate = (d) => {
+    try {
+      const date = typeof d === 'string' ? new Date(d) : d;
+      if (!date) return null;
+      const day = date.toLocaleDateString(undefined, { weekday: 'short' });
+      const ddmmyy = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      return `${day}, ${ddmmyy}`;
+    } catch {
+      return null;
     }
   };
 
@@ -188,6 +214,11 @@ const Goals = () => {
                             <Typography variant="body2" color="text.secondary">{goal.xp} XP</Typography>
                           </Box>
                           <LinearProgress variant="determinate" value={(goal.current / goal.target) * 100} sx={{ height: 8, borderRadius: 4, backgroundColor: 'rgba(78, 205, 196, 0.2)', '& .MuiLinearProgress-bar': { background: `linear-gradient(90deg, ${getGoalTypeColor(goal.type)}, ${getGoalTypeColor(goal.type)}CC)`, borderRadius: 4 } }} />
+                          {(goal.dueDate || goal.createdAt) && (
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                              {goal.dueDate ? `Due: ${formatDate(goal.dueDate)}` : `Assigned: ${formatDate(goal.createdAt)}`}
+                            </Typography>
+                          )}
                         </Box>
                       </Box>
                     </Box>
