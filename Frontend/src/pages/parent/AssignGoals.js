@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { goalsAPI } from '../../services/api';
+import { goalsAPI, parentAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Container, 
@@ -27,32 +27,7 @@ import {
 const AssignGoals = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [goals, setGoals] = useState([
-    {
-      id: 1,
-      child: 'emma',
-      title: 'Practice 5 words daily',
-      description: 'Complete 5 word practice sessions each day',
-      target: 5,
-      type: 'daily',
-      xp: 50,
-      active: true,
-      startDate: '2024-01-01',
-      endDate: '2024-01-31'
-    },
-    {
-      id: 2,
-      child: 'liam',
-      title: 'Achieve 80% accuracy',
-      description: 'Maintain 80% or higher accuracy in practice sessions',
-      target: 80,
-      type: 'weekly',
-      xp: 100,
-      active: true,
-      startDate: '2024-01-01',
-      endDate: '2024-01-31'
-    }
-  ]);
+  const [goals, setGoals] = useState([]);
 
   const [newGoal, setNewGoal] = useState({
     child: '',
@@ -66,10 +41,20 @@ const AssignGoals = () => {
     endDate: ''
   });
 
-  const children = [
-    { value: 'emma', label: 'Emma (8 years old)' },
-    { value: 'liam', label: 'Liam (6 years old)' }
-  ];
+  const [children, setChildren] = useState([]);
+  const childOptions = children.map(c => ({ value: c.id, label: c.name || c.email || c.id }));
+
+  useEffect(() => {
+    const loadChildren = async () => {
+      try {
+        const res = await parentAPI.listChildren();
+        setChildren(res.data || []);
+      } catch (e) {
+        console.error('Failed to load children:', e);
+      }
+    };
+    loadChildren();
+  }, []);
 
   const goalTypes = [
     { value: 'daily', label: 'Daily Goal' },
@@ -88,7 +73,7 @@ const AssignGoals = () => {
     if (newGoal.child && newGoal.title && newGoal.target) {
       try {
         const payload = {
-          childId: newGoal.child, // expect child's uid
+          childId: newGoal.child,
           title: newGoal.title,
           description: newGoal.description,
           targetValue: parseInt(newGoal.target),
@@ -159,9 +144,60 @@ const AssignGoals = () => {
         </Typography>
       </Box>
 
-      {/* Create New Goal & Current Goals sections remain the same */}
+      {/* Create New Goal */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Typography variant="h6" sx={{ mb: 2 }}>Create New Goal</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel id="child-select-label">Child</InputLabel>
+                <Select labelId="child-select-label" label="Child" value={newGoal.child} onChange={(e) => handleInputChange('child', e.target.value)}>
+                  {childOptions.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <TextField fullWidth label="Title" value={newGoal.title} onChange={(e) => handleInputChange('title', e.target.value)} />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField fullWidth label="Description" value={newGoal.description} onChange={(e) => handleInputChange('description', e.target.value)} />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField fullWidth type="number" label="Target" value={newGoal.target} onChange={(e) => handleInputChange('target', e.target.value)} />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField fullWidth type="number" label="XP Reward" value={newGoal.xp} onChange={(e) => handleInputChange('xp', e.target.value)} />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Button variant="contained" onClick={handleAddGoal} disabled={!newGoal.child || !newGoal.title || !newGoal.target}>Assign Goal</Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
-      {/* Goal Statistics section remains the same */}
+      {/* Recently Assigned (this session) */}
+      <Card>
+        <CardContent>
+          <Typography variant="h6" sx={{ mb: 2 }}>Recently Assigned</Typography>
+          {goals.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">No goals assigned yet.</Typography>
+          ) : (
+            <Box>
+              {goals.map(g => (
+                <Box key={g.id} display="flex" justifyContent="space-between" alignItems="center" sx={{ p: 1, borderBottom: '1px solid #eee' }}>
+                  <Box>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{g.title}</Typography>
+                    <Typography variant="body2" color="text.secondary">Target: {g.targetValue} • XP: {g.xpReward}</Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </CardContent>
+      </Card>
     </Container>
   );
 };
