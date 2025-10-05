@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
+import { goalsAPI } from '../../services/api';
 import { 
   Container, 
   Typography, 
@@ -27,16 +28,40 @@ const Goals = () => {
   const { gameProgress } = useGame();
   const navigate = useNavigate();
   
-  const [goals, setGoals] = useState([
-    { id: 1, title: 'Practice 5 words today', description: 'Complete 5 word practice sessions', target: 5, current: 3, type: 'daily', completed: false, xp: 50 },
-    { id: 2, title: 'Get 3 perfect scores', description: 'Achieve 100% accuracy on 3 words', target: 3, current: 1, type: 'daily', completed: false, xp: 100 },
-    { id: 3, title: 'Practice for 7 days straight', description: 'Maintain your practice streak', target: 7, current: gameProgress.currentStreak, type: 'weekly', completed: false, xp: 200 },
-    { id: 4, title: 'Complete 20 words this week', description: 'Practice 20 different words', target: 20, current: 12, type: 'weekly', completed: false, xp: 150 },
-    { id: 5, title: 'Earn 5 new badges', description: 'Unlock 5 different achievement badges', target: 5, current: gameProgress.badges.length, type: 'monthly', completed: false, xp: 300 }
-  ]);
+  const [goals, setGoals] = useState([]);
 
-  const handleGoalToggle = (goalId) => {
-    setGoals(goals.map(goal => goal.id === goalId ? { ...goal, completed: !goal.completed } : goal));
+  useEffect(() => {
+    const loadAssignedGoals = async () => {
+      try {
+        const res = await goalsAPI.listMyAssigned();
+        const mapped = (res.data || []).map(g => ({
+          id: g.id,
+          title: g.title,
+          description: g.description,
+          target: g.targetValue || 1,
+          current: g.progress || 0,
+          type: 'daily',
+          completed: g.status === 'completed',
+          xp: g.xpReward || 0
+        }));
+        setGoals(mapped);
+      } catch (e) {
+        console.error('Failed to load assigned goals:', e);
+      }
+    };
+    loadAssignedGoals();
+  }, []);
+
+  const handleGoalToggle = async (goalId) => {
+    const goal = goals.find(g => g.id === goalId);
+    if (!goal) return;
+    const newCompleted = !goal.completed;
+    try {
+      await goalsAPI.updateMyAssignedProgress(goalId, { status: newCompleted ? 'completed' : 'active', progress: newCompleted ? goal.target : goal.current });
+      setGoals(goals.map(g => g.id === goalId ? { ...g, completed: newCompleted, current: newCompleted ? g.target : g.current } : g));
+    } catch (e) {
+      console.error('Failed to update goal progress:', e);
+    }
   };
 
   const getGoalTypeColor = (type) => {
