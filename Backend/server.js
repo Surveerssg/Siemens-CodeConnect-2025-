@@ -15,6 +15,7 @@ const progressRoutes = require('./routes/progress');
 const gameRoutes = require('./routes/games');
 const goalRoutes = require('./routes/goals');
 const parentGoalsRoutes = require('./routes/parentGoals');
+const parentChildrenRoutes = require('./routes/parentChildren');
 
 // Initialize Express app
 const app = express();
@@ -39,7 +40,9 @@ const limiter = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
     error: 'Too many requests from this IP, please try again later.'
-  }
+  },
+  // Skip rate limiting during local development to avoid interrupting dev flows
+  skip: () => (process.env.NODE_ENV || 'development') !== 'production'
 });
 app.use(limiter);
 
@@ -69,6 +72,7 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/parent/goals', parentGoalsRoutes);
+app.use('/api/parent/children', parentChildrenRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
