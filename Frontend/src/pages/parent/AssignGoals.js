@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { goalsAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Container, 
   Typography, 
@@ -24,6 +26,7 @@ import {
 
 const AssignGoals = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [goals, setGoals] = useState([
     {
       id: 1,
@@ -81,25 +84,35 @@ const AssignGoals = () => {
     }));
   };
 
-  const handleAddGoal = () => {
+  const handleAddGoal = async () => {
     if (newGoal.child && newGoal.title && newGoal.target) {
-      const goal = {
-        ...newGoal,
-        id: Date.now(),
-        target: parseInt(newGoal.target)
-      };
-      setGoals(prev => [...prev, goal]);
-      setNewGoal({
-        child: '',
-        title: '',
-        description: '',
-        target: '',
-        type: 'daily',
-        xp: 25,
-        active: true,
-        startDate: '',
-        endDate: ''
-      });
+      try {
+        const payload = {
+          childId: newGoal.child, // expect child's uid
+          title: newGoal.title,
+          description: newGoal.description,
+          targetValue: parseInt(newGoal.target),
+          xpReward: parseInt(newGoal.xp),
+          dueDate: newGoal.endDate || null
+        };
+        const res = await goalsAPI.assignToChild(payload);
+        const created = { id: res.data.id, ...payload, type: newGoal.type, active: true };
+        setGoals(prev => [created, ...prev]);
+        setNewGoal({
+          child: '',
+          title: '',
+          description: '',
+          target: '',
+          type: 'daily',
+          xp: 25,
+          active: true,
+          startDate: '',
+          endDate: ''
+        });
+      } catch (e) {
+        console.error('Failed to assign goal:', e);
+        alert(e?.message || 'Failed to assign goal');
+      }
     }
   };
 

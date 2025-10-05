@@ -28,7 +28,7 @@ import {
 
 const ChildDashboard = () => {
   const { user, userRole, logout } = useAuth();
-  const { gameProgress } = useGame();
+  const { gameProgress, loading, refreshData } = useGame();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -154,16 +154,24 @@ const ChildDashboard = () => {
                 <Box sx={{ width: 110, height: 110, mx: 'auto', mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem', boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)' }}>
                   👶
                 </Box>
-                <Typography variant="h3" fontWeight="bold" gutterBottom sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  Level {gameProgress.currentLevel}
-                </Typography>
-                <Typography variant="body1" color="text.secondary" mb={3} fontWeight={600}>
-                  {gameProgress.totalXP} XP Total
-                </Typography>
-                <LinearProgress variant="determinate" value={(gameProgress.totalXP % 1000) / 10} sx={{ height: 12, borderRadius: 10, backgroundColor: 'rgba(102, 126, 234, 0.15)', '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)', borderRadius: 10 }}} />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2, fontWeight: 600 }}>
-                  {1000 - (gameProgress.totalXP % 1000)} XP to next level
-                </Typography>
+                {loading ? (
+                  <Typography variant="h3" fontWeight="bold" gutterBottom sx={{ color: '#667eea' }}>
+                    Loading...
+                  </Typography>
+                ) : (
+                  <>
+                    <Typography variant="h3" fontWeight="bold" gutterBottom sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                      Level {gameProgress.currentLevel}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary" mb={3} fontWeight={600}>
+                      {gameProgress.totalXP} XP Total
+                    </Typography>
+                    <LinearProgress variant="determinate" value={(gameProgress.totalXP % 1000) / 10} sx={{ height: 12, borderRadius: 10, backgroundColor: 'rgba(102, 126, 234, 0.15)', '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)', borderRadius: 10 }}} />
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 2, fontWeight: 600 }}>
+                      {1000 - (gameProgress.totalXP % 1000)} XP to next level
+                    </Typography>
+                  </>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -178,13 +186,19 @@ const ChildDashboard = () => {
                     <Flame size={28} />
                     <Typography variant="h5" fontWeight="700">Current Streak</Typography>
                   </Box>
-                  <Typography variant="h1" fontWeight="bold" mb={1} sx={{ fontSize: '4rem' }}>{gameProgress.currentStreak}</Typography>
-                  <Typography variant="h6" sx={{ opacity: 0.95, mb: 3 }}>days in a row!</Typography>
-                  <Box sx={{ pt: 2.5, borderTop: '2px solid rgba(255,255,255,0.25)' }}>
-                    <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 600 }}>
-                      Best streak: {gameProgress.bestStreak} days 🏆
-                    </Typography>
-                  </Box>
+                  {loading ? (
+                    <Typography variant="h1" fontWeight="bold" mb={1} sx={{ fontSize: '4rem' }}>...</Typography>
+                  ) : (
+                    <>
+                      <Typography variant="h1" fontWeight="bold" mb={1} sx={{ fontSize: '4rem' }}>{gameProgress.currentStreak}</Typography>
+                      <Typography variant="h6" sx={{ opacity: 0.95, mb: 3 }}>days in a row!</Typography>
+                      <Box sx={{ pt: 2.5, borderTop: '2px solid rgba(255,255,255,0.25)' }}>
+                        <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 600 }}>
+                          Best streak: {gameProgress.bestStreak} days 🏆
+                        </Typography>
+                      </Box>
+                    </>
+                  )}
                 </Box>
               </CardContent>
             </Card>
