@@ -13,7 +13,8 @@ import {
   LinearProgress,
   Chip,
   Checkbox,
-  FormControlLabel
+  FormControlLabel,
+  Badge
 } from '@mui/material';
 import { 
   ArrowLeft, 
@@ -21,7 +22,9 @@ import {
   CheckCircle, 
   Circle,
   Star,
-  Trophy
+  Trophy,
+  Calendar,
+  User
 } from 'lucide-react';
 
 const Goals = () => {
@@ -29,6 +32,7 @@ const Goals = () => {
   const navigate = useNavigate();
   
   const [goals, setGoals] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const toDateAny = (v) => {
     if (!v) return null;
@@ -45,6 +49,7 @@ const Goals = () => {
   useEffect(() => {
     const loadAssignedGoals = async () => {
       try {
+        setLoading(true);
         const res = await goalsAPI.listMyAssigned();
         const mapped = (res.data || []).map(g => ({
           id: g.id,
@@ -52,15 +57,19 @@ const Goals = () => {
           description: g.description,
           target: g.targetValue || 1,
           current: g.progress || 0,
-          type: 'daily',
+          type: 'assigned',
           completed: g.status === 'completed',
           xp: g.xpReward || 0,
           dueDate: toDateAny(g.dueDate),
-          createdAt: toDateAny(g.createdAt)
+          createdAt: toDateAny(g.createdAt),
+          assignedBy: g.assignedByRole || 'parent',
+          parentGoalId: g.parentGoalId
         }));
         setGoals(mapped);
       } catch (e) {
         console.error('Failed to load assigned goals:', e);
+      } finally {
+        setLoading(false);
       }
     };
     loadAssignedGoals();
@@ -69,10 +78,23 @@ const Goals = () => {
   const handleGoalToggle = async (goalId) => {
     const goal = goals.find(g => g.id === goalId);
     if (!goal) return;
+    
     const newCompleted = !goal.completed;
+    const newProgress = newCompleted ? goal.target : 0;
+    
     try {
-      await goalsAPI.updateMyAssignedProgress(goalId, { status: newCompleted ? 'completed' : 'active', progress: newCompleted ? goal.target : goal.current });
-      setGoals(goals.map(g => g.id === goalId ? { ...g, completed: newCompleted, current: newCompleted ? g.target : g.current } : g));
+      await goalsAPI.updateMyAssignedProgress(goalId, { 
+        status: newCompleted ? 'completed' : 'active', 
+        progress: newProgress 
+      });
+      
+      setGoals(goals.map(g => 
+        g.id === goalId ? { 
+          ...g, 
+          completed: newCompleted, 
+          current: newProgress 
+        } : g
+      ));
     } catch (e) {
       console.error('Failed to update goal progress:', e);
     }
@@ -82,9 +104,13 @@ const Goals = () => {
     try {
       const date = typeof d === 'string' ? new Date(d) : d;
       if (!date) return null;
-      const day = date.toLocaleDateString(undefined, { weekday: 'short' });
-      const ddmmyy = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-      return `${day}, ${ddmmyy}`;
+      return date.toLocaleDateString(undefined, { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     } catch {
       return null;
     }
@@ -92,25 +118,35 @@ const Goals = () => {
 
   const getGoalTypeColor = (type) => {
     switch (type) {
-      case 'daily': return '#FF6B6B';
-      case 'weekly': return '#4ECDC4';
-      case 'monthly': return '#9B59B6';
+      case 'assigned': return '#FF6B6B';
+      case 'daily': return '#4ECDC4';
+      case 'weekly': return '#9B59B6';
       default: return '#95A5A6';
     }
   };
 
   const getGoalTypeIcon = (type) => {
     switch (type) {
+      case 'assigned': return '👨‍👦';
       case 'daily': return '📅';
       case 'weekly': return '📊';
-      case 'monthly': return '🏆';
       default: return '🎯';
     }
   };
 
   const completedGoals = goals.filter(goal => goal.completed).length;
   const totalGoals = goals.length;
-  const completionRate = (completedGoals / totalGoals) * 100;
+  const completionRate = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
+
+  const assignedGoals = goals.filter(goal => goal.type === 'assigned');
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ minHeight: '100vh', py: 4 }}>
+        <Typography>Loading goals...</Typography>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ minHeight: '100vh', py: 4 }}>
@@ -159,29 +195,41 @@ const Goals = () => {
           <Card sx={{ textAlign: 'center', p: 3 }}>
             <Typography variant="h6" gutterBottom sx={{ color: '#9B59B6' }}>
               <Trophy size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              Current Streak
+              Assigned Goals
             </Typography>
             <Typography variant="h2" sx={{ color: '#9B59B6', fontWeight: 'bold' }}>
-              {gameProgress.currentStreak}
+              {assignedGoals.length}
             </Typography>
-            <Typography variant="body2" color="text.secondary">days in a row!</Typography>
+            <Typography variant="body2" color="text.secondary">From parents</Typography>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Goals Sections */}
-      {['daily', 'weekly', 'monthly'].map(type => (
-        <Box key={type} mb={4}>
-          <Typography variant="h5" gutterBottom sx={{ color: '#2C3E50', fontWeight: 'bold', mb: 3 }}>
-            {type.charAt(0).toUpperCase() + type.slice(1)} Goals
-          </Typography>
+      {/* Assigned Goals Section */}
+      <Box mb={4}>
+        <Typography variant="h5" gutterBottom sx={{ color: '#2C3E50', fontWeight: 'bold', mb: 3 }}>
+          <User size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+          Parent-Assigned Goals
+        </Typography>
+        
+        {assignedGoals.length === 0 ? (
+          <Card sx={{ textAlign: 'center', p: 4 }}>
+            <Typography variant="h6" color="text.secondary">
+              No goals assigned yet
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Your parents will assign goals for you to complete!
+            </Typography>
+          </Card>
+        ) : (
           <Grid container spacing={3}>
-            {goals.filter(goal => goal.type === type).map(goal => (
+            {assignedGoals.map(goal => (
               <Grid item xs={12} md={6} key={goal.id}>
                 <Card 
                   sx={{ 
-                    border: goal.completed ? '2px solid #4CAF50' : '2px solid transparent',
-                    background: goal.completed ? 'linear-gradient(135deg, #E8F5E8, #F1F8E9)' : 'linear-gradient(135deg, #FFF, #F8F9FA)'
+                    border: goal.completed ? '2px solid #4CAF50' : '2px solid #FF6B6B',
+                    background: goal.completed ? 'linear-gradient(135deg, #E8F5E8, #F1F8E9)' : 'linear-gradient(135deg, #FFF, #F8F9FA)',
+                    position: 'relative'
                   }}
                 >
                   <CardContent>
@@ -193,33 +241,67 @@ const Goals = () => {
                             onChange={() => handleGoalToggle(goal.id)}
                             icon={<Circle size={24} />}
                             checkedIcon={<CheckCircle size={24} />}
-                            sx={{ color: goal.completed ? '#4CAF50' : '#9E9E9E' }}
+                            sx={{ color: goal.completed ? '#4CAF50' : '#FF6B6B' }}
                           />
                         }
                         label=""
                       />
                       <Box flexGrow={1}>
                         <Box display="flex" alignItems="center" mb={1}>
-                          <Typography variant="h6" sx={{ color: goal.completed ? '#4CAF50' : '#2C3E50', textDecoration: goal.completed ? 'line-through' : 'none' }}>
+                          <Typography variant="h6" sx={{ 
+                            color: goal.completed ? '#4CAF50' : '#2C3E50', 
+                            textDecoration: goal.completed ? 'line-through' : 'none' 
+                          }}>
                             {goal.title}
                           </Typography>
-                          <Chip label={getGoalTypeIcon(goal.type)} size="small" sx={{ ml: 1, background: getGoalTypeColor(goal.type), color: 'white', fontWeight: 'bold' }} />
+                          <Chip 
+                            label={getGoalTypeIcon(goal.type)} 
+                            size="small" 
+                            sx={{ 
+                              ml: 1, 
+                              background: getGoalTypeColor(goal.type), 
+                              color: 'white', 
+                              fontWeight: 'bold' 
+                            }} 
+                          />
                         </Box>
+                        
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                           {goal.description}
                         </Typography>
+                        
                         <Box mb={2}>
                           <Box display="flex" justifyContent="space-between" mb={1}>
-                            <Typography variant="body2" color="text.secondary">Progress: {goal.current}/{goal.target}</Typography>
-                            <Typography variant="body2" color="text.secondary">{goal.xp} XP</Typography>
-                          </Box>
-                          <LinearProgress variant="determinate" value={(goal.current / goal.target) * 100} sx={{ height: 8, borderRadius: 4, backgroundColor: 'rgba(78, 205, 196, 0.2)', '& .MuiLinearProgress-bar': { background: `linear-gradient(90deg, ${getGoalTypeColor(goal.type)}, ${getGoalTypeColor(goal.type)}CC)`, borderRadius: 4 } }} />
-                          {(goal.dueDate || goal.createdAt) && (
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                              {goal.dueDate ? `Due: ${formatDate(goal.dueDate)}` : `Assigned: ${formatDate(goal.createdAt)}`}
+                            <Typography variant="body2" color="text.secondary">
+                              Progress: {goal.current}/{goal.target}
                             </Typography>
-                          )}
+                            <Typography variant="body2" color="text.secondary">
+                              {goal.xp} XP
+                            </Typography>
+                          </Box>
+                          <LinearProgress 
+                            variant="determinate" 
+                            value={(goal.current / goal.target) * 100} 
+                            sx={{ 
+                              height: 8, 
+                              borderRadius: 4, 
+                              backgroundColor: 'rgba(255, 107, 107, 0.2)', 
+                              '& .MuiLinearProgress-bar': { 
+                                background: `linear-gradient(90deg, ${getGoalTypeColor(goal.type)}, ${getGoalTypeColor(goal.type)}CC)`, 
+                                borderRadius: 4 
+                              } 
+                            }} 
+                          />
                         </Box>
+
+                        {goal.createdAt && (
+                          <Box display="flex" alignItems="center" sx={{ mt: 1 }}>
+                            <Calendar size={16} style={{ marginRight: 8, color: '#666' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              Assigned: {formatDate(goal.createdAt)}
+                            </Typography>
+                          </Box>
+                        )}
                       </Box>
                     </Box>
                   </CardContent>
@@ -227,8 +309,8 @@ const Goals = () => {
               </Grid>
             ))}
           </Grid>
-        </Box>
-      ))}
+        )}
+      </Box>
     </Container>
   );
 };
