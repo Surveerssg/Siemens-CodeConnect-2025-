@@ -1,3 +1,4 @@
+// routes/goals.js
 const express = require('express');
 const admin = require('firebase-admin');
 const { authenticateToken } = require('../middleware/auth');
@@ -5,19 +6,70 @@ const { validateGoals } = require('../middleware/validation');
 
 const router = express.Router();
 
-// Get user goals data
+/**
+ * Robust user derivation (works with different auth middlewares)
+ */
+const getRequestUser = (req) => {
+  const userId = req.userId || req.user?.uid || req.user?.id || req.uid || (req.user && req.user.uid);
+  const userRole = req.userRole || req.user?.role || req.role || (req.user && req.user.role);
+  return { userId, userRole };
+};
+
+/**
+ * Convert various Firestore timestamp-like values to JS Date (or null)
+ */
+const toJsDate = (v) => {
+  if (!v) return null;
+  if (v instanceof Date) return v;
+  if (typeof v === 'number' || typeof v === 'string') {
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof v.toDate === 'function') return v.toDate();
+  if (v.seconds) return new Date(v.seconds * 1000);
+  if (v._seconds) return new Date(v._seconds * 1000);
+  return null;
+};
+
+/**
+ * Convert a Firestore document snapshot to plain object with id and JS Date fields
+ */
+const convertDoc = (docSnap) => {
+  if (!docSnap) return null;
+  const data = docSnap.data ? docSnap.data() : docSnap;
+  const result = {
+    id: docSnap.id || data.id || null,
+    ...(data || {})
+  };
+
+  // convert common timestamp fields
+  if (result.createdAt) result.createdAt = toJsDate(result.createdAt);
+  if (result.updatedAt) result.updatedAt = toJsDate(result.updatedAt);
+  if (result.completedAt) result.completedAt = toJsDate(result.completedAt);
+  if (result.timestamp) result.timestamp = toJsDate(result.timestamp);
+  if (result.dueDate) result.dueDate = toJsDate(result.dueDate);
+  return result;
+};
+
+/**
+ * GET /api/goals
+ * Get user goals data (creates default doc if not exists)
+ */
 router.get('/', authenticateToken, async (req, res) => {
   try {
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
     const goalsQuery = await admin.firestore()
       .collection('goals')
-      .where('userId', '==', req.userId)
+      .where('userId', '==', userId)
       .limit(1)
       .get();
 
     if (goalsQuery.empty) {
       // Create default goals data if none exists
       const defaultGoalsData = {
-        userId: req.userId,
+        userId,
         Current_Streak: 0,
         Best_Streak: 0,
         Goals_Completed: 0,
@@ -31,53 +83,62 @@ router.get('/', authenticateToken, async (req, res) => {
         .collection('goals')
         .add(defaultGoalsData);
 
+      // Read back to get resolved timestamps
+      const saved = await newGoalsRef.get();
       return res.json({
         success: true,
-        data: {
-          id: newGoalsRef.id,
-          ...defaultGoalsData
-        }
+        data: convertDoc(saved)
       });
     }
 
-    const goalsData = goalsQuery.docs[0];
-    res.json({
+    const goalsDoc = goalsQuery.docs[0];
+    return res.json({
       success: true,
-      data: {
-        id: goalsData.id,
-        ...goalsData.data()
-      }
+      data: convertDoc(goalsDoc)
     });
   } catch (error) {
-    console.error('Error fetching goals data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error fetching goals data:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 
-// Update user goals data
+/**
+ * PUT /api/goals
+ * Update user goals data (create if missing)
+ */
 router.put('/', authenticateToken, validateGoals, async (req, res) => {
   try {
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
     const { currentStreak, goalsCompleted, totalXPEarned, bestStreak } = req.body;
     
+    // Build update data object
     const updateData = {
       Current_Streak: currentStreak,
-      Best_Streak: typeof bestStreak === 'number' ? bestStreak : admin.firestore.FieldValue.delete(),
       Goals_Completed: goalsCompleted,
       Total_XP_Earned: totalXPEarned,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     };
 
+    if (typeof bestStreak === 'number') {
+      updateData.Best_Streak = bestStreak;
+    }
+
     // Check if goals document exists
     const goalsQuery = await admin.firestore()
       .collection('goals')
-      .where('userId', '==', req.userId)
+      .where('userId', '==', userId)
       .limit(1)
       .get();
 
     if (goalsQuery.empty) {
       // Create new goals document
       const newGoalsData = {
-        userId: req.userId,
+        userId,
         ...updateData,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       };
@@ -86,13 +147,11 @@ router.put('/', authenticateToken, validateGoals, async (req, res) => {
         .collection('goals')
         .add(newGoalsData);
 
+      const saved = await newGoalsRef.get();
       return res.json({
         success: true,
         message: 'Goals data created successfully',
-        data: {
-          id: newGoalsRef.id,
-          ...newGoalsData
-        }
+        data: convertDoc(saved)
       });
     }
 
@@ -100,25 +159,32 @@ router.put('/', authenticateToken, validateGoals, async (req, res) => {
     const goalsDoc = goalsQuery.docs[0];
     await goalsDoc.ref.update(updateData);
 
-    res.json({
+    // Read back updated doc
+    const updatedDoc = await goalsDoc.ref.get();
+    return res.json({
       success: true,
       message: 'Goals data updated successfully',
-      data: {
-        id: goalsDoc.id,
-        ...updateData
-      }
+      data: convertDoc(updatedDoc)
     });
   } catch (error) {
-    console.error('Error updating goals data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error updating goals data:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 
-// Complete a goal
+/**
+ * POST /api/goals/complete
+ * Complete a goal (log completion and update user goals)
+ */
 router.post('/complete', authenticateToken, async (req, res) => {
   try {
-    const { goalType, xpReward, description } = req.body;
-    
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { goalType, xpReward = 0, description = `${goalType} goal completed!` } = req.body;
     if (!goalType) {
       return res.status(400).json({ error: 'Goal type is required' });
     }
@@ -126,15 +192,15 @@ router.post('/complete', authenticateToken, async (req, res) => {
     // Get current goals data
     const goalsQuery = await admin.firestore()
       .collection('goals')
-      .where('userId', '==', req.userId)
+      .where('userId', '==', userId)
       .limit(1)
       .get();
 
-    let goalsDoc;
+    let goalsDocRef;
     if (goalsQuery.empty) {
       // Create new goals document
       const newGoalsData = {
-        userId: req.userId,
+        userId,
         Current_Streak: 1,
         Best_Streak: 1,
         Goals_Completed: 1,
@@ -147,57 +213,69 @@ router.post('/complete', authenticateToken, async (req, res) => {
       const newGoalsRef = await admin.firestore()
         .collection('goals')
         .add(newGoalsData);
-      
-      goalsDoc = { id: newGoalsRef.id, data: () => newGoalsData };
+
+      goalsDocRef = newGoalsRef;
     } else {
-      goalsDoc = goalsQuery.docs[0];
+      const goalsDoc = goalsQuery.docs[0];
+      goalsDocRef = goalsDoc.ref;
       const currentData = goalsDoc.data();
       
       // Update goals data
-      const updateData = {
+      const updatedData = {
         Current_Streak: (currentData.Current_Streak || 0) + 1,
         Best_Streak: Math.max(currentData.Best_Streak || 0, (currentData.Current_Streak || 0) + 1),
-        Goals_Completed: currentData.Goals_Completed + 1,
-        Total_XP_Earned: currentData.Total_XP_Earned + (xpReward || 0),
+        Goals_Completed: (currentData.Goals_Completed || 0) + 1,
+        Total_XP_Earned: (currentData.Total_XP_Earned || 0) + (xpReward || 0),
         Last_Practice_Date: new Date().toISOString().slice(0,10),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
 
-      await goalsDoc.ref.update(updateData);
+      await goalsDoc.ref.update(updatedData);
     }
 
     // Log the goal completion
-    await admin.firestore()
+    const completionRef = await admin.firestore()
       .collection('goal_completions')
       .add({
-        userId: req.userId,
+        userId,
         goalType,
         xpReward: xpReward || 0,
-        description: description || `${goalType} goal completed!`,
+        description,
         timestamp: admin.firestore.FieldValue.serverTimestamp()
       });
 
-    res.json({
+    // Return created completion and updated goals doc
+    const completionSaved = await completionRef.get();
+    const updatedGoalsSaved = await goalsDocRef.get();
+
+    return res.json({
       success: true,
       message: 'Goal completed successfully',
       data: {
-        goalType,
-        xpReward: xpReward || 0,
-        description: description || `${goalType} goal completed!`
+        completion: convertDoc(completionSaved),
+        goals: convertDoc(updatedGoalsSaved)
       }
     });
   } catch (error) {
-    console.error('Error completing goal:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error completing goal:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 
-// Reset streak (when user misses a day)
+/**
+ * POST /api/goals/reset-streak
+ */
 router.post('/reset-streak', authenticateToken, async (req, res) => {
   try {
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
     const goalsQuery = await admin.firestore()
       .collection('goals')
-      .where('userId', '==', req.userId)
+      .where('userId', '==', userId)
       .limit(1)
       .get();
 
@@ -213,34 +291,43 @@ router.post('/reset-streak', authenticateToken, async (req, res) => {
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
+    const updatedDoc = await goalsDoc.ref.get();
     res.json({
       success: true,
       message: 'Streak reset successfully',
-      data: {
-        Current_Streak: 0
-      }
+      data: convertDoc(updatedDoc)
     });
   } catch (error) {
-    console.error('Error resetting streak:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error resetting streak:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 
-// Touch streak by day: increments if practiced today following a consecutive day, resets on gaps, no-ops if already counted today
+/**
+ * POST /api/goals/touch
+ * Touch streak by day: increments if practiced today following previous day,
+ * resets on gaps, no-ops if already counted today
+ */
 router.post('/touch', authenticateToken, async (req, res) => {
   try {
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
     const today = new Date();
     const todayStr = today.toISOString().slice(0,10); // YYYY-MM-DD
 
     const goalsQuery = await admin.firestore()
       .collection('goals')
-      .where('userId', '==', req.userId)
+      .where('userId', '==', userId)
       .limit(1)
       .get();
 
     if (goalsQuery.empty) {
       const newGoals = {
-        userId: req.userId,
+        userId,
         Current_Streak: 1,
         Best_Streak: 1,
         Goals_Completed: 0,
@@ -250,7 +337,8 @@ router.post('/touch', authenticateToken, async (req, res) => {
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
       const ref = await admin.firestore().collection('goals').add(newGoals);
-      return res.json({ success: true, data: { id: ref.id, ...newGoals } });
+      const saved = await ref.get();
+      return res.json({ success: true, data: convertDoc(saved) });
     }
 
     const docSnap = goalsQuery.docs[0];
@@ -283,128 +371,182 @@ router.post('/touch', authenticateToken, async (req, res) => {
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    return res.json({ success: true, data: { Current_Streak: current, Best_Streak: best, Last_Practice_Date: todayStr } });
+    const updated = await docSnap.ref.get();
+    return res.json({ success: true, data: convertDoc(updated) });
   } catch (error) {
-    console.error('Error touching streak:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error touching streak:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 
-// Get goals assigned to the current (child) user
+/**
+ * GET /api/goals/assigned
+ * Return assigned goals for the authenticated child.
+ * Tries both 'childId' and 'childUserId' for compatibility.
+ */
 router.get('/assigned', authenticateToken, async (req, res) => {
   try {
-    const snap = await admin.firestore()
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    console.log(`[GET /api/goals/assigned] userId=${userId}`);
+
+    // Query assigned_goals by childId
+    const byChildIdSnap = await admin.firestore()
       .collection('assigned_goals')
-      .where('childId', '==', req.userId)
-      .orderBy('createdAt', 'desc')
+      .where('childId', '==', userId)
       .get();
 
-    const items = [];
-    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+    let docs = [...byChildIdSnap.docs];
+
+    // If nothing found by childId, try childUserId (compatibility)
+    if (docs.length === 0) {
+      const byChildUserIdSnap = await admin.firestore()
+        .collection('assigned_goals')
+        .where('childUserId', '==', userId)
+        .get();
+      docs = [...byChildUserIdSnap.docs];
+    }
+
+    if (!docs || docs.length === 0) {
+      // No assigned goals — not an error
+      return res.json({ success: true, data: [] });
+    }
+
+    const items = docs.map(d => convertDoc(d));
+
+    // Sort by createdAt desc if present
+    items.sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0));
+
     return res.json({ success: true, data: items });
   } catch (error) {
-    console.error('Error fetching assigned goals for child:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error fetching assigned goals for child:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 
-// Update progress for an assigned goal (child marks progress)
+/**
+ * PUT /api/goals/assigned/:goalId/progress
+ * Update progress/status for an assigned goal (child)
+ */
 router.put('/assigned/:goalId/progress', authenticateToken, async (req, res) => {
   try {
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
     const { goalId } = req.params;
     const { progress, status } = req.body;
 
-    const docRef = admin.firestore().collection('assigned_goals').doc(goalId);
-    const doc = await docRef.get();
-    if (!doc.exists) return res.status(404).json({ error: 'Assigned goal not found' });
-    const data = doc.data();
-    // Only the child who owns it can update progress
-    if (data.childId !== req.userId) return res.status(403).json({ error: 'Not authorized' });
+    const assignedRef = admin.firestore().collection('assigned_goals').doc(goalId);
+    const assignedDoc = await assignedRef.get();
+    if (!assignedDoc.exists) return res.status(404).json({ error: 'Assigned goal not found' });
+
+    const assignedData = assignedDoc.data();
+    const ownerId = assignedData.childId || assignedData.childUserId;
+    if (ownerId !== userId) return res.status(403).json({ error: 'Not authorized to modify this assigned goal' });
 
     const updates = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
-    if (typeof progress === 'number') updates.progress = progress;
-    if (status) updates.status = status;
+    if (typeof progress !== 'undefined') updates.progress = Number(progress) || 0;
+    if (typeof status !== 'undefined') updates.status = status;
 
-    // if completed, award XP to games.Total_XP
-    if (status === 'completed' && typeof data.xpReward === 'number' && data.xpReward > 0) {
+    await assignedRef.update(updates);
+
+    // If completed and xpReward exists, update games.Total_XP for the child
+    if (status === 'completed' && typeof assignedData.xpReward === 'number' && assignedData.xpReward > 0) {
       const gamesQuery = await admin.firestore()
         .collection('games')
-        .where('userId', '==', req.userId)
+        .where('userId', '==', userId)
         .limit(1)
         .get();
+
       if (gamesQuery.empty) {
-        await admin.firestore().collection('games').add({
-          userId: req.userId,
+        // create games doc with initial XP
+        const gRef = await admin.firestore().collection('games').add({
+          userId,
           Achievements: 0,
           Games_Played: 0,
-          Total_XP: data.xpReward,
+          Total_XP: assignedData.xpReward,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
+        // read back not strictly necessary, but left out to keep code simple
       } else {
-        const gameDoc = gamesQuery.docs[0];
-        const current = gameDoc.data();
-        await gameDoc.ref.update({
-          Total_XP: (current.Total_XP || 0) + data.xpReward,
+        const gDoc = gamesQuery.docs[0];
+        await gDoc.ref.update({
+          Total_XP: (gDoc.data().Total_XP || 0) + assignedData.xpReward,
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
       }
     }
 
-    await docRef.update(updates);
-    return res.json({ success: true, message: 'Progress updated' });
+    const updatedAssigned = await assignedRef.get();
+    return res.json({ success: true, data: convertDoc(updatedAssigned) });
   } catch (error) {
-    console.error('Error updating assigned goal progress:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error updating assigned goal progress:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 
-// Get goal completion history
+/**
+ * GET /api/goals/history
+ * Get goal completion history for the user
+ */
 router.get('/history', authenticateToken, async (req, res) => {
   try {
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
     const { limit = 30, offset = 0 } = req.query;
-    
+
     const completionsQuery = await admin.firestore()
       .collection('goal_completions')
-      .where('userId', '==', req.userId)
+      .where('userId', '==', userId)
       .orderBy('timestamp', 'desc')
       .limit(parseInt(limit))
       .offset(parseInt(offset))
       .get();
 
-    const completions = [];
-    completionsQuery.forEach(doc => {
-      completions.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
+    const completions = completionsQuery.docs.map(doc => convertDoc(doc));
 
-    res.json({
-      success: true,
-      data: completions
-    });
+    return res.json({ success: true, data: completions });
   } catch (error) {
-    console.error('Error fetching goal history:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error fetching goal history:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 
-// Create a new goal
+/**
+ * POST /api/goals/create
+ * Create a new user goal (non-parent-assigned)
+ */
 router.post('/create', authenticateToken, async (req, res) => {
   try {
-    const { goalType, description, targetValue, xpReward } = req.body;
-    
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { goalType, description, targetValue = 1, xpReward = 10 } = req.body;
     if (!goalType || !description) {
       return res.status(400).json({ error: 'Goal type and description are required' });
     }
 
     const goalData = {
-      userId: req.userId,
+      userId,
       goalType,
       description,
-      targetValue: targetValue || 1,
-      xpReward: xpReward || 10,
+      targetValue,
+      xpReward,
       status: 'active',
       progress: 0,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -415,51 +557,57 @@ router.post('/create', authenticateToken, async (req, res) => {
       .collection('user_goals')
       .add(goalData);
 
-    res.json({
+    const saved = await goalRef.get();
+    return res.json({
       success: true,
       message: 'Goal created successfully',
-      data: {
-        id: goalRef.id,
-        ...goalData
-      }
+      data: convertDoc(saved)
     });
   } catch (error) {
-    console.error('Error creating goal:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error creating goal:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 
-// Get user's active goals
+/**
+ * GET /api/goals/active
+ * Get user's active user_goals
+ */
 router.get('/active', authenticateToken, async (req, res) => {
   try {
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
     const goalsQuery = await admin.firestore()
       .collection('user_goals')
-      .where('userId', '==', req.userId)
+      .where('userId', '==', userId)
       .where('status', '==', 'active')
       .orderBy('createdAt', 'desc')
       .get();
 
-    const goals = [];
-    goalsQuery.forEach(doc => {
-      goals.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
-
-    res.json({
-      success: true,
-      data: goals
-    });
+    const goals = goalsQuery.docs.map(doc => convertDoc(doc));
+    return res.json({ success: true, data: goals });
   } catch (error) {
-    console.error('Error fetching active goals:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error fetching active goals:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 
-// Update goal progress
+/**
+ * PUT /api/goals/:goalId/progress
+ * Update a user's own goal progress
+ */
 router.put('/:goalId/progress', authenticateToken, async (req, res) => {
   try {
+    const { userId } = getRequestUser(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
     const { goalId } = req.params;
     const { progress } = req.body;
     
@@ -467,19 +615,15 @@ router.put('/:goalId/progress', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Progress must be a non-negative number' });
     }
 
-    const goalDoc = await admin.firestore()
+    const goalDocRef = admin.firestore()
       .collection('user_goals')
-      .doc(goalId)
-      .get();
+      .doc(goalId);
 
-    if (!goalDoc.exists) {
-      return res.status(404).json({ error: 'Goal not found' });
-    }
+    const goalDoc = await goalDocRef.get();
+    if (!goalDoc.exists) return res.status(404).json({ error: 'Goal not found' });
 
     const goalData = goalDoc.data();
-    if (goalData.userId !== req.userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
+    if (goalData.userId !== userId) return res.status(403).json({ error: 'Access denied' });
 
     const updateData = {
       progress,
@@ -487,24 +631,25 @@ router.put('/:goalId/progress', authenticateToken, async (req, res) => {
     };
 
     // Check if goal is completed
-    if (progress >= goalData.targetValue) {
+    if (progress >= (goalData.targetValue || 1)) {
       updateData.status = 'completed';
       updateData.completedAt = admin.firestore.FieldValue.serverTimestamp();
     }
 
-    await goalDoc.ref.update(updateData);
+    await goalDocRef.update(updateData);
 
-    res.json({
+    const updated = await goalDocRef.get();
+    return res.json({
       success: true,
       message: 'Goal progress updated successfully',
-      data: {
-        id: goalId,
-        ...updateData
-      }
+      data: convertDoc(updated)
     });
   } catch (error) {
-    console.error('Error updating goal progress:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error updating goal progress:', error.stack || error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error.message || String(error)) : undefined
+    });
   }
 });
 

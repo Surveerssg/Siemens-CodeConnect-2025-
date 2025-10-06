@@ -181,18 +181,6 @@ export const goalsAPI = {
     body: JSON.stringify(data),
   }),
 
-  // Assigned goals (parent -> child)
-  assignToChild: (data) => apiRequest('/parent/goals', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  updateAssigned: (goalId, data) => apiRequest(`/parent/goals/${goalId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  deleteAssigned: (goalId) => apiRequest(`/parent/goals/${goalId}`, { method: 'DELETE' }),
-  listChildAssigned: (childId) => apiRequest(`/parent/goals/child/${childId}`),
-  
   // For child: fetch own assigned goals and update progress
   listMyAssigned: () => apiRequest('/goals/assigned'),
   updateMyAssignedProgress: (goalId, data) => apiRequest(`/goals/assigned/${goalId}/progress`, {
@@ -201,14 +189,33 @@ export const goalsAPI = {
   }),
 };
 
-export default {
-  user: userAPI,
-  progress: progressAPI,
-  games: gamesAPI,
-  goals: goalsAPI,
+// Parent Goals API - UPDATED TO MATCH SERVER.JS
+export const parentGoalsAPI = {
+  // Create a new parent goal and assign to child
+  create: (data) => apiRequest('/parent/goals', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  
+  // Get all parent goals for the current parent
+  list: () => apiRequest('/parent/goals'),
+  
+  // Get a specific parent goal by ID
+  get: (id) => apiRequest(`/parent/goals/${id}`),
+  
+  // Update a parent goal
+  update: (id, data) => apiRequest(`/parent/goals/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  
+  // Delete a parent goal
+  delete: (id) => apiRequest(`/parent/goals/${id}`, { 
+    method: 'DELETE' 
+  }),
 };
 
-// Parent helpers
+// Parent API
 export const parentAPI = {
   linkChild: (childId) => apiRequest('/parent/children/link', {
     method: 'POST',
@@ -220,4 +227,13 @@ export const parentAPI = {
   }),
   listChildren: () => apiRequest('/parent/children'),
   getChildSummary: (childId) => apiRequest(`/parent/children/${childId}/summary`),
+};
+
+export default {
+  user: userAPI,
+  progress: progressAPI,
+  games: gamesAPI,
+  goals: goalsAPI,
+  parentGoals: parentGoalsAPI,
+  parent: parentAPI,
 };

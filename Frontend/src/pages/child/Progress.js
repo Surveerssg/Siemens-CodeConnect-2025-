@@ -100,109 +100,239 @@ const Progress = () => {
     <Container maxWidth="lg" sx={{ 
       minHeight: '100vh',
       position: 'relative',
-      py: 4
+      py: 4,
+      backgroundColor: '#FAF8F5'
     }}>
+      {/* Header */}
       <Box display="flex" alignItems="center" mb={4}>
         <Button
           startIcon={<ArrowLeft size={20} />}
           onClick={() => navigate('/dashboard')}
-          sx={{ color: '#4ECDC4', mr: 2 }}
+          sx={{ 
+            color: '#5B7C99',
+            mr: 2,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+            '&:hover': {
+              backgroundColor: '#E8E6E1'
+            }
+          }}
         >
           Back to Dashboard
         </Button>
         <Typography variant="h4" sx={{ 
-          color: '#2C3E50',
-          fontWeight: 'bold'
+          color: '#3A3D42',
+          fontWeight: 'bold',
+          fontFamily: '"Outfit", "Inter", sans-serif'
         }}>
           My Progress 📈
         </Typography>
       </Box>
 
-      <Grid container spacing={4} mb={4}>
+      {/* Stats Cards */}
+      <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={3}>
-          <Card sx={{ textAlign: 'center', p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#FF6B6B' }}>
-              <Target size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+          <Card sx={{ 
+            textAlign: 'center', 
+            p: 3,
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            backgroundColor: 'white',
+            border: '1px solid #E8E6E1',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+            }
+          }}>
+            <Target size={32} color="#5B7C99" style={{ margin: '0 auto 12px' }} />
+            <Typography variant="h6" gutterBottom sx={{ 
+              color: '#5B7C99',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              fontWeight: 600
+            }}>
               Words This Week
             </Typography>
-            <Typography variant="h2" sx={{ color: '#FF6B6B', fontWeight: 'bold' }}>
+            <Typography variant="h2" sx={{ 
+              color: '#5B7C99', 
+              fontWeight: 'bold',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              mb: 1
+            }}>
               {weeklyStats.totalWords}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: '#5B7C99',
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+            }}>
               Great job!
             </Typography>
           </Card>
         </Grid>
 
         <Grid item xs={12} md={3}>
-          <Card sx={{ textAlign: 'center', p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#4ECDC4' }}>
-              <TrendingUp size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+          <Card sx={{ 
+            textAlign: 'center', 
+            p: 3,
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            backgroundColor: 'white',
+            border: '1px solid #E8E6E1',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+            }
+          }}>
+            <TrendingUp size={32} color="#8FA998" style={{ margin: '0 auto 12px' }} />
+            <Typography variant="h6" gutterBottom sx={{ 
+              color: '#8FA998',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              fontWeight: 600
+            }}>
               Average Score
             </Typography>
-            <Typography variant="h2" sx={{ color: '#4ECDC4', fontWeight: 'bold' }}>
+            <Typography variant="h2" sx={{ 
+              color: '#8FA998', 
+              fontWeight: 'bold',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              mb: 1
+            }}>
               {weeklyStats.averageScore}%
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: '#8FA998',
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+            }}>
               Keep it up!
             </Typography>
           </Card>
         </Grid>
 
         <Grid item xs={12} md={3}>
-          <Card sx={{ textAlign: 'center', p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#9B59B6' }}>
-              <Star size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+          <Card sx={{ 
+            textAlign: 'center', 
+            p: 3,
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            backgroundColor: 'white',
+            border: '1px solid #E8E6E1',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+            }
+          }}>
+            <Star size={32} color="#C67B5C" style={{ margin: '0 auto 12px' }} />
+            <Typography variant="h6" gutterBottom sx={{ 
+              color: '#C67B5C',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              fontWeight: 600
+            }}>
               Best Score
             </Typography>
-            <Typography variant="h2" sx={{ color: '#9B59B6', fontWeight: 'bold' }}>
+            <Typography variant="h2" sx={{ 
+              color: '#C67B5C', 
+              fontWeight: 'bold',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              mb: 1
+            }}>
               {weeklyStats.bestScore}%
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: '#C67B5C',
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+            }}>
               Amazing!
             </Typography>
           </Card>
         </Grid>
 
         <Grid item xs={12} md={3}>
-          <Card sx={{ textAlign: 'center', p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#F39C12' }}>
-              <Calendar size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+          <Card sx={{ 
+            textAlign: 'center', 
+            p: 3,
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            backgroundColor: 'white',
+            border: '1px solid #E8E6E1',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+            }
+          }}>
+            <Calendar size={32} color="#5B7C99" style={{ margin: '0 auto 12px' }} />
+            <Typography variant="h6" gutterBottom sx={{ 
+              color: '#5B7C99',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              fontWeight: 600
+            }}>
               Practice Days
             </Typography>
-            <Typography variant="h2" sx={{ color: '#F39C12', fontWeight: 'bold' }}>
+            <Typography variant="h2" sx={{ 
+              color: '#5B7C99', 
+              fontWeight: 'bold',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              mb: 1
+            }}>
               {weeklyStats.practiceDays}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: '#5B7C99',
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+            }}>
               This week
             </Typography>
           </Card>
         </Grid>
       </Grid>
 
-      <Grid container spacing={4} mb={4}>
+      {/* Charts Section */}
+      <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
+          <Card sx={{
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            backgroundColor: 'white',
+            border: '1px solid #E8E6E1'
+          }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h5" gutterBottom sx={{ 
-                color: '#2C3E50',
+                color: '#3A3D42',
                 fontWeight: 'bold',
-                mb: 3
+                mb: 3,
+                fontFamily: '"Outfit", "Inter", sans-serif'
               }}>
                 Weekly Progress
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={mockProgressData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8E6E1" />
+                  <XAxis 
+                    dataKey="day" 
+                    stroke="#5B7C99"
+                    tick={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', fill: '#5B7C99' }}
+                  />
+                  <YAxis 
+                    stroke="#5B7C99"
+                    tick={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', fill: '#5B7C99' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      borderRadius: 8,
+                      border: '1px solid #E8E6E1',
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                    }}
+                  />
                   <Line 
                     type="monotone" 
                     dataKey="score" 
-                    stroke="#4ECDC4" 
+                    stroke="#8FA998" 
                     strokeWidth={3}
-                    dot={{ fill: '#4ECDC4', strokeWidth: 2, r: 6 }}
+                    dot={{ fill: '#8FA998', strokeWidth: 2, r: 6 }}
+                    activeDot={{ r: 8, fill: '#C67B5C' }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -211,22 +341,45 @@ const Progress = () => {
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
+          <Card sx={{
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            backgroundColor: 'white',
+            border: '1px solid #E8E6E1'
+          }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h5" gutterBottom sx={{ 
-                color: '#2C3E50',
+                color: '#3A3D42',
                 fontWeight: 'bold',
-                mb: 3
+                mb: 3,
+                fontFamily: '"Outfit", "Inter", sans-serif'
               }}>
                 Words Per Day
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={mockProgressData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="words" fill="#FF6B6B" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8E6E1" />
+                  <XAxis 
+                    dataKey="day" 
+                    stroke="#5B7C99"
+                    tick={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', fill: '#5B7C99' }}
+                  />
+                  <YAxis 
+                    stroke="#5B7C99"
+                    tick={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', fill: '#5B7C99' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      borderRadius: 8,
+                      border: '1px solid #E8E6E1',
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="words" 
+                    fill="#C67B5C" 
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -234,14 +387,21 @@ const Progress = () => {
         </Grid>
       </Grid>
 
-      <Grid container spacing={4} mb={4}>
+      {/* Activities & Achievements */}
+      <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
+          <Card sx={{
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            backgroundColor: 'white',
+            border: '1px solid #E8E6E1'
+          }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h5" gutterBottom sx={{ 
-                color: '#2C3E50',
+                color: '#3A3D42',
                 fontWeight: 'bold',
-                mb: 3
+                mb: 3,
+                fontFamily: '"Outfit", "Inter", sans-serif'
               }}>
                 Recent Activities
               </Typography>
@@ -255,21 +415,37 @@ const Progress = () => {
                     p={2}
                     mb={1}
                     sx={{ 
-                      background: 'rgba(78, 205, 196, 0.1)',
+                      backgroundColor: '#FAF8F5',
                       borderRadius: 2,
-                      border: '1px solid rgba(78, 205, 196, 0.2)'
+                      border: '1px solid #E8E6E1',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: '#F5F5F5',
+                        transform: 'translateX(4px)'
+                      }
                     }}
                   >
                     <Box>
-                      <Typography variant="h6" sx={{ color: '#2C3E50' }}>
+                      <Typography variant="h6" sx={{ 
+                        color: '#3A3D42',
+                        fontFamily: '"Outfit", "Inter", sans-serif',
+                        fontWeight: 600
+                      }}>
                         {activity.word}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{
+                        color: '#5B7C99',
+                        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                      }}>
                         {activity.time}
                       </Typography>
                     </Box>
                     <Box textAlign="right">
-                      <Typography variant="h6" sx={{ color: '#4ECDC4' }}>
+                      <Typography variant="h6" sx={{ 
+                        color: '#8FA998',
+                        fontFamily: '"Outfit", "Inter", sans-serif',
+                        fontWeight: 600
+                      }}>
                         {activity.score}%
                       </Typography>
                       <Box display="flex" gap={0.5}>
@@ -278,7 +454,8 @@ const Progress = () => {
                             key={i}
                             size={16}
                             style={{ 
-                              color: i < activity.stars ? '#FFD700' : '#E0E0E0' 
+                              color: i < activity.stars ? '#C67B5C' : '#E8E6E1',
+                              fill: i < activity.stars ? '#C67B5C' : 'none'
                             }}
                           />
                         ))}
@@ -292,12 +469,18 @@ const Progress = () => {
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
+          <Card sx={{
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            backgroundColor: 'white',
+            border: '1px solid #E8E6E1'
+          }}>
+            <CardContent sx={{ p: 3 }}>
               <Typography variant="h5" gutterBottom sx={{ 
-                color: '#2C3E50',
+                color: '#3A3D42',
                 fontWeight: 'bold',
-                mb: 3
+                mb: 3,
+                fontFamily: '"Outfit", "Inter", sans-serif'
               }}>
                 Achievements
               </Typography>
@@ -310,36 +493,46 @@ const Progress = () => {
                     p={2}
                     mb={1}
                     sx={{ 
-                      background: achievement.earned 
-                        ? 'rgba(255, 215, 0, 0.1)' 
-                        : 'rgba(224, 224, 224, 0.1)',
+                      backgroundColor: achievement.earned ? '#FAF8F5' : '#F8F8F8',
                       borderRadius: 2,
-                      border: `1px solid ${achievement.earned 
-                        ? 'rgba(255, 215, 0, 0.3)' 
-                        : 'rgba(224, 224, 224, 0.3)'}`,
-                      opacity: achievement.earned ? 1 : 0.6
+                      border: `2px solid ${achievement.earned ? '#8FA998' : '#E8E6E1'}`,
+                      opacity: achievement.earned ? 1 : 0.7,
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        transform: 'translateX(4px)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }
                     }}
                   >
-                    <Typography variant="h4" sx={{ mr: 2 }}>
+                    <Typography variant="h4" sx={{ mr: 2, fontSize: '2.5rem' }}>
                       {achievement.icon}
                     </Typography>
                     <Box flexGrow={1}>
                       <Typography variant="h6" sx={{ 
-                        color: achievement.earned ? '#2C3E50' : '#9E9E9E'
+                        color: achievement.earned ? '#3A3D42' : '#5B7C99',
+                        fontFamily: '"Outfit", "Inter", sans-serif',
+                        fontWeight: 600
                       }}>
                         {achievement.name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{
+                        color: achievement.earned ? '#5B7C99' : '#8FA998',
+                        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                      }}>
                         {achievement.description}
                       </Typography>
                       {achievement.earned && achievement.date && (
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" sx={{
+                          color: '#C67B5C',
+                          fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                          fontWeight: 600
+                        }}>
                           Earned on {new Date(achievement.date).toLocaleDateString()}
                         </Typography>
                       )}
                     </Box>
                     {achievement.earned && (
-                      <Award size={20} color="#FFD700" />
+                      <Award size={20} color="#8FA998" />
                     )}
                   </Box>
                 ))}
@@ -349,35 +542,60 @@ const Progress = () => {
         </Grid>
       </Grid>
 
-      <Card>
-        <CardContent>
+      {/* Level Progress */}
+      <Card sx={{
+        borderRadius: 3,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+        backgroundColor: 'white',
+        border: '1px solid #E8E6E1'
+      }}>
+        <CardContent sx={{ p: 3 }}>
           <Typography variant="h5" gutterBottom sx={{ 
-            color: '#2C3E50',
+            color: '#3A3D42',
             fontWeight: 'bold',
             mb: 3,
-            textAlign: 'center'
+            textAlign: 'center',
+            fontFamily: '"Outfit", "Inter", sans-serif'
           }}>
             Level Progress
           </Typography>
           <Box mb={2}>
             <Box display="flex" justifyContent="space-between" mb={1}>
-              <Typography variant="h6">Level {gameProgress.currentLevel}</Typography>
-              <Typography variant="h6">{gameProgress.totalXP} XP</Typography>
+              <Typography variant="h6" sx={{
+                color: '#5B7C99',
+                fontFamily: '"Outfit", "Inter", sans-serif',
+                fontWeight: 600
+              }}>
+                Level {gameProgress.currentLevel}
+              </Typography>
+              <Typography variant="h6" sx={{
+                color: '#5B7C99',
+                fontFamily: '"Outfit", "Inter", sans-serif',
+                fontWeight: 600
+              }}>
+                {gameProgress.totalXP} XP
+              </Typography>
             </Box>
             <LinearProgress 
               variant="determinate" 
               value={(gameProgress.totalXP % 1000) / 10} 
               sx={{ 
-                height: 20, 
-                borderRadius: 10,
-                backgroundColor: 'rgba(78, 205, 196, 0.2)',
+                height: 16, 
+                borderRadius: 8,
+                backgroundColor: '#E8E6E1',
                 '& .MuiLinearProgress-bar': {
-                  background: 'linear-gradient(90deg, #4ECDC4, #44A08D)',
-                  borderRadius: 10
+                  backgroundColor: '#8FA998',
+                  borderRadius: 8
                 }
               }} 
             />
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ 
+              mt: 1, 
+              textAlign: 'center',
+              color: '#5B7C99',
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+              fontWeight: 600
+            }}>
               {1000 - (gameProgress.totalXP % 1000)} XP to Level {gameProgress.currentLevel + 1}
             </Typography>
           </Box>
