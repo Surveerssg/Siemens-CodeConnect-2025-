@@ -26,7 +26,9 @@ import {
   Calendar,
   User,
   Target,
-  Award
+  Award,
+  TrendingUp,
+  Star
 } from 'lucide-react';
 
 const AssignGoals = () => {
@@ -157,197 +159,515 @@ const AssignGoals = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ minHeight: '100vh', py: 4 }}>
-      <Box display="flex" alignItems="center" mb={4}>
-        <Button
-          startIcon={<ArrowLeft size={20} />}
-          onClick={() => navigate('/parent')}
-          sx={{ color: '#4ECDC4', mr: 2 }}
-        >
-          Back to Dashboard
-        </Button>
-        <Typography variant="h4" sx={{ color: '#2C3E50', fontWeight: 'bold' }}>
-          Assign Goals to Children 🎯
-        </Typography>
-      </Box>
-
-      {message.text && (
-        <Alert severity={message.type} sx={{ mb: 3 }}>
-          {message.text}
-        </Alert>
-      )}
-
-      {/* Create New Goal */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h5" sx={{ mb: 3, color: '#2C3E50' }}>
-            <Plus size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-            Create New Goal
+    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Header */}
+        <Box display="flex" alignItems="center" mb={4}>
+          <Button
+            startIcon={<ArrowLeft size={20} />}
+            onClick={() => navigate('/parent')}
+            sx={{ 
+              color: '#5B7C99', 
+              mr: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+              '&:hover': {
+                backgroundColor: '#E8E6E1'
+              }
+            }}
+          >
+            Back to Dashboard
+          </Button>
+          <Typography variant="h4" sx={{ 
+            color: '#3A3D42', 
+            fontWeight: 'bold',
+            fontFamily: '"Outfit", "Inter", sans-serif'
+          }}>
+            Assign Goals to Children 🎯
           </Typography>
-          
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel id="child-select-label">Select Child *</InputLabel>
-                <Select 
-                  labelId="child-select-label" 
-                  label="Select Child *" 
-                  value={newGoal.children_email} 
-                  onChange={(e) => handleInputChange('children_email', e.target.value)}
-                >
-                  {childOptions.map(opt => (
-                    <MenuItem key={opt.value} value={opt.value}>
-                      <Box display="flex" alignItems="center">
-                        <User size={16} style={{ marginRight: 8 }} />
-                        {opt.label}
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField 
-                fullWidth 
-                label="Goal Title *" 
-                value={newGoal.title} 
-                onChange={(e) => handleInputChange('title', e.target.value)} 
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField 
-                fullWidth 
-                label="Description" 
-                multiline
-                rows={2}
-                value={newGoal.description} 
-                onChange={(e) => handleInputChange('description', e.target.value)} 
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <TextField 
-                fullWidth 
-                type="number" 
-                label="Target Value *" 
-                value={newGoal.target} 
-                onChange={(e) => handleInputChange('target', e.target.value)}
-                InputProps={{ inputProps: { min: 1 } }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <TextField 
-                fullWidth 
-                type="number" 
-                label="XP Reward" 
-                value={newGoal.xp_reward} 
-                onChange={(e) => handleInputChange('xp_reward', e.target.value)}
-                InputProps={{ inputProps: { min: 0 } }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Button 
-                variant="contained" 
-                onClick={handleAssignGoal} 
-                disabled={!newGoal.children_email || !newGoal.title || !newGoal.target}
-                sx={{ height: '56px', width: '100%' }}
-              >
-                Assign Goal
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+        </Box>
 
-      {/* Assigned Goals List */}
-      <Card>
-        <CardContent>
-          <Typography variant="h5" sx={{ mb: 3, color: '#2C3E50' }}>
-            <Target size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-            Your Assigned Goals ({parentGoals.length})
-          </Typography>
+        {message.text && (
+          <Alert severity={message.type} sx={{ 
+            mb: 3,
+            borderRadius: 2,
+            fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+          }}>
+            {message.text}
+          </Alert>
+        )}
 
-          {parentGoals.length === 0 ? (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-              No goals assigned yet. Create your first goal above!
+        {/* Create New Goal */}
+        <Card sx={{ 
+          mb: 4,
+          borderRadius: 3,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+          backgroundColor: 'white',
+          border: '1px solid #E8E6E1'
+        }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h5" sx={{ 
+              mb: 3, 
+              color: '#3A3D42',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <Plus size={24} style={{ marginRight: 12 }} />
+              Create New Goal
             </Typography>
-          ) : (
-            <Box>
-              {parentGoals.map(goal => (
-                <Card key={goal.id} sx={{ mb: 2, border: '1px solid #e0e0e0' }}>
-                  <CardContent>
-                    <Grid container spacing={2} alignItems="center">
-                      <Grid item xs={12} md={8}>
-                        <Typography variant="h6" sx={{ color: '#2C3E50', mb: 1 }}>
-                          {goal.title}
-                        </Typography>
-                        
-                        {goal.description && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            {goal.description}
-                          </Typography>
-                        )}
-                        
-                        <Box display="flex" alignItems="center" flexWrap="wrap" gap={1} sx={{ mb: 1 }}>
-                          <Chip 
-                            icon={<User size={14} />}
-                            label={getChildName(goal.children_email)} 
-                            size="small" 
-                            variant="outlined"
-                          />
-                          <Chip 
-                            icon={<Target size={14} />}
-                            label={`Target: ${goal.target}`} 
-                            size="small" 
-                            variant="outlined"
-                          />
-                          <Chip 
-                            icon={<Award size={14} />}
-                            label={`${goal.xp_reward} XP`} 
-                            size="small" 
-                            variant="outlined"
-                            sx={{ color: '#FF6B6B', borderColor: '#FF6B6B' }}
-                          />
-                          <Chip 
-                            label={goal.status} 
-                            size="small" 
-                            color={goal.status === 'active' ? 'success' : 'default'}
-                          />
-                        </Box>
-                        
+            
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel sx={{
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                    color: '#5B7C99'
+                  }}>
+                    Select Child *
+                  </InputLabel>
+                  <Select 
+                    value={newGoal.children_email} 
+                    onChange={(e) => handleInputChange('children_email', e.target.value)}
+                    label="Select Child *"
+                    sx={{
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#E8E6E1',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#5B7C99',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#5B7C99',
+                      },
+                    }}
+                  >
+                    {childOptions.map(opt => (
+                      <MenuItem 
+                        key={opt.value} 
+                        value={opt.value}
+                        sx={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif' }}
+                      >
                         <Box display="flex" alignItems="center">
-                          <Calendar size={14} style={{ marginRight: 4, color: '#666' }} />
-                          <Typography variant="caption" color="text.secondary">
-                            Created: {formatDate(goal.createdAt)}
+                          <User size={16} style={{ marginRight: 8, color: '#5B7C99' }} />
+                          {opt.label}
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <TextField 
+                  fullWidth 
+                  label="Goal Title *" 
+                  value={newGoal.title} 
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& fieldset': {
+                        borderColor: '#E8E6E1',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#5B7C99',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#5B7C99',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      color: '#5B7C99',
+                    }
+                  }}
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField 
+                  fullWidth 
+                  label="Description" 
+                  multiline
+                  rows={2}
+                  value={newGoal.description} 
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& fieldset': {
+                        borderColor: '#E8E6E1',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#5B7C99',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#5B7C99',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      color: '#5B7C99',
+                    }
+                  }}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <TextField 
+                  fullWidth 
+                  type="number" 
+                  label="Target Value *" 
+                  value={newGoal.target} 
+                  onChange={(e) => handleInputChange('target', e.target.value)}
+                  InputProps={{ inputProps: { min: 1 } }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& fieldset': {
+                        borderColor: '#E8E6E1',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#5B7C99',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#5B7C99',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      color: '#5B7C99',
+                    }
+                  }}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <TextField 
+                  fullWidth 
+                  type="number" 
+                  label="XP Reward" 
+                  value={newGoal.xp_reward} 
+                  onChange={(e) => handleInputChange('xp_reward', e.target.value)}
+                  InputProps={{ inputProps: { min: 0 } }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& fieldset': {
+                        borderColor: '#E8E6E1',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#5B7C99',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#5B7C99',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      color: '#5B7C99',
+                    }
+                  }}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleAssignGoal} 
+                  disabled={!newGoal.children_email || !newGoal.title || !newGoal.target}
+                  sx={{ 
+                    height: '56px', 
+                    width: '100%',
+                    backgroundColor: '#8FA998',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                    borderRadius: 2,
+                    '&:hover': {
+                      backgroundColor: '#7D9786',
+                      boxShadow: '0 4px 12px rgba(143, 169, 152, 0.3)'
+                    },
+                    '&:disabled': {
+                      backgroundColor: '#E8E6E1',
+                      color: '#8FA998'
+                    }
+                  }}
+                >
+                  Assign Goal
+                </Button>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Assigned Goals List */}
+        <Card sx={{
+          borderRadius: 3,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+          backgroundColor: 'white',
+          border: '1px solid #E8E6E1'
+        }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h5" sx={{ 
+              mb: 3, 
+              color: '#3A3D42',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <Target size={24} style={{ marginRight: 12 }} />
+              Your Assigned Goals ({parentGoals.length})
+            </Typography>
+
+            {parentGoals.length === 0 ? (
+              <Box textAlign="center" py={4}>
+                <Typography variant="body2" sx={{ 
+                  color: '#5B7C99',
+                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                }}>
+                  No goals assigned yet. Create your first goal above!
+                </Typography>
+              </Box>
+            ) : (
+              <Box>
+                {parentGoals.map(goal => (
+                  <Card 
+                    key={goal.id} 
+                    sx={{ 
+                      mb: 2, 
+                      borderRadius: 2,
+                      border: '1px solid #E8E6E1',
+                      backgroundColor: '#FAF8F5',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateX(4px)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+                      }
+                    }}
+                  >
+                    <CardContent sx={{ p: 2 }}>
+                      <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} md={8}>
+                          <Typography variant="h6" sx={{ 
+                            color: '#3A3D42', 
+                            mb: 1,
+                            fontFamily: '"Outfit", "Inter", sans-serif',
+                            fontWeight: 600
+                          }}>
+                            {goal.title}
                           </Typography>
-                        </Box>
+                          
+                          {goal.description && (
+                            <Typography variant="body2" sx={{ 
+                              color: '#5B7C99',
+                              mb: 1,
+                              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                            }}>
+                              {goal.description}
+                            </Typography>
+                          )}
+                          
+                          <Box display="flex" alignItems="center" flexWrap="wrap" gap={1} sx={{ mb: 1 }}>
+                            <Chip 
+                              icon={<User size={14} color="#5B7C99" />}
+                              label={getChildName(goal.children_email)} 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ 
+                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                                fontWeight: 600,
+                                color: '#5B7C99',
+                                borderColor: '#5B7C99',
+                                borderRadius: 1
+                              }}
+                            />
+                            <Chip 
+                              icon={<Target size={14} color="#8FA998" />}
+                              label={`Target: ${goal.target}`} 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ 
+                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                                fontWeight: 600,
+                                color: '#8FA998',
+                                borderColor: '#8FA998',
+                                borderRadius: 1
+                              }}
+                            />
+                            <Chip 
+                              icon={<Award size={14} color="#C67B5C" />}
+                              label={`${goal.xp_reward} XP`} 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ 
+                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                                fontWeight: 600,
+                                color: '#C67B5C',
+                                borderColor: '#C67B5C',
+                                borderRadius: 1
+                              }}
+                            />
+                            <Chip 
+                              label={goal.status} 
+                              size="small" 
+                              sx={{ 
+                                backgroundColor: goal.status === 'active' ? '#8FA998' : '#E8E6E1',
+                                color: 'white',
+                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                                fontWeight: 600,
+                                borderRadius: 1
+                              }}
+                            />
+                          </Box>
+                          
+                          <Box display="flex" alignItems="center">
+                            <Calendar size={14} style={{ marginRight: 4, color: '#5B7C99' }} />
+                            <Typography variant="caption" sx={{
+                              color: '#5B7C99',
+                              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                              fontWeight: 600
+                            }}>
+                              Created: {formatDate(goal.createdAt)}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        
+                        <Grid item xs={12} md={4}>
+                          <Box display="flex" flexDirection="column" gap={1}>
+                            <Button 
+                              variant="outlined" 
+                              size="small"
+                              onClick={() => handleDeleteGoal(goal.id)}
+                              sx={{
+                                color: '#C67B5C',
+                                borderColor: '#C67B5C',
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                                borderRadius: 2,
+                                '&:hover': {
+                                  backgroundColor: '#FFE8E8',
+                                  borderColor: '#C67B5C'
+                                }
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </Box>
+                        </Grid>
                       </Grid>
-                      
-                      <Grid item xs={12} md={4}>
-                        <Box display="flex" flexDirection="column" gap={1}>
-                          <Button 
-                            variant="outlined" 
-                            color="error" 
-                            size="small"
-                            onClick={() => handleDeleteGoal(goal.id)}
-                          >
-                            Delete
-                          </Button>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
-          )}
-        </CardContent>
-      </Card>
-    </Container>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Statistics Card */}
+        {parentGoals.length > 0 && (
+          <Card sx={{ 
+            mt: 4,
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            backgroundColor: 'white',
+            border: '1px solid #E8E6E1'
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h5" gutterBottom sx={{ 
+                color: '#3A3D42', 
+                fontWeight: 'bold', 
+                mb: 3,
+                fontFamily: '"Outfit", "Inter", sans-serif'
+              }}>
+                Goals Overview
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Box textAlign="center" p={2}>
+                    <Typography variant="h4" sx={{ 
+                      color: '#5B7C99', 
+                      fontWeight: 'bold',
+                      fontFamily: '"Outfit", "Inter", sans-serif'
+                    }}>
+                      {parentGoals.length}
+                    </Typography>
+                    <Typography variant="body2" sx={{
+                      color: '#5B7C99',
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                    }}>
+                      Total Goals
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Box textAlign="center" p={2}>
+                    <Typography variant="h4" sx={{ 
+                      color: '#8FA998', 
+                      fontWeight: 'bold',
+                      fontFamily: '"Outfit", "Inter", sans-serif'
+                    }}>
+                      {parentGoals.filter(g => g.status === 'active').length}
+                    </Typography>
+                    <Typography variant="body2" sx={{
+                      color: '#8FA998',
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                    }}>
+                      Active Goals
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Box textAlign="center" p={2}>
+                    <Typography variant="h4" sx={{ 
+                      color: '#C67B5C', 
+                      fontWeight: 'bold',
+                      fontFamily: '"Outfit", "Inter", sans-serif'
+                    }}>
+                      {new Set(parentGoals.map(g => g.children_email)).size}
+                    </Typography>
+                    <Typography variant="body2" sx={{
+                      color: '#C67B5C',
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                    }}>
+                      Children with Goals
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Box textAlign="center" p={2}>
+                    <Typography variant="h4" sx={{ 
+                      color: '#5B7C99', 
+                      fontWeight: 'bold',
+                      fontFamily: '"Outfit", "Inter", sans-serif'
+                    }}>
+                      {parentGoals.reduce((sum, goal) => sum + parseInt(goal.xp_reward), 0)}
+                    </Typography>
+                    <Typography variant="body2" sx={{
+                      color: '#5B7C99',
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                    }}>
+                      Total XP Available
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        )}
+      </Container>
+    </Box>
   );
 };
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import { ROLES } from '../../constants';
 import {
@@ -36,10 +36,25 @@ const SignupTherapist = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [e.target.name]: e.target.value
-    });
+    }));
+  };
+
+  // small helper to wait
+  const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+  const waitForUserDoc = async (uid, maxAttempts = 12, intervalMs = 250) => {
+    const ref = doc(db, 'users', uid);
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+      const snap = await getDoc(ref);
+      if (snap.exists()) return snap;
+      attempts++;
+      await sleep(intervalMs);
+    }
+    return null; // timed out
   };
 
   const handleSubmit = async (e) => {
@@ -54,30 +69,60 @@ const SignupTherapist = () => {
     }
 
     try {
+      // create auth user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
 
+      // set display name in auth profile
       await updateProfile(userCredential.user, {
         displayName: formData.name
       });
 
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
+      // write profile to Firestore (client-side timestamp is okay here)
+      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      const payload = {
         name: formData.name,
         email: formData.email,
         role: ROLES.THERAPIST,
-        license: formData.license,
-        institution: formData.institution,
-        specialization: formData.specialization,
+        license: formData.license || '',
+        institution: formData.institution || '',
+        specialization: formData.specialization || '',
         createdAt: new Date(),
         assignedChildren: []
-      });
+      };
 
-      navigate('/therapist');
+      await setDoc(userDocRef, payload, { merge: true });
+
+      // Wait until the user doc is actually readable by other parts of the app.
+      // This avoids the race where a global auth listener redirects before the role is known.
+      const docSnap = await waitForUserDoc(userCredential.user.uid, 12, 250);
+      if (!docSnap) {
+        // not strictly fatal — still try to continue, but log/display a warning
+        console.warn('Timed out waiting for user doc to be readable.');
+      }
+
+      // reload auth user and refresh token so AuthContext (if it uses token claims or server calls) gets fresh data
+      try {
+        // auth.currentUser should be same as userCredential.user, but reload to be safe
+        if (auth.currentUser && typeof auth.currentUser.reload === 'function') {
+          await auth.currentUser.reload();
+        }
+        // force a fresh token
+        if (auth.currentUser && typeof auth.currentUser.getIdToken === 'function') {
+          await auth.currentUser.getIdToken(true);
+        }
+      } catch (reloadErr) {
+        console.warn('Error reloading auth user or refreshing token:', reloadErr);
+      }
+
+      // Finally navigate to therapist dashboard
+      navigate('/therapist', { replace: true });
     } catch (err) {
-      setError(err.message);
+      console.error('Signup error:', err);
+      setError(err.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }

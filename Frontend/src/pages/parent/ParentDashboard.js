@@ -76,13 +76,8 @@ const ParentDashboard = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ 
-      minHeight: '100vh', 
-      position: 'relative', 
-      zIndex: 2, 
-      py: 4,
-      backgroundColor: '#FAF8F5'
-    }}>
+    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
+  <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, py: 4 }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} flexWrap="wrap" gap={2}>
         <Box>
@@ -268,66 +263,87 @@ const ParentDashboard = () => {
             </Card>
           </Grid>
         )}
-        {children.map((child) => (
-          <Grid item xs={12} md={6} key={child.id}>
-            <Card sx={{
-              borderRadius: 3,
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-              backgroundColor: 'white',
-              border: '1px solid #E8E6E1',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-              }
+
+{children.map((child) => (
+  <Grid item xs={12} md={6} key={child.id}>
+    <Card sx={{
+      borderRadius: 3,
+      boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+      backgroundColor: 'white',
+      border: '1px solid #E8E6E1',
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+      }
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box display="flex" alignItems="flex-start" gap={3}>
+          {/* Avatar Section */}
+          <Avatar 
+            sx={{ 
+              width: 60, 
+              height: 60, 
+              backgroundColor: '#5B7C99',
+              fontSize: '1.5rem',
+              fontWeight: 'bold'
+            }}
+          >
+            {child.name ? child.name.charAt(0).toUpperCase() : child.email.charAt(0).toUpperCase()}
+          </Avatar>
+          
+          {/* Text Content Section */}
+          <Box flexGrow={1} minWidth={0}>
+            <Typography variant="h6" sx={{ 
+              fontWeight: 'bold',
+              color: '#3A3D42',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              mb: 1,
+              wordBreak: 'break-word'
             }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  <Box>
-                    <Typography variant="h6" sx={{ 
-                      fontWeight: 'bold',
-                      color: '#3A3D42',
-                      fontFamily: '"Outfit", "Inter", sans-serif',
-                      mb: 0.5
-                    }}>
-                      {child.name || child.email}
-                    </Typography>
-                    {child.email && (
-                      <Typography variant="body2" sx={{
-                        color: '#5B7C99',
-                        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                      }}>
-                        {child.email}
-                      </Typography>
-                    )}
-                  </Box>
-                  <Button 
-                    onClick={() => navigate(`/parent/child/${child.id}`)}
-                    variant="outlined"
-                    sx={{
-                      color: '#5B7C99',
-                      borderColor: '#E8E6E1',
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      borderRadius: 2,
-                      px: 3,
-                      '&:hover': {
-                        backgroundColor: '#F5F5F5',
-                        borderColor: '#5B7C99',
-                        boxShadow: '0 2px 8px rgba(91, 124, 153, 0.15)'
-                      }
-                    }}
-                  >
-                    View Summary
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+              {child.name || child.email}
+            </Typography>
+            {child.email && (
+              <Typography variant="body2" sx={{
+                color: '#5B7C99',
+                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                mb: 2,
+                wordBreak: 'break-word'
+              }}>
+                {child.email}
+              </Typography>
+            )}
+            
+            {/* View Summary Button */}
+            <Button 
+              onClick={() => navigate(`/parent/child/${child.id}`)}
+              variant="contained"
+              sx={{
+                backgroundColor: '#8FA998',
+                textTransform: 'none',
+                fontWeight: 600,
+                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                minWidth: '140px',
+                '&:hover': {
+                  backgroundColor: '#7D9786',
+                  boxShadow: '0 4px 12px rgba(143, 169, 152, 0.3)'
+                }
+              }}
+            >
+              View Summary
+            </Button>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  </Grid>
+))}
       </Grid>
     </Container>
+    </Box>
   );
 };
 
