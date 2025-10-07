@@ -108,10 +108,42 @@ router.get('/', async (req, res) => {
       };
     });
 
-    // Sort by createdAt desc
-    items.sort((a, b) => tsToMillis(b.createdAt) - tsToMillis(a.createdAt));
+    // For each parent goal, try to attach the assigned_goals doc (if any)
+    const itemsWithAssigned = await Promise.all(items.map(async (it) => {
+      try {
+        const assignedSnap = await admin.firestore()
+          .collection('assigned_goals')
+          .where('parentGoalId', '==', it.id)
+          .limit(1)
+          .get();
 
-    return res.json({ success: true, data: items });
+        if (!assignedSnap.empty) {
+          const aDoc = assignedSnap.docs[0];
+          const aData = aDoc.data();
+          it.assignedGoal = {
+            id: aDoc.id,
+            ...aData,
+            createdAt: aData.createdAt?.toDate?.() || aData.createdAt,
+            updatedAt: aData.updatedAt?.toDate?.() || aData.updatedAt
+          };
+          // normalize simple fields for convenience
+          it.assignedStatus = it.assignedGoal.status;
+          it.assignedProgress = it.assignedGoal.progress;
+        } else {
+          it.assignedGoal = null;
+          it.assignedStatus = null;
+          it.assignedProgress = null;
+        }
+      } catch (e) {
+        console.error('Failed to lookup assigned goal for parentGoal', it.id, e);
+      }
+      return it;
+    }));
+
+    // Sort by createdAt desc
+    itemsWithAssigned.sort((a, b) => tsToMillis(b.createdAt) - tsToMillis(a.createdAt));
+
+    return res.json({ success: true, data: itemsWithAssigned });
   } catch (error) {
     console.error('Error fetching parent goals:', error.stack || error);
     res.status(500).json({ 

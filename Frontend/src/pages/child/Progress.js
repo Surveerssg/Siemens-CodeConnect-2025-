@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
-import { progressAPI } from '../../services/api';
+import { progressAPI, gamesAPI } from '../../services/api';
+import { getAchievementIcon } from '../../utils/achievementIcons';
 import { 
   Container, 
   Typography, 
@@ -32,27 +33,50 @@ import {
   Bar 
 } from 'recharts';
 
+const formatRelativeTime = (date) => {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInSeconds < 60) return 'just now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+  return date.toLocaleDateString();
+};
+
 const Progress = () => {
   const { gameProgress } = useGame();
   const navigate = useNavigate();
-  const [progressData, setProgressData] = useState(null);
   const [progressHistory, setProgressHistory] = useState([]);
+  const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadProgressData();
+    loadData();
   }, []);
 
-  const loadProgressData = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const [currentProgress, history] = await Promise.all([
-        progressAPI.getProgress(),
-        progressAPI.getHistory(7, 0)
+      const [progressResponse, achievementsResponse] = await Promise.all([
+        progressAPI.getHistory(),
+        gamesAPI.getAchievements()
       ]);
 
-      setProgressData(currentProgress.data);
-      setProgressHistory(history.data);
+      const progressHistoryData = progressResponse.data || [];
+      setProgressHistory(progressHistoryData);
+      
+      const achievementsData = (achievementsResponse.data || []).map(achievement => ({
+        name: achievement.achievementType,
+        description: achievement.description,
+        icon: getAchievementIcon(achievement.achievementType),
+        earned: true,
+        date: achievement.timestamp
+      }));
+      setAchievements(achievementsData);
     } catch (error) {
       console.error('Error loading progress data:', error);
     } finally {
@@ -60,11 +84,11 @@ const Progress = () => {
     }
   };
 
-  const weeklyStats = progressData ? {
-    totalWords: progressData.Words_This_Week || 0,
-    averageScore: Math.round(progressData.Average_Score || 0),
-    bestScore: Math.round(progressData.Best_Score || 0),
-    practiceDays: progressData.Practice_Days || 0
+  const weeklyStats = progressHistory.length > 0 ? {
+    totalWords: progressHistory[0].totalWords || 0,
+    averageScore: Math.round(progressHistory[0].averageScore || 0),
+    bestScore: Math.round(progressHistory[0].bestScore || 0),
+    practiceDays: progressHistory[0].practiceDays || 0
   } : {
     totalWords: 0,
     averageScore: 0,
@@ -73,28 +97,11 @@ const Progress = () => {
   };
 
   // Convert history data to chart format
-  const mockProgressData = progressHistory.slice(0, 7).map((session, index) => ({
-    day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][index] || `Day ${index + 1}`,
+    const processedProgressData = progressHistory.slice(0, 7).map(session => ({
+    day: new Date(session.timestamp).toLocaleDateString('en-US', { weekday: 'short' }),
     score: session.score || 0,
     words: session.wordsPracticed || 0
-  }));
-
-  const achievements = [
-    { name: 'First Word Master', description: 'Completed your first word!', icon: '🌟', earned: true, date: '2024-01-15' },
-    { name: '3 Day Streak', description: 'Practiced for 3 days in a row!', icon: '🔥', earned: true, date: '2024-01-18' },
-    { name: 'Perfect Score', description: 'Got a perfect 100% score!', icon: '⭐', earned: true, date: '2024-01-20' },
-    { name: 'Week Warrior', description: 'Practiced every day this week!', icon: '🏆', earned: false, date: null },
-    { name: 'Speed Demon', description: 'Completed 10 words in one session!', icon: '⚡', earned: false, date: null },
-    { name: 'Consistency King', description: '30 day practice streak!', icon: '👑', earned: false, date: null }
-  ];
-
-  const recentActivities = [
-    { word: 'Apple', score: 95, time: '2 hours ago', stars: 5 },
-    { word: 'Ball', score: 78, time: '1 day ago', stars: 4 },
-    { word: 'Cat', score: 88, time: '1 day ago', stars: 4 },
-    { word: 'Dog', score: 92, time: '2 days ago', stars: 5 },
-    { word: 'Elephant', score: 65, time: '3 days ago', stars: 3 }
-  ];
+  })).reverse();
 
   return (
     <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
@@ -304,7 +311,7 @@ const Progress = () => {
                   Weekly Progress
                 </Typography>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={mockProgressData}>
+                  <LineChart data={processedProgressData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E8E6E1" />
                     <XAxis 
                       dataKey="day" 
@@ -353,7 +360,7 @@ const Progress = () => {
                   Words Per Day
                 </Typography>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={mockProgressData}>
+                  <BarChart data={processedProgressData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E8E6E1" />
                     <XAxis 
                       dataKey="day" 
@@ -402,7 +409,7 @@ const Progress = () => {
                   Recent Activities
                 </Typography>
                 <Box>
-                  {recentActivities.map((activity, index) => (
+                  {progressHistory.slice(0, 5).map((activity, index) => (
                     <Box 
                       key={index}
                       display="flex" 
@@ -427,13 +434,13 @@ const Progress = () => {
                           fontFamily: '"Outfit", "Inter", sans-serif',
                           fontWeight: 600
                         }}>
-                          {activity.word}
+                          {activity.wordPracticed || 'Word'}
                         </Typography>
                         <Typography variant="body2" sx={{
                           color: '#5B7C99',
                           fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
                         }}>
-                          {activity.time}
+                          {formatRelativeTime(new Date(activity.timestamp))}
                         </Typography>
                       </Box>
                       <Box textAlign="right">
@@ -442,19 +449,22 @@ const Progress = () => {
                           fontFamily: '"Outfit", "Inter", sans-serif',
                           fontWeight: 600
                         }}>
-                          {activity.score}%
+                          {activity.score || 0}%
                         </Typography>
                         <Box display="flex" gap={0.5}>
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              size={16}
-                              style={{ 
-                                color: i < activity.stars ? '#C67B5C' : '#E8E6E1',
-                                fill: i < activity.stars ? '#C67B5C' : 'none'
-                              }}
-                            />
-                          ))}
+                          {[...Array(5)].map((_, i) => {
+                            const stars = Math.round((activity.score || 0) / 20); // Convert percentage to 5-star scale
+                            return (
+                              <Star
+                                key={i}
+                                size={16}
+                                style={{ 
+                                  color: i < stars ? '#C67B5C' : '#E8E6E1',
+                                  fill: i < stars ? '#C67B5C' : 'none'
+                                }}
+                              />
+                            );
+                          })}
                         </Box>
                       </Box>
                     </Box>

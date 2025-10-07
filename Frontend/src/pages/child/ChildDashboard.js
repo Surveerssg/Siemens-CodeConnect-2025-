@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useGame } from '../../context/GameContext';
+import { gamesAPI } from '../../services/api';
 import { 
   Container, 
   Typography, 
@@ -25,6 +26,21 @@ import {
   Flame,
   Trophy
 } from 'lucide-react';
+
+const getAchievementIcon = (type) => {
+  const icons = {
+    'FIRST_WORD': '🌟',
+    'STREAK_3': '🔥',
+    'PERFECT_SCORE': '⭐',
+    'GAME_CHAMPION': '🏆',
+    'PRACTICE_MASTER': '📚',
+    'WORD_COLLECTOR': '🎯',
+    'SUPER_LEARNER': '🎓',
+    'DAILY_HERO': '💪',
+    default: '🎉'
+  };
+  return icons[type] || icons.default;
+};
 
 const ChildDashboard = () => {
   const { user, userRole, logout } = useAuth();
@@ -74,12 +90,71 @@ const ChildDashboard = () => {
     }
   ];
 
-  const recentAchievements = [
-    { name: 'First Word Master', icon: '🌟', earned: true },
-    { name: '3 Day Streak', icon: '🔥', earned: true },
-    { name: 'Perfect Score', icon: '⭐', earned: false },
-    { name: 'Game Champion', icon: '🏆', earned: false }
+  const [achievements, setAchievements] = useState([]);
+  // Achievement templates (show locked ones as goals)
+  const achievementTemplates = [
+    { key: 'FIRST_GAME', name: 'First Game', description: 'Play your first game', icon: '🎮', condition: (ctx) => (ctx.gamesPlayed || 0) >= 1 },
+    { key: 'SPEED_DEMON', name: 'Speed Demon', description: 'Complete 10 words in one session', icon: '⚡', condition: (ctx) => (ctx.history || []).some(h => (h.wordsPracticed || 0) >= 10) },
+    { key: 'WEEK_WARRIOR', name: 'Week Warrior', description: 'Practiced every day this week', icon: '🏆', condition: (ctx) => (ctx.streakDays || 0) >= 7 },
+    { key: 'CONSISTENCY_KING', name: 'Consistency King', description: '30 day practice streak', icon: '👑', condition: (ctx) => (ctx.streakDays || 0) >= 30 },
+    { key: 'GAME_CHAMPION', name: 'Game Champion', description: 'Complete all games', icon: '🏆', condition: (ctx) => (ctx.completedGamesCount || 0) >= 3 }
   ];
+
+  useEffect(() => {
+    const loadAchievements = async () => {
+      try {
+        // Fetch achievements and supporting data to evaluate locked goals
+        const [achResp, historyResp, userGameResp] = await Promise.all([
+          gamesAPI.getAchievements(),
+          gamesAPI.getHistory(50, 0),
+          gamesAPI.getGameData()
+        ]);
+
+        const existing = (achResp?.data || []);
+        const history = (historyResp?.data || []);
+        const userGame = userGameResp?.data || {};
+
+        const existingMap = existing.reduce((acc, a) => {
+          const key = a.achievementType || a.name;
+          acc[key] = a;
+          return acc;
+        }, {});
+
+        // helper context
+        const completedGamesCount = history.reduce((count, h) => {
+          if (h.score && h.score > 0) return count + 1;
+          return count;
+        }, 0);
+
+        const ctx = {
+          gamesPlayed: userGame.Games_Played || history.length || 0,
+          history,
+          streakDays: userGame.Longest_Streak || 0,
+          completedGamesCount
+        };
+
+        const merged = achievementTemplates.map(t => {
+          const exists = existingMap[t.key];
+          const earned = !!exists || Boolean(t.condition(ctx));
+          return {
+            key: t.key,
+            name: t.name,
+            description: t.description,
+            icon: getAchievementIcon(t.key) || t.icon,
+            earned,
+            date: exists?.timestamp || null
+          };
+        }).slice(0,4);
+
+        setAchievements(merged);
+      } catch (error) {
+        console.error('Error loading achievements:', error);
+        setAchievements([]);
+      }
+    };
+
+    loadAchievements();
+  }, []);
 
   return (
     <Box sx={{ 
@@ -433,7 +508,7 @@ const ChildDashboard = () => {
           Your Achievements
         </Typography>
         <Grid container spacing={3}>
-          {recentAchievements.map((achievement, index) => (
+          {achievements.map((achievement, index) => (
             <Grid item xs={6} sm={3} key={index}>
               <Card sx={{ 
                 borderRadius: 3, 

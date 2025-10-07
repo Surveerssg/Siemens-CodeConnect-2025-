@@ -55,7 +55,7 @@ export const GameProvider = ({ children }) => {
         currentLevel,
         totalXP: totalXP,
         currentStreak: goalsData.data?.Current_Streak || 0,
-        bestStreak: progressData.data?.Best_Streak || 0,
+        bestStreak: Math.max(progressData.data?.Best_Streak || 0, goalsData.data?.Current_Streak || 0),
         badges: [], // Will be loaded from achievements
         currentGame: null,
         score: 0
@@ -210,10 +210,15 @@ export const GameProvider = ({ children }) => {
   const recordPracticeSession = async (score, wordsPracticed = 1, gameType = 'general') => {
     try {
       console.log(`Recording practice session: score=${score}, words=${wordsPracticed}, type=${gameType}`);
+      
+      // Update best streak if current streak is higher
+      const bestStreak = Math.max(gameProgress.bestStreak, gameProgress.currentStreak);
+      
       await progressAPI.recordSession({
         score,
         wordsPracticed,
-        gameType
+        gameType,
+        currentStreak: gameProgress.currentStreak
       });
       console.log('Practice session recorded successfully');
     } catch (error) {

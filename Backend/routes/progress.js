@@ -20,6 +20,7 @@ router.get('/', authenticateToken, async (req, res) => {
         userId: req.userId,
         Average_Score: 0,
         Best_Score: 0,
+        Best_Streak: 0,
         Practice_Days: 0,
         Words_This_Week: 0,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -56,11 +57,12 @@ router.get('/', authenticateToken, async (req, res) => {
 // Update user progress
 router.put('/', authenticateToken, validateProgress, async (req, res) => {
   try {
-    const { averageScore, bestScore, practiceDays, wordsThisWeek } = req.body;
+    const { averageScore, bestScore, bestStreak, practiceDays, wordsThisWeek } = req.body;
     
     const updateData = {
       Average_Score: averageScore,
       Best_Score: bestScore,
+      Best_Streak: bestStreak,
       Practice_Days: practiceDays,
       Words_This_Week: wordsThisWeek,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -116,10 +118,14 @@ router.put('/', authenticateToken, validateProgress, async (req, res) => {
 // Add practice session
 router.post('/session', authenticateToken, async (req, res) => {
   try {
-    const { score, wordsPracticed, gameType } = req.body;
+    const { score, wordsPracticed, gameType, currentStreak } = req.body;
     
     if (typeof score !== 'number' || score < 0 || score > 100) {
       return res.status(400).json({ error: 'Score must be between 0 and 100' });
+    }
+
+    if (typeof currentStreak === 'number' && currentStreak < 0) {
+      return res.status(400).json({ error: 'Current streak must be a non-negative number' });
     }
 
     // Get current progress
@@ -136,6 +142,7 @@ router.post('/session', authenticateToken, async (req, res) => {
         userId: req.userId,
         Average_Score: score,
         Best_Score: score,
+        Best_Streak: currentStreak || 0,
         Practice_Days: 1,
         Words_This_Week: wordsPracticed || 1,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),

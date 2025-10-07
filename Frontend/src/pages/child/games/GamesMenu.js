@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
 import { 
@@ -22,12 +22,18 @@ import {
   Trophy,
   Zap
 } from 'lucide-react';
+import { gamesAPI } from '../../../services/api';
 
 const GamesMenu = () => {
   const { gameProgress } = useGame();
   const navigate = useNavigate();
+  const [games, setGames] = useState([]);
+  const [achievements, setAchievements] = useState([]);
+  const [gamesPlayed, setGamesPlayed] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const games = [
+  // Static game templates (definitions live on the frontend)
+  const gameTemplates = [
     {
       id: 'word-match',
       title: 'Word Match',
@@ -36,9 +42,7 @@ const GamesMenu = () => {
       color: '#FF6B6B',
       difficulty: 'Easy',
       xp: 25,
-      unlocked: true,
-      completed: false,
-      bestScore: 0
+      unlockXP: 0
     },
     {
       id: 'balloon-pop',
@@ -48,9 +52,7 @@ const GamesMenu = () => {
       color: '#4ECDC4',
       difficulty: 'Medium',
       xp: 50,
-      unlocked: gameProgress.totalXP >= 100,
-      completed: false,
-      bestScore: 0
+      unlockXP: 100
     },
     {
       id: 'treasure-hunt',
@@ -60,19 +62,92 @@ const GamesMenu = () => {
       color: '#9B59B6',
       difficulty: 'Hard',
       xp: 100,
-      unlocked: gameProgress.totalXP >= 250,
-      completed: false,
-      bestScore: 0
+      unlockXP: 250
     }
   ];
 
-  const achievements = [
-    { name: 'First Game', description: 'Play your first game', icon: '🎮', earned: true },
-    { name: 'Word Master', description: 'Complete 10 words in Word Match', icon: '🎯', earned: false },
-    { name: 'Balloon Popper', description: 'Pop 20 balloons', icon: '🎈', earned: false },
-    { name: 'Treasure Hunter', description: 'Find 5 treasures', icon: '🏴‍☠️', earned: false },
-    { name: 'Game Champion', description: 'Complete all games', icon: '🏆', earned: false }
+  // Achievement templates (show locked ones as goals)
+  const achievementTemplates = [
+    { key: 'FIRST_GAME', name: 'First Game', description: 'Play your first game', icon: '🎮', condition: (ctx) => (ctx.gamesPlayed || 0) >= 1 },
+    { key: 'SPEED_DEMON', name: 'Speed Demon', description: 'Complete 10 words in one session', icon: '⚡', condition: (ctx) => (ctx.history || []).some(h => (h.wordsPracticed || 0) >= 10) },
+    { key: 'WEEK_WARRIOR', name: 'Week Warrior', description: 'Practiced every day this week', icon: '🏆', condition: (ctx) => (ctx.streakDays || 0) >= 7 },
+    { key: 'CONSISTENCY_KING', name: 'Consistency King', description: '30 day practice streak', icon: '👑', condition: (ctx) => (ctx.streakDays || 0) >= 30 },
+    { key: 'GAME_CHAMPION', name: 'Game Champion', description: 'Complete all games', icon: '🏆', condition: (ctx) => (ctx.completedGamesCount || 0) >= gameTemplates.length }
   ];
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        // Fetch user-specific game data, achievements, and history
+        const [userGameResp, achievementsResp, historyResp] = await Promise.all([
+          gamesAPI.getGameData(),
+          gamesAPI.getAchievements(),
+          gamesAPI.getHistory(50, 0),
+        ]);
+
+        const userGame = userGameResp?.data || {};
+        const history = historyResp?.data || [];
+
+        // Compute best scores per game type from history
+        const bestScores = {};
+        history.forEach(h => {
+          const type = h.gameType || h.game || 'unknown';
+          const score = typeof h.score === 'number' ? h.score : parseFloat(h.score) || 0;
+          bestScores[type] = Math.max(bestScores[type] || 0, score);
+        });
+
+        // Merge static templates with user-specific info
+        const gamesData = gameTemplates.map(t => ({
+          ...t,
+          unlocked: gameProgress.totalXP >= (t.unlockXP || 0),
+          completed: false,
+          bestScore: bestScores[t.id] || 0
+        }));
+
+        setGames(gamesData);
+
+        // Map existing achievements by type/key
+        const existingAchievements = (achievementsResp?.data || []).reduce((acc, a) => {
+          const key = a.achievementType || a.name;
+          acc[key] = a;
+          return acc;
+        }, {});
+
+        // Compute some helper values for conditions
+        const completedGamesCount = gamesData.filter(g => g.bestScore > 0).length;
+        const ctx = {
+          gamesPlayed: userGame.Games_Played || history.length || 0,
+          history,
+          streakDays: userGame.Longest_Streak || 0,
+          completedGamesCount
+        };
+
+        const mergedAchievements = achievementTemplates.map(t => {
+          const exists = existingAchievements[t.key];
+          const earned = !!exists || Boolean(t.condition(ctx));
+          return {
+            key: t.key,
+            name: t.name,
+            description: t.description,
+            icon: t.icon,
+            earned,
+            date: exists?.timestamp || null
+          };
+        });
+
+        setAchievements(mergedAchievements);
+
+        setGamesPlayed(userGame.Games_Played || history.length || 0);
+      } catch (err) {
+        console.error('Error loading games menu data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [gameProgress.totalXP]);
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
@@ -108,7 +183,7 @@ const GamesMenu = () => {
 
       {/* Stats cards */}
       <Grid container spacing={4} mb={4}>
-        {/* Total XP */}
+  {/* Total XP */}
         <Grid item xs={12} md={4}>
           <Card className="game-card" sx={{ 
             background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4)',
@@ -137,7 +212,7 @@ const GamesMenu = () => {
               Games Played
             </Typography>
             <Typography variant="h2" sx={{ color: '#4ECDC4', fontWeight: 'bold' }}>
-              0
+              {loading ? '—' : gamesPlayed}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Start playing to increase!
@@ -153,10 +228,10 @@ const GamesMenu = () => {
               Achievements
             </Typography>
             <Typography variant="h2" sx={{ color: '#9B59B6', fontWeight: 'bold' }}>
-              {achievements.filter(a => a.earned).length}
+              {loading ? '—' : (achievements.filter(a => a.earned).length)}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              out of {achievements.length} total
+              out of {loading ? '—' : achievements.length} total
             </Typography>
           </Card>
         </Grid>
@@ -172,7 +247,7 @@ const GamesMenu = () => {
       </Typography>
 
       <Grid container spacing={3} mb={4}>
-        {games.map((game) => (
+        {(loading ? [1,2,3] : games).map((game, idx) => (
           <Grid item xs={12} md={4} key={game.id}>
             <Card 
               className="game-card"
@@ -193,7 +268,7 @@ const GamesMenu = () => {
             >
               <CardContent sx={{ textAlign: 'center', p: 3 }}>
                 <Typography variant="h1" sx={{ mb: 2, fontSize: '4rem' }}>
-                  {game.icon}
+                  {loading ? '🎮' : game.icon}
                 </Typography>
                 <Typography variant="h5" gutterBottom sx={{ 
                   color: game.unlocked ? game.color : '#9E9E9E',
@@ -216,7 +291,7 @@ const GamesMenu = () => {
                     }}
                   />
                   <Chip
-                    label={`${game.xp} XP`}
+                    label={`${loading ? '—' : game.xp} XP`}
                     size="small"
                     sx={{ 
                       background: '#4ECDC4',
@@ -235,7 +310,7 @@ const GamesMenu = () => {
                   </Box>
                 )}
 
-                {game.bestScore > 0 && (
+                {!loading && game.bestScore > 0 && (
                   <Typography variant="body2" color="text.secondary">
                     Best Score: {game.bestScore}
                   </Typography>
@@ -244,14 +319,14 @@ const GamesMenu = () => {
               
               <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
                 <Button
-                  startIcon={game.unlocked ? <Play size={16} /> : <Lock size={16} />}
-                  disabled={!game.unlocked}
+                  startIcon={(!loading && game.unlocked) ? <Play size={16} /> : <Lock size={16} />}
+                  disabled={loading ? true : !game.unlocked}
                   sx={{ 
-                    color: game.unlocked ? game.color : '#9E9E9E',
+                    color: (!loading && game.unlocked) ? game.color : '#9E9E9E',
                     fontWeight: 'bold'
                   }}
                 >
-                  {game.unlocked ? 'Play Game' : 'Locked'}
+                  {loading ? 'Loading' : (game.unlocked ? 'Play Game' : 'Locked')}
                 </Button>
               </CardActions>
             </Card>
@@ -269,13 +344,13 @@ const GamesMenu = () => {
       </Typography>
 
       <Grid container spacing={2}>
-        {achievements.map((achievement, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+        {(loading ? [1,2,3] : achievements).map((achievement, index) => (
+          <Grid item xs={12} sm={6} md={4} key={achievement?.name || index}>
             <Card 
               className="game-card"
               sx={{ 
-                opacity: achievement.earned ? 1 : 0.6,
-                background: achievement.earned 
+                opacity: achievement?.earned ? 1 : 0.6,
+                background: achievement?.earned 
                   ? 'linear-gradient(135deg, #FFD700, #FFA500)' 
                   : 'linear-gradient(135deg, #E0E0E0, #BDBDBD)',
                 color: 'white'
@@ -283,20 +358,20 @@ const GamesMenu = () => {
             >
               <CardContent sx={{ textAlign: 'center', p: 2 }}>
                 <Typography variant="h3" sx={{ mb: 1 }}>
-                  {achievement.icon}
+                  {loading ? '🏆' : achievement.icon}
                 </Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  {achievement.name}
+                  {loading ? 'Loading...' : achievement.name}
                 </Typography>
                 <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
-                  {achievement.description}
+                  {loading ? '' : achievement.description}
                 </Typography>
                 <Typography variant="caption" sx={{ 
                   display: 'block', 
                   mt: 1,
                   fontWeight: 'bold'
                 }}>
-                  {achievement.earned ? '✅ Earned!' : '🔒 Locked'}
+                  {loading ? '' : (achievement.earned ? `✅ Earned${achievement.date ? ' on ' + new Date(achievement.date).toLocaleDateString() : '!'}` : '🔒 Locked — Goal: ' + achievement.description)}
                 </Typography>
               </CardContent>
             </Card>

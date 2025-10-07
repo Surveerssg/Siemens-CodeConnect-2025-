@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { therapistAPI, parentAPI } from '../../services/api'; // import parentAPI for fetching notes
+import { therapistAPI, parentAPI } from '../../services/api';
 import { 
   Container, Typography, Box, Grid, Card, Button,
   FormControl, InputLabel, Select, MenuItem, TextField,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress
 } from '@mui/material';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Send, User, Calendar, FileText } from 'lucide-react';
 
 const Notes = () => {
   const navigate = useNavigate();
@@ -18,6 +18,7 @@ const Notes = () => {
   const [loading, setLoading] = useState(false);
   const [notesList, setNotesList] = useState([]);
   const [notesLoading, setNotesLoading] = useState(false);
+  const [expandedNotes, setExpandedNotes] = useState({});
 
   const therapistEmail = "therapist@example.com";
 
@@ -107,109 +108,481 @@ const Notes = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box display="flex" alignItems="center" mb={4}>
-        <Button startIcon={<ArrowLeft />} onClick={() => navigate('/therapist')} sx={{ mr: 2 }}>
-          Back to Dashboard
-        </Button>
-        <Typography variant="h4" fontWeight="bold">Therapist Notes 📝</Typography>
-      </Box>
+    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Header */}
+        <Box display="flex" alignItems="center" mb={4}>
+          <Button 
+            startIcon={<ArrowLeft size={20} />} 
+            onClick={() => navigate('/therapist')}
+            sx={{ 
+              color: '#5B7C99',
+              mr: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+              '&:hover': {
+                backgroundColor: '#E8E6E1'
+              }
+            }}
+          >
+            Back to Dashboard
+          </Button>
+          <Typography variant="h4" sx={{ 
+            color: '#3A3D42', 
+            fontWeight: 'bold',
+            fontFamily: '"Outfit", "Inter", sans-serif'
+          }}>
+            Therapist Notes 📝
+          </Typography>
+        </Box>
 
-      {/* Note Form */}
-      <Card sx={{ mb: 4, p: 3 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Select Child</InputLabel>
-              <Select
-                value={selectedChild}
-                onChange={(e) => setSelectedChild(e.target.value)}
+        {/* Note Form */}
+        <Card sx={{ 
+          mb: 4, 
+          p: 3,
+          borderRadius: 3,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+          backgroundColor: 'white',
+          border: '1px solid #E8E6E1'
+        }}>
+          <Typography variant="h5" gutterBottom sx={{ 
+            color: '#3A3D42',
+            fontWeight: 'bold',
+            mb: 3,
+            fontFamily: '"Outfit", "Inter", sans-serif',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <Send size={24} style={{ marginRight: 12 }} />
+            Send New Note
+          </Typography>
+          
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+  <FormControl fullWidth>
+    <InputLabel 
+      shrink={Boolean(selectedChild)}
+      sx={{
+        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+        color: '#5B7C99',
+        backgroundColor: 'white',
+        paddingLeft: '4px',
+        paddingRight: '4px'
+      }}
+    >
+      Select Child
+    </InputLabel>
+    <Select
+      value={selectedChild}
+      onChange={(e) => setSelectedChild(e.target.value)}
+      displayEmpty
+      renderValue={(selected) => {
+        if (!selected) {
+          return (
+            <span style={{
+              color: '#5B7C99',
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+            }}>
+              Select Child
+            </span>
+          );
+        }
+        const selectedChildData = children.find(child => child.value === selected);
+        return selectedChildData ? selectedChildData.label : selected;
+      }}
+      sx={{
+        borderRadius: 2,
+        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#E8E6E1',
+        },
+        '&:hover .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#5B7C99',
+        },
+        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#5B7C99',
+        },
+      }}
+    >
+      {children.map(child => (
+        <MenuItem 
+          key={child.value} 
+          value={child.value}
+          sx={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif' }}
+        >
+          {child.label}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+</Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField 
+                label="Parent Email" 
+                fullWidth 
+                value={parentEmail} 
+                disabled
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                    '& fieldset': {
+                      borderColor: '#E8E6E1',
+                    },
+                    '&.Mui-disabled': {
+                      backgroundColor: '#FAF8F5',
+                    }
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                    color: '#5B7C99',
+                  }
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Note Title"
+                fullWidth
+                value={note.title}
+                onChange={(e) => setNote(prev => ({ ...prev, title: e.target.value }))}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                    '& fieldset': {
+                      borderColor: '#E8E6E1',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#5B7C99',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#5B7C99',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                    color: '#5B7C99',
+                  }
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Note Content"
+                fullWidth
+                multiline
+                rows={4}
+                value={note.content}
+                onChange={(e) => setNote(prev => ({ ...prev, content: e.target.value }))}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                    '& fieldset': {
+                      borderColor: '#E8E6E1',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#5B7C99',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#5B7C99',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                    color: '#5B7C99',
+                  }
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                startIcon={<Plus size={20} />}
+                onClick={handleAddNote}
+                disabled={loading || !note.title || !note.content || !selectedChild}
+                sx={{
+                  backgroundColor: '#8FA998',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                  borderRadius: 2,
+                  px: 4,
+                  py: 1,
+                  '&:hover': {
+                    backgroundColor: '#7D9786',
+                    boxShadow: '0 4px 12px rgba(143, 169, 152, 0.3)'
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#E8E6E1',
+                    color: '#8FA998'
+                  }
+                }}
               >
-                {children.map(child => (
-                  <MenuItem key={child.value} value={child.value}>{child.label}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                {loading ? 'Sending...' : 'Send Note'}
+              </Button>
+            </Grid>
           </Grid>
+        </Card>
 
-          <Grid item xs={12} md={6}>
-            <TextField label="Parent Email" fullWidth value={parentEmail} disabled />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              label="Note Title"
-              fullWidth
-              value={note.title}
-              onChange={(e) => setNote(prev => ({ ...prev, title: e.target.value }))}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              label="Note Content"
-              fullWidth
-              multiline
-              rows={4}
-              value={note.content}
-              onChange={(e) => setNote(prev => ({ ...prev, content: e.target.value }))}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Button
-              variant="contained"
-              startIcon={<Plus />}
-              onClick={handleAddNote}
-              disabled={loading}
-              sx={{ backgroundColor: '#4ECDC4', '&:hover': { backgroundColor: '#44A08D' } }}
-            >
-              {loading ? 'Sending...' : 'Send Note'}
-            </Button>
-          </Grid>
-        </Grid>
-      </Card>
-
-      {/* Notes Table */}
-      <Card sx={{ p: 3 }}>
-        <Typography variant="h6" fontWeight="bold" mb={2}>All Notes Sent to Parent</Typography>
-        {notesLoading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" height="100px">
-            <CircularProgress />
-            <Typography sx={{ ml: 2 }}>Loading notes...</Typography>
-          </Box>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Child Email</TableCell>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Content</TableCell>
-                  <TableCell>Date</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {notesList.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">No notes sent yet.</TableCell>
+        {/* Notes Table */}
+        <Card sx={{ 
+          p: 3,
+          borderRadius: 3,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+          backgroundColor: 'white',
+          border: '1px solid #E8E6E1'
+        }}>
+          <Typography variant="h5" gutterBottom sx={{ 
+            color: '#3A3D42',
+            fontWeight: 'bold',
+            mb: 3,
+            fontFamily: '"Outfit", "Inter", sans-serif',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <FileText size={24} style={{ marginRight: 12 }} />
+            All Notes Sent to Parent
+          </Typography>
+          
+          {notesLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" height="100px">
+              <CircularProgress sx={{ color: '#5B7C99' }} />
+              <Typography sx={{ 
+                ml: 2, 
+                color: '#5B7C99',
+                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+              }}>
+                Loading notes...
+              </Typography>
+            </Box>
+          ) : (
+            <TableContainer component={Paper} sx={{ 
+              borderRadius: 2,
+              boxShadow: 'none',
+              border: '1px solid #E8E6E1'
+            }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#FAF8F5' }}>
+                    <TableCell sx={{ 
+                      fontFamily: '"Outfit", "Inter", sans-serif',
+                      fontWeight: 600,
+                      color: '#3A3D42',
+                      borderColor: '#E8E6E1'
+                    }}>
+                      <Box display="flex" alignItems="center">
+                        <User size={16} style={{ marginRight: 8 }} />
+                        Child Email
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ 
+                      fontFamily: '"Outfit", "Inter", sans-serif',
+                      fontWeight: 600,
+                      color: '#3A3D42',
+                      borderColor: '#E8E6E1'
+                    }}>
+                      Title
+                    </TableCell>
+                    <TableCell sx={{ 
+                      fontFamily: '"Outfit", "Inter", sans-serif',
+                      fontWeight: 600,
+                      color: '#3A3D42',
+                      borderColor: '#E8E6E1'
+                    }}>
+                      Content
+                    </TableCell>
+                    <TableCell sx={{ 
+                      fontFamily: '"Outfit", "Inter", sans-serif',
+                      fontWeight: 600,
+                      color: '#3A3D42',
+                      borderColor: '#E8E6E1'
+                    }}>
+                      <Box display="flex" alignItems="center">
+                        <Calendar size={16} style={{ marginRight: 8 }} />
+                        Date
+                      </Box>
+                    </TableCell>
                   </TableRow>
-                ) : (
-                  notesList.map(n => (
-                    <TableRow key={n.id}>
-                      <TableCell>{n.child_email || 'N/A'}</TableCell>
-                      <TableCell>{n.title || 'Untitled'}</TableCell>
-                      <TableCell>{n.notes || '-'}</TableCell>
-                      <TableCell>{formatDate(n.createdAt)}</TableCell>
+                </TableHead>
+                <TableBody>
+                  {notesList.length === 0 ? (
+                    <TableRow>
+                      <TableCell 
+                        colSpan={4} 
+                        align="center"
+                        sx={{ 
+                          color: '#5B7C99',
+                          fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                          py: 4,
+                          borderColor: '#E8E6E1'
+                        }}
+                      >
+                        No notes sent yet.
+                      </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                  ) : (
+                    notesList.map((n, index) => (
+                      <TableRow 
+                        key={n.id} 
+                        sx={{ 
+                          backgroundColor: index % 2 === 0 ? 'white' : '#FAF8F5',
+                          '&:hover': {
+                            backgroundColor: '#F5F5F5'
+                          }
+                        }}
+                      >
+                        <TableCell sx={{ 
+                          fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                          color: '#5B7C99',
+                          borderColor: '#E8E6E1',
+                          fontWeight: 600
+                        }}>
+                          {n.child_email || 'N/A'}
+                        </TableCell>
+                        <TableCell sx={{ 
+                          fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                          color: '#3A3D42',
+                          borderColor: '#E8E6E1',
+                          fontWeight: 600
+                        }}>
+                          {n.title || 'Untitled'}
+                        </TableCell>
+                        <TableCell sx={{ 
+                          fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                          color: '#5B7C99',
+                          borderColor: '#E8E6E1',
+                          maxWidth: '300px'
+                        }}>
+                          {(() => {
+                            const content = n.notes || '';
+                            const isExpanded = !!expandedNotes[n.id];
+                            const previewLength = 80;
+                            if (!content) return '-';
+                            if (isExpanded) {
+                              return (
+                                <Box>
+                                  <Typography sx={{ whiteSpace: 'pre-wrap' }}>{content}</Typography>
+                                  {content.length > previewLength && (
+                                    <Button size="small" onClick={() => setExpandedNotes(prev => ({ ...prev, [n.id]: false }))} sx={{ textTransform: 'none', mt: 1 }}>
+                                      Show less
+                                    </Button>
+                                  )}
+                                </Box>
+                              );
+                            }
+
+                            const preview = content.length > previewLength ? `${content.slice(0, previewLength)}...` : content;
+                            return (
+                              <Box>
+                                <Typography sx={{ whiteSpace: 'pre-wrap' }}>{preview}</Typography>
+                                {content.length > previewLength && (
+                                  <Button size="small" onClick={() => setExpandedNotes(prev => ({ ...prev, [n.id]: true }))} sx={{ textTransform: 'none', mt: 1 }}>
+                                    Show more
+                                  </Button>
+                                )}
+                              </Box>
+                            );
+                          })()}
+                        </TableCell>
+                        <TableCell sx={{ 
+                          fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                          color: '#5B7C99',
+                          borderColor: '#E8E6E1'
+                        }}>
+                          {formatDate(n.createdAt)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Card>
+
+        {/* Summary Card */}
+        {notesList.length > 0 && (
+          <Card sx={{ 
+            mt: 4,
+            p: 3,
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            backgroundColor: 'white',
+            border: '1px solid #E8E6E1'
+          }}>
+            <Typography variant="h5" gutterBottom sx={{ 
+              color: '#3A3D42',
+              fontWeight: 'bold',
+              mb: 3,
+              fontFamily: '"Outfit", "Inter", sans-serif'
+            }}>
+              Notes Summary
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box textAlign="center" p={2}>
+                  <Typography variant="h4" sx={{ 
+                    color: '#5B7C99', 
+                    fontWeight: 'bold',
+                    fontFamily: '"Outfit", "Inter", sans-serif'
+                  }}>
+                    {notesList.length}
+                  </Typography>
+                  <Typography variant="body2" sx={{
+                    color: '#5B7C99',
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                  }}>
+                    Total Notes
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box textAlign="center" p={2}>
+                  <Typography variant="h4" sx={{ 
+                    color: '#8FA998', 
+                    fontWeight: 'bold',
+                    fontFamily: '"Outfit", "Inter", sans-serif'
+                  }}>
+                    {new Set(notesList.map(n => n.child_email)).size}
+                  </Typography>
+                  <Typography variant="body2" sx={{
+                    color: '#8FA998',
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                  }}>
+                    Children
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box textAlign="center" p={2}>
+                  <Typography variant="h4" sx={{ 
+                    color: '#C67B5C', 
+                    fontWeight: 'bold',
+                    fontFamily: '"Outfit", "Inter", sans-serif'
+                  }}>
+                    {notesList.filter(n => n.title && n.title.length > 0).length}
+                  </Typography>
+                  <Typography variant="body2" sx={{
+                    color: '#C67B5C',
+                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+                  }}>
+                    Titled Notes
+                  </Typography>
+                </Box>
+              </Grid>
+              {/* 'This Month' tile removed per design request */}
+            </Grid>
+          </Card>
         )}
-      </Card>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 

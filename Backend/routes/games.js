@@ -48,7 +48,7 @@ router.get('/', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching game data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', message: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
   }
 });
 
@@ -107,7 +107,7 @@ router.put('/', authenticateToken, validateGame, async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating game data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', message: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
   }
 });
 
@@ -184,7 +184,7 @@ router.post('/xp', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error adding XP:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', message: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
   }
 });
 
@@ -228,7 +228,7 @@ router.post('/started', authenticateToken, async (req, res) => {
     res.json({ success: true, message: 'Game start recorded' });
   } catch (error) {
     console.error('Error recording game start:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', message: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
   }
 });
 
@@ -306,7 +306,7 @@ router.post('/complete', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error recording game completion:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', message: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
   }
 });
 
@@ -315,12 +315,13 @@ router.get('/history', authenticateToken, async (req, res) => {
   try {
     const { limit = 50, offset = 0 } = req.query;
     
+    // Firestore requires a composite index for a where + orderBy on different fields.
+    // To avoid forcing immediate index creation while developing locally,
+    // fetch the matching documents and sort them in-memory by timestamp.
     const completionsQuery = await admin.firestore()
       .collection('game_completions')
       .where('userId', '==', req.userId)
-      .orderBy('timestamp', 'desc')
-      .limit(parseInt(limit))
-      .offset(parseInt(offset))
+      .limit(parseInt(limit) + parseInt(offset))
       .get();
 
     const completions = [];
@@ -331,23 +332,35 @@ router.get('/history', authenticateToken, async (req, res) => {
       });
     });
 
+    // Sort by timestamp descending (robust to Timestamp or Date)
+    completions.sort((a, b) => {
+      const aTs = a.timestamp && a.timestamp.toMillis ? a.timestamp.toMillis() : (a.timestamp ? new Date(a.timestamp).getTime() : 0);
+      const bTs = b.timestamp && b.timestamp.toMillis ? b.timestamp.toMillis() : (b.timestamp ? new Date(b.timestamp).getTime() : 0);
+      return bTs - aTs;
+    });
+
+    // Apply offset & limit in-memory
+    const start = parseInt(offset) || 0;
+    const end = start + (parseInt(limit) || 50);
+    const page = completions.slice(start, end);
+
     res.json({
       success: true,
-      data: completions
+      data: page
     });
   } catch (error) {
     console.error('Error fetching game history:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', message: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
   }
 });
 
 // Get achievements
 router.get('/achievements', authenticateToken, async (req, res) => {
   try {
+    // Fetch user's achievements and sort in-memory to avoid creating a composite index
     const achievementsQuery = await admin.firestore()
       .collection('achievements')
       .where('userId', '==', req.userId)
-      .orderBy('timestamp', 'desc')
       .get();
 
     const achievements = [];
@@ -358,13 +371,19 @@ router.get('/achievements', authenticateToken, async (req, res) => {
       });
     });
 
+    achievements.sort((a, b) => {
+      const aTs = a.timestamp && a.timestamp.toMillis ? a.timestamp.toMillis() : (a.timestamp ? new Date(a.timestamp).getTime() : 0);
+      const bTs = b.timestamp && b.timestamp.toMillis ? b.timestamp.toMillis() : (b.timestamp ? new Date(b.timestamp).getTime() : 0);
+      return bTs - aTs;
+    });
+
     res.json({
       success: true,
       data: achievements
     });
   } catch (error) {
     console.error('Error fetching achievements:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', message: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
   }
 });
 
@@ -417,7 +436,7 @@ router.post('/achievements', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error adding achievement:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', message: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
   }
 });
 

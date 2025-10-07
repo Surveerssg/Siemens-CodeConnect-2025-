@@ -467,6 +467,76 @@ router.put('/assigned/:goalId/progress', authenticateToken, async (req, res) => 
 
       if (gamesQuery.empty) {
         // create games doc with initial XP
+
+    // If assigned goal completed, try to update the corresponding parent_goals doc so
+    // therapists/parents see the parent goal marked completed as well.
+    if (status === 'completed') {
+      try {
+        // Primary path: update by parentGoalId if present
+        if (assignedData.parentGoalId) {
+          console.log(`Assigned goal references parentGoalId=${assignedData.parentGoalId} — updating parent_goals status`);
+          const parentGoalRef = admin.firestore().collection('parent_goals').doc(assignedData.parentGoalId);
+          const parentGoalDoc = await parentGoalRef.get();
+          if (parentGoalDoc.exists) {
+            await parentGoalRef.update({
+              status: 'completed',
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            console.log('Updated parent_goals status via parentGoalId');
+          } else {
+            console.warn('parentGoalId provided but parent_goals doc not found:', assignedData.parentGoalId);
+          }
+        } else {
+          // Fallback: try to find a matching parent_goals doc by child and title/xp/target heuristics
+          console.log('No parentGoalId on assigned goal — running fallback lookup for parent_goals');
+          const candidateQuery = admin.firestore().collection('parent_goals')
+            .where('childUserId', '==', assignedData.childId || assignedData.childUserId || assignedData.childId)
+            .limit(1);
+
+          const candidateSnap = await candidateQuery.get();
+          if (!candidateSnap.empty) {
+            const pgRef = candidateSnap.docs[0].ref;
+            await pgRef.update({ status: 'completed', updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+            console.log('Updated parent_goals status via childUserId fallback');
+          } else {
+            // Try an alternate fallback by matching children_email or title
+            const altQuery = admin.firestore().collection('parent_goals')
+              .where('children_email', '==', assignedData.childEmail || assignedData.child_email || assignedData.childEmail)
+              .limit(1);
+            const altSnap = await altQuery.get();
+            if (!altSnap.empty) {
+              const altRef = altSnap.docs[0].ref;
+              await altRef.update({ status: 'completed', updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+              console.log('Updated parent_goals status via children_email fallback');
+            } else {
+              // As a last resort, attempt to match by title and assignedBy
+              const titleMatchQuery = admin.firestore().collection('parent_goals')
+                .where('title', '==', assignedData.title || '')
+                .where('parentId', '==', assignedData.assignedBy || assignedData.assignedBy)
+                .limit(1);
+              const titleSnap = await titleMatchQuery.get();
+              if (!titleSnap.empty) {
+                const tRef = titleSnap.docs[0].ref;
+                await tRef.update({ status: 'completed', updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+                console.log('Updated parent_goals status via title+parent fallback');
+              } else {
+                console.warn('Could not locate matching parent_goals doc for assigned goal completion. assignedData:', JSON.stringify({
+                  id: assignedDoc.id,
+                  parentGoalId: assignedData.parentGoalId,
+                  childId: assignedData.childId,
+                  childUserId: assignedData.childUserId,
+                  childEmail: assignedData.childEmail,
+                  title: assignedData.title
+                }));
+              }
+            }
+          }
+        }
+      } catch (parentUpdateErr) {
+        // Log but don't fail the main request
+        console.error('Failed to update parent_goals status after assigned goal completion:', parentUpdateErr);
+      }
+    }
         const gRef = await admin.firestore().collection('games').add({
           userId,
           Achievements: 0,
