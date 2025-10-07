@@ -296,4 +296,53 @@ router.get('/:childId/summary', async (req, res) => {
   }
 });
 
+// GET /parent/children/parent-notes
+router.get('/parent-notes', async (req, res) => {
+  try {
+    const parentEmail = req.query.email?.toLowerCase().trim();
+
+    if (!parentEmail) {
+      return res.status(400).json({ success: false, error: 'Parent email is required' });
+    }
+
+    // Fetch all notes where parent_email matches (case-insensitive)
+    const notesSnap = await admin.firestore()
+      .collection('therapist_notes')
+      .where('parent_email', '==', parentEmail) // make sure field matches Firestore exactly
+      .get();
+
+    const notes = notesSnap.empty
+      ? []
+      : notesSnap.docs.map(doc => {
+          const data = doc.data();
+
+          // Normalize Firestore Timestamp fields to ISO strings for the client
+          const toISO = (ts) => {
+            if (!ts) return null;
+            // Firestore Timestamp has toDate()
+            if (typeof ts.toDate === 'function') return ts.toDate().toISOString();
+            // If already a Date or string/number, try to convert
+            try {
+              return new Date(ts).toISOString();
+            } catch {
+              return null;
+            }
+          };
+
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: toISO(data.createdAt),
+            updatedAt: toISO(data.updatedAt)
+          };
+        });
+
+    return res.json({ success: true, data: notes });
+  } catch (error) {
+    console.error('Error fetching parent notes:', error);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+
 module.exports = router;
