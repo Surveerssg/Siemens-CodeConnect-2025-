@@ -227,10 +227,41 @@ export const parentAPI = {
   }),
   listChildren: () => apiRequest('/parent/children'),
   getChildSummary: (childId) => apiRequest(`/parent/children/${childId}/summary`),
+  // Fetch all notes for a parent
+  getNotes: (parentEmail) => {
+    if (!parentEmail) throw new Error('Parent email is required');
+    
+    console.log(`📤 Fetching notes for parent email: ${parentEmail}`);
+    const encodedEmail = encodeURIComponent(parentEmail.trim().toLowerCase());
+
+    return apiRequest(`/parent/children/parent-notes?email=${encodedEmail}`);
+  },
+};
+
+// Therapist API
+export const therapistAPI = {
+  linkChild: (childId) => apiRequest('/therapist/children/link', {
+    method: 'POST',
+    body: JSON.stringify({ childId }),
+  }),
+  linkChildByEmail: (email) => apiRequest('/therapist/children/link-email', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  }),
+  listChildren: () => apiRequest('/therapist/children'),
+  getParentEmail: (childId) => apiRequest(`/therapist/children/${childId}/parent`),
+  getChildSummary: (childId) => apiRequest(`/therapist/children/${childId}/summary`),
+
+  // NEW: Send note to parent
+  sendNote: (childId, title, content) => apiRequest(`/therapist/children/${childId}/notes`, {
+    method: 'POST',
+    body: JSON.stringify({ title, content }),
+  }),
 };
 
 export default {
   user: userAPI,
+  therapist: therapistAPI,
   progress: progressAPI,
   games: gamesAPI,
   goals: goalsAPI,
