@@ -1,271 +1,216 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { therapistAPI, parentAPI } from '../../services/api'; // import parentAPI for fetching notes
 import { 
-  Container, 
-  Typography, 
-  Box, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper
+  Container, Typography, Box, Grid, Card, Button,
+  FormControl, InputLabel, Select, MenuItem, TextField,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress
 } from '@mui/material';
-import { 
-  ArrowLeft, 
-  Plus,
-  Save,
-  Edit,
-  Delete,
-  Calendar,
-  User
-} from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 
-const TherapistNotes = () => {
+const Notes = () => {
   const navigate = useNavigate();
-  const [notes, setNotes] = useState([
-    {
-      id: 1,
-      child: 'emma',
-      title: 'Excellent progress with vowel sounds',
-      content: 'Emma showed significant improvement in pronouncing vowel sounds today. She was able to correctly say "apple" and "elephant" with much clearer pronunciation. Her confidence has also improved noticeably.',
-      date: '2024-01-20',
-      type: 'progress',
-      priority: 'high',
-      sessionType: 'individual',
-      duration: 30,
-      goals: ['Improve vowel sounds', 'Build confidence']
-    },
-    {
-      id: 2,
-      child: 'liam',
-      title: 'Struggling with consonant blends',
-      content: 'Liam is having difficulty with consonant blends like "bl" and "cl". We should focus more on these sounds in upcoming sessions. He seems to get frustrated easily, so we need to make the exercises more engaging.',
-      date: '2024-01-19',
-      type: 'concern',
-      priority: 'high',
-      sessionType: 'individual',
-      duration: 25,
-      goals: ['Focus on consonant blends', 'Improve engagement']
-    },
-    {
-      id: 3,
-      child: 'sophia',
-      title: 'Completed advanced exercises successfully',
-      content: 'Sophia completed all advanced exercises today with 95% accuracy. She is ready to move to the next level of difficulty. Her pronunciation has improved dramatically over the past month.',
-      date: '2024-01-18',
-      type: 'achievement',
-      priority: 'medium',
-      sessionType: 'group',
-      duration: 45,
-      goals: ['Advanced speech patterns', 'Maintain accuracy']
-    }
-  ]);
 
-  const [newNote, setNewNote] = useState({
-    child: '',
-    title: '',
-    content: '',
-    type: 'progress',
-    priority: 'medium',
-    sessionType: 'individual',
-    duration: 30,
-    goals: []
-  });
+  const [children, setChildren] = useState([]);
+  const [selectedChild, setSelectedChild] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
+  const [note, setNote] = useState({ title: '', content: '' });
+  const [loading, setLoading] = useState(false);
+  const [notesList, setNotesList] = useState([]);
+  const [notesLoading, setNotesLoading] = useState(false);
 
-  const [editingNote, setEditingNote] = useState(null);
+  const therapistEmail = "therapist@example.com";
 
-  const children = [
-    { value: 'emma', label: 'Emma Johnson (8 years old)' },
-    { value: 'liam', label: 'Liam Smith (6 years old)' },
-    { value: 'sophia', label: 'Sophia Davis (7 years old)' }
-  ];
+  // Load therapist's children
+  useEffect(() => {
+    const loadChildren = async () => {
+      try {
+        const res = await therapistAPI.listChildren(); 
+        const list = (res.data || []).map(c => ({
+          value: c.id,
+          label: c.name || c.email || c.id
+        }));
+        setChildren(list);
+        if (list.length > 0) setSelectedChild(list[0].value);
+      } catch (err) {
+        console.error('Failed to load children:', err);
+      }
+    };
+    loadChildren();
+  }, []);
 
-  const noteTypes = [
-    { value: 'progress', label: 'Progress Update', color: '#4CAF50' },
-    { value: 'concern', label: 'Concern', color: '#FF9800' },
-    { value: 'achievement', label: 'Achievement', color: '#2196F3' },
-    { value: 'observation', label: 'General Observation', color: '#9C27B0' },
-    { value: 'recommendation', label: 'Recommendation', color: '#607D8B' }
-  ];
+  // Fetch parent email and notes when child is selected
+  useEffect(() => {
+    const fetchParentInfo = async () => {
+      if (!selectedChild) return;
+      try {
+        const res = await therapistAPI.getParentEmail(selectedChild);
+        const email = res.data?.parentEmail || '';
+        setParentEmail(email);
 
-  const priorities = [
-    { value: 'low', label: 'Low', color: '#4CAF50' },
-    { value: 'medium', label: 'Medium', color: '#FF9800' },
-    { value: 'high', label: 'High', color: '#F44336' }
-  ];
+        // Fetch all notes for this parent
+        if (email) fetchNotes(email);
+      } catch (err) {
+        console.error('Failed to fetch parent info:', err);
+        setParentEmail('');
+        setNotesList([]);
+      }
+    };
+    fetchParentInfo();
+  }, [selectedChild]);
 
-  const sessionTypes = [
-    { value: 'individual', label: 'Individual Session' },
-    { value: 'group', label: 'Group Session' },
-    { value: 'assessment', label: 'Assessment' },
-    { value: 'follow-up', label: 'Follow-up' }
-  ];
-
-  const handleInputChange = (field, value) => {
-    if (editingNote) {
-      setEditingNote(prev => ({ ...prev, [field]: value }));
-    } else {
-      setNewNote(prev => ({ ...prev, [field]: value }));
+  // Fetch notes by parent email
+  const fetchNotes = async (email) => {
+    try {
+      setNotesLoading(true);
+      const res = await parentAPI.getNotes(email);
+      if (res.success && Array.isArray(res.data)) {
+        setNotesList(res.data);
+      } else {
+        setNotesList([]);
+      }
+    } catch (err) {
+      console.error('Error fetching notes:', err);
+      setNotesList([]);
+    } finally {
+      setNotesLoading(false);
     }
   };
 
-  const handleAddNote = () => {
-    if (newNote.child && newNote.title && newNote.content) {
-      const note = { ...newNote, id: Date.now(), date: new Date().toISOString().split('T')[0] };
-      setNotes(prev => [note, ...prev]);
-      setNewNote({ child: '', title: '', content: '', type: 'progress', priority: 'medium', sessionType: 'individual', duration: 30, goals: [] });
+  // Send note
+  const handleAddNote = async () => {
+    if (!note.title || !note.content || !selectedChild) {
+      return alert('Please fill all fields');
+    }
+
+    setLoading(true);
+    try {
+      const res = await therapistAPI.sendNote(selectedChild, note.title, note.content, therapistEmail);
+      alert(res.message || 'Note sent successfully!');
+      setNote({ title: '', content: '' });
+
+      // Refresh notes after sending
+      if (parentEmail) fetchNotes(parentEmail);
+    } catch (err) {
+      console.error('Error sending note:', err);
+      alert('Failed to send note: ' + (err.message || err));
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEditNote = (note) => setEditingNote(note);
-  const handleSaveEdit = () => {
-    if (editingNote) {
-      setNotes(prev => prev.map(note => note.id === editingNote.id ? editingNote : note));
-      setEditingNote(null);
-    }
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'N/A';
+    if (timestamp.toDate) return timestamp.toDate().toLocaleString();
+    if (timestamp.seconds) return new Date(timestamp.seconds * 1000).toLocaleString();
+    return new Date(timestamp).toLocaleString();
   };
-  const handleDeleteNote = (noteId) => setNotes(prev => prev.filter(note => note.id !== noteId));
-
-  const getTypeColor = (type) => noteTypes.find(t => t.value === type)?.color || '#9E9E9E';
-  const getPriorityColor = (priority) => priorities.find(p => p.value === priority)?.color || '#9E9E9E';
-  const getChildName = (childValue) => children.find(c => c.value === childValue)?.label || childValue;
 
   return (
-    <Container maxWidth="lg" sx={{ minHeight: '100vh', py: 4 }}>
+    <Container maxWidth="md" sx={{ py: 4 }}>
       <Box display="flex" alignItems="center" mb={4}>
-        <Button startIcon={<ArrowLeft size={20} />} onClick={() => navigate('/therapist')} sx={{ color: '#4ECDC4', mr: 2 }}>
+        <Button startIcon={<ArrowLeft />} onClick={() => navigate('/therapist')} sx={{ mr: 2 }}>
           Back to Dashboard
         </Button>
-        <Typography variant="h4" sx={{ color: '#2C3E50', fontWeight: 'bold' }}>Therapist Notes 📝</Typography>
+        <Typography variant="h4" fontWeight="bold">Therapist Notes 📝</Typography>
       </Box>
 
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h5" gutterBottom sx={{ color: '#2C3E50', fontWeight: 'bold', mb: 3 }}>
-                {editingNote ? 'Edit Note' : 'Add New Note'}
-              </Typography>
+      {/* Note Form */}
+      <Card sx={{ mb: 4, p: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth>
+              <InputLabel>Select Child</InputLabel>
+              <Select
+                value={selectedChild}
+                onChange={(e) => setSelectedChild(e.target.value)}
+              >
+                {children.map(child => (
+                  <MenuItem key={child.value} value={child.value}>{child.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
 
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Select Child</InputLabel>
-                    <Select value={editingNote ? editingNote.child : newNote.child} onChange={(e) => handleInputChange('child', e.target.value)} label="Select Child">
-                      {children.map((child) => <MenuItem key={child.value} value={child.value}>{child.label}</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField label="Parent Email" fullWidth value={parentEmail} disabled />
+          </Grid>
 
-                <Grid item xs={12}>
-                  <TextField fullWidth label="Note Title" value={editingNote ? editingNote.title : newNote.title} onChange={(e) => handleInputChange('title', e.target.value)} />
-                </Grid>
+          <Grid item xs={12}>
+            <TextField
+              label="Note Title"
+              fullWidth
+              value={note.title}
+              onChange={(e) => setNote(prev => ({ ...prev, title: e.target.value }))}
+            />
+          </Grid>
 
-                <Grid item xs={12}>
-                  <TextField fullWidth label="Note Content" value={editingNote ? editingNote.content : newNote.content} onChange={(e) => handleInputChange('content', e.target.value)} multiline rows={4} />
-                </Grid>
+          <Grid item xs={12}>
+            <TextField
+              label="Note Content"
+              fullWidth
+              multiline
+              rows={4}
+              value={note.content}
+              onChange={(e) => setNote(prev => ({ ...prev, content: e.target.value }))}
+            />
+          </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Note Type</InputLabel>
-                    <Select value={editingNote ? editingNote.type : newNote.type} onChange={(e) => handleInputChange('type', e.target.value)} label="Note Type">
-                      {noteTypes.map(type => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                </Grid>
+          <Grid item xs={12}>
+            <Button
+              variant="contained"
+              startIcon={<Plus />}
+              onClick={handleAddNote}
+              disabled={loading}
+              sx={{ backgroundColor: '#4ECDC4', '&:hover': { backgroundColor: '#44A08D' } }}
+            >
+              {loading ? 'Sending...' : 'Send Note'}
+            </Button>
+          </Grid>
+        </Grid>
+      </Card>
 
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Priority</InputLabel>
-                    <Select value={editingNote ? editingNote.priority : newNote.priority} onChange={(e) => handleInputChange('priority', e.target.value)} label="Priority">
-                      {priorities.map(priority => <MenuItem key={priority.value} value={priority.value}>{priority.label}</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Session Type</InputLabel>
-                    <Select value={editingNote ? editingNote.sessionType : newNote.sessionType} onChange={(e) => handleInputChange('sessionType', e.target.value)} label="Session Type">
-                      {sessionTypes.map(type => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Duration (minutes)" type="number" value={editingNote ? editingNote.duration : newNote.duration} onChange={(e) => handleInputChange('duration', e.target.value)} />
-                </Grid>
-              </Grid>
-
-              <Box mt={3} display="flex" justifyContent="center" gap={2}>
-                {editingNote ? (
-                  <>
-                    <Button variant="contained" startIcon={<Save size={20} />} onClick={handleSaveEdit} sx={{ background: '#4CAF50', '&:hover': { background: '#45A049' } }}>Save Changes</Button>
-                    <Button variant="outlined" onClick={() => setEditingNote(null)} sx={{ color: '#FF6B6B' }}>Cancel</Button>
-                  </>
+      {/* Notes Table */}
+      <Card sx={{ p: 3 }}>
+        <Typography variant="h6" fontWeight="bold" mb={2}>All Notes Sent to Parent</Typography>
+        {notesLoading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height="100px">
+            <CircularProgress />
+            <Typography sx={{ ml: 2 }}>Loading notes...</Typography>
+          </Box>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Child Email</TableCell>
+                  <TableCell>Title</TableCell>
+                  <TableCell>Content</TableCell>
+                  <TableCell>Date</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {notesList.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No notes sent yet.</TableCell>
+                  </TableRow>
                 ) : (
-                  <Button variant="contained" startIcon={<Plus size={20} />} onClick={handleAddNote} sx={{ background: '#4ECDC4', '&:hover': { background: '#44A08D' } }}>Add Note</Button>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h5" gutterBottom sx={{ color: '#2C3E50', fontWeight: 'bold', mb: 3 }}>
-                All Notes ({notes.length})
-              </Typography>
-
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Child</TableCell>
-                      <TableCell>Title</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Priority</TableCell>
-                      <TableCell>Date</TableCell>
-                      <TableCell>Actions</TableCell>
+                  notesList.map(n => (
+                    <TableRow key={n.id}>
+                      <TableCell>{n.child_email || 'N/A'}</TableCell>
+                      <TableCell>{n.title || 'Untitled'}</TableCell>
+                      <TableCell>{n.notes || '-'}</TableCell>
+                      <TableCell>{formatDate(n.createdAt)}</TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {notes.map(note => (
-                      <TableRow key={note.id}>
-                        <TableCell>{getChildName(note.child)}</TableCell>
-                        <TableCell>{note.title}</TableCell>
-                        <TableCell><Chip label={noteTypes.find(t => t.value === note.type)?.label} sx={{ background: getTypeColor(note.type), color: 'white' }} /></TableCell>
-                        <TableCell><Chip label={priorities.find(p => p.value === note.priority)?.label} sx={{ background: getPriorityColor(note.priority), color: 'white' }} /></TableCell>
-                        <TableCell>{new Date(note.date).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <IconButton onClick={() => handleEditNote(note)}><Edit size={16} /></IconButton>
-                          <IconButton onClick={() => handleDeleteNote(note.id)}><Delete size={16} /></IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Card>
     </Container>
   );
 };
 
-export default TherapistNotes;
+export default Notes;
