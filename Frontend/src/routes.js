@@ -31,6 +31,7 @@ import TherapistNotes from './pages/therapist/Notes';
 
 import Profile from './pages/common/Profile';
 import Settings from './pages/common/Settings';
+import TherapistChildDetail from './pages/therapist/TherapistChildDetail';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, userRole } = useAuth();
@@ -165,6 +166,12 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
+      <Route path="/therapist/child/:childId" element={
+        <ProtectedRoute allowedRoles={[ROLES.THERAPIST]}>
+          <TherapistChildDetail />
+        </ProtectedRoute>
+      } />
+
       <Route path="/therapist/children" element={
         <ProtectedRoute allowedRoles={[ROLES.THERAPIST]}>
           <AssignedChildren />
