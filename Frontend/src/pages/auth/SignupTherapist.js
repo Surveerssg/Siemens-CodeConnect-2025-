@@ -1,3 +1,11 @@
+const SPECIALIZATION_LABELS = {
+  'speech-language-pathology': 'Speech-Language Pathology',
+  'pediatric-therapy': 'Pediatric Therapy',
+  'hearing-impaired': 'Hearing Impaired Specialization',
+  'autism-spectrum': 'Autism Spectrum',
+  'general': 'General Speech Therapy'
+};
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
@@ -6,7 +14,7 @@ import { auth, db } from '../../firebase';
 import { ROLES } from '../../constants';
 import {
   Container,
-  Paper,
+  Card,
   TextField,
   Button,
   Typography,
@@ -14,10 +22,10 @@ import {
   Alert,
   CircularProgress,
   Grid,
+  MenuItem,
   FormControl,
   InputLabel,
-  Select,
-  MenuItem
+  Select
 } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 
@@ -42,7 +50,6 @@ const SignupTherapist = () => {
     }));
   };
 
-  // small helper to wait
   const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
   const waitForUserDoc = async (uid, maxAttempts = 12, intervalMs = 250) => {
@@ -54,7 +61,7 @@ const SignupTherapist = () => {
       attempts++;
       await sleep(intervalMs);
     }
-    return null; // timed out
+    return null;
   };
 
   const handleSubmit = async (e) => {
@@ -69,19 +76,16 @@ const SignupTherapist = () => {
     }
 
     try {
-      // create auth user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
 
-      // set display name in auth profile
       await updateProfile(userCredential.user, {
         displayName: formData.name
       });
 
-      // write profile to Firestore (client-side timestamp is okay here)
       const userDocRef = doc(db, 'users', userCredential.user.uid);
       const payload = {
         name: formData.name,
@@ -96,21 +100,15 @@ const SignupTherapist = () => {
 
       await setDoc(userDocRef, payload, { merge: true });
 
-      // Wait until the user doc is actually readable by other parts of the app.
-      // This avoids the race where a global auth listener redirects before the role is known.
       const docSnap = await waitForUserDoc(userCredential.user.uid, 12, 250);
       if (!docSnap) {
-        // not strictly fatal — still try to continue, but log/display a warning
         console.warn('Timed out waiting for user doc to be readable.');
       }
 
-      // reload auth user and refresh token so AuthContext (if it uses token claims or server calls) gets fresh data
       try {
-        // auth.currentUser should be same as userCredential.user, but reload to be safe
         if (auth.currentUser && typeof auth.currentUser.reload === 'function') {
           await auth.currentUser.reload();
         }
-        // force a fresh token
         if (auth.currentUser && typeof auth.currentUser.getIdToken === 'function') {
           await auth.currentUser.getIdToken(true);
         }
@@ -118,7 +116,6 @@ const SignupTherapist = () => {
         console.warn('Error reloading auth user or refreshing token:', reloadErr);
       }
 
-      // Finally navigate to therapist dashboard
       navigate('/therapist', { replace: true });
     } catch (err) {
       console.error('Signup error:', err);
@@ -129,121 +126,323 @@ const SignupTherapist = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h4" textAlign="center" mb={3}>
-          👩‍⚕️ Join as a Therapist
-        </Typography>
+    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center' }}>
+      <Container maxWidth="sm" sx={{ py: 6 }}>
+        <Card sx={{
+          p: { xs: 3, md: 4 },
+          borderRadius: 3,
+          boxShadow: '0 6px 20px rgba(58,61,66,0.06)',
+          backgroundColor: 'white',
+          border: '1px solid #E8E6E1',
+          position: 'relative'
+        }}>
+          {/* Removed the top gradient line */}
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-        <Box component="form" onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Your Name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="License Number"
-                name="license"
-                value={formData.license}
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Email Address"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Institution / Clinic"
-                name="institution"
-                value={formData.institution}
-                onChange={handleChange}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Specialization</InputLabel>
-                <Select
-                  name="specialization"
-                  value={formData.specialization}
-                  onChange={handleChange}
-                  label="Specialization"
-                >
-                  <MenuItem value="speech-language-pathology">Speech-Language Pathology</MenuItem>
-                  <MenuItem value="pediatric-therapy">Pediatric Therapy</MenuItem>
-                  <MenuItem value="hearing-impaired">Hearing Impaired Specialization</MenuItem>
-                  <MenuItem value="autism-spectrum">Autism Spectrum</MenuItem>
-                  <MenuItem value="general">General Speech Therapy</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Confirm Password"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-          </Grid>
-
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3 }}
-            disabled={loading}
+          <Typography
+            variant="h4"
+            textAlign="center"
+            mb={3}
+            sx={{
+              color: '#3A3D42',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              fontWeight: 700,
+              fontSize: { xs: '1.6rem', md: '1.95rem' }
+            }}
           >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Create Therapist Account!'}
-          </Button>
-        </Box>
+            Join as a Therapist 👩‍⚕️
+          </Typography>
 
-        <Box mt={2} textAlign="center">
-          <Button component={Link} to="/role-selector" startIcon={<ArrowLeft />}>
-            Back to Role Selection
-          </Button>
-        </Box>
-      </Paper>
-    </Container>
+          {error && (
+            <Alert
+              severity="error"
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                backgroundColor: 'rgba(198, 123, 92, 0.08)',
+                border: '1px solid rgba(198, 123, 92, 0.25)',
+                color: '#3A3D42',
+                '& .MuiAlert-icon': { color: '#C67B5C' }
+              }}
+            >
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit} noValidate>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Your Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& fieldset': { borderColor: '#E8E6E1' },
+                      '&:hover fieldset': { borderColor: '#5B7C99' },
+                      '&.Mui-focused fieldset': { borderColor: '#5B7C99' }
+                    },
+                    '& .MuiInputLabel-root': { 
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', 
+                      color: '#5B7C99' 
+                    }
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="License Number"
+                  name="license"
+                  value={formData.license}
+                  onChange={handleChange}
+                  required
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& fieldset': { borderColor: '#E8E6E1' },
+                      '&:hover fieldset': { borderColor: '#5B7C99' },
+                      '&.Mui-focused fieldset': { borderColor: '#5B7C99' }
+                    },
+                    '& .MuiInputLabel-root': { 
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', 
+                      color: '#5B7C99' 
+                    }
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Email Address"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& fieldset': { borderColor: '#E8E6E1' },
+                      '&:hover fieldset': { borderColor: '#5B7C99' },
+                      '&.Mui-focused fieldset': { borderColor: '#5B7C99' }
+                    },
+                    '& .MuiInputLabel-root': { 
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', 
+                      color: '#5B7C99' 
+                    }
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Institution / Clinic"
+                  name="institution"
+                  value={formData.institution}
+                  onChange={handleChange}
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& fieldset': { borderColor: '#E8E6E1' },
+                      '&:hover fieldset': { borderColor: '#5B7C99' },
+                      '&.Mui-focused fieldset': { borderColor: '#5B7C99' }
+                    },
+                    '& .MuiInputLabel-root': { 
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', 
+                      color: '#5B7C99' 
+                    }
+                  }}
+                />
+              </Grid>
+
+<Grid item xs={12} sm={6}>
+  <TextField
+    select
+    fullWidth
+    label="Specialization"
+    name="specialization"
+    value={formData.specialization}
+    onChange={handleChange}
+    size="medium"
+    SelectProps={{
+      displayEmpty: true,
+      renderValue: (selected) => {
+        if (!selected) {
+          return (
+            <span style={{
+              color: '#5B7C99',
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+            }}>
+              Specialization
+            </span>
+          );
+        }
+        return SPECIALIZATION_LABELS[selected] || selected;
+      },
+      MenuProps: { PaperProps: { style: { maxHeight: 280 } } }
+    }}
+    slotProps={{
+      inputLabel: {
+        shrink: Boolean(formData.specialization),
+      }
+    }}
+    sx={{
+      '& .MuiOutlinedInput-root': {
+        borderRadius: 2,
+        '& fieldset': { borderColor: '#E8E6E1' },
+        '&:hover fieldset': { borderColor: '#5B7C99' },
+        '&.Mui-focused fieldset': { borderColor: '#5B7C99' }
+      },
+      '& .MuiSelect-select': {
+        padding: '12px 36px 12px 14px',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+      },
+      '& .MuiInputLabel-root': { 
+        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+        color: '#5B7C99',
+        backgroundColor: 'white',
+        paddingLeft: '4px',
+        paddingRight: '4px'
+      },
+      '& .MuiSelect-icon': { 
+        right: 12,
+        color: '#5B7C99'
+      }
+    }}
+  >
+    <MenuItem value="speech-language-pathology">Speech-Language Pathology</MenuItem>
+    <MenuItem value="pediatric-therapy">Pediatric Therapy</MenuItem>
+    <MenuItem value="hearing-impaired">Hearing Impaired Specialization</MenuItem>
+    <MenuItem value="autism-spectrum">Autism Spectrum</MenuItem>
+    <MenuItem value="general">General Speech Therapy</MenuItem>
+  </TextField>
+</Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& fieldset': { borderColor: '#E8E6E1' },
+                      '&:hover fieldset': { borderColor: '#5B7C99' },
+                      '&.Mui-focused fieldset': { borderColor: '#5B7C99' }
+                    },
+                    '& .MuiInputLabel-root': { 
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', 
+                      color: '#5B7C99' 
+                    }
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                      '& fieldset': { borderColor: '#E8E6E1' },
+                      '&:hover fieldset': { borderColor: '#5B7C99' },
+                      '&.Mui-focused fieldset': { borderColor: '#5B7C99' }
+                    },
+                    '& .MuiInputLabel-root': { 
+                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', 
+                      color: '#5B7C99' 
+                    }
+                  }}
+                />
+              </Grid>
+            </Grid>
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              disabled={loading}
+              sx={{
+                mt: 4,
+                height: 52,
+                backgroundColor: '#5B7C99',
+                textTransform: 'none',
+                fontWeight: 700,
+                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                borderRadius: 3,
+                fontSize: '1rem',
+                boxShadow: '0 6px 18px rgba(91,124,153,0.12)',
+                '&:hover': { 
+                  backgroundColor: '#4A677F', 
+                  boxShadow: '0 8px 26px rgba(74,103,127,0.14)' 
+                },
+                '&:disabled': { 
+                  backgroundColor: '#E8E6E1', 
+                  color: '#5B7C99' 
+                }
+              }}
+            >
+              {loading ? <CircularProgress size={22} color="inherit" /> : 'Create Therapist Account'}
+            </Button>
+          </Box>
+
+          <Box textAlign="center" mt={3} sx={{ borderTop: '1px solid #E8E6E1', pt: 3 }}>
+            <Button
+              component={Link}
+              to="/role-selector"
+              startIcon={<ArrowLeft size={18} />}
+              sx={{
+                color: '#5B7C99',
+                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: 2,
+                px: 2,
+                py: 1,
+                '&:hover': { 
+                  backgroundColor: '#5B7C9910' 
+                }
+              }}
+            >
+              Back to Role Selection
+            </Button>
+          </Box>
+        </Card>
+      </Container>
+    </Box>
   );
 };
 

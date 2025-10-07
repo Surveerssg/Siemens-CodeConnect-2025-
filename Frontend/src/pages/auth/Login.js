@@ -12,9 +12,11 @@ import {
   Typography,
   Box,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Card,
+  Grid
 } from '@mui/material';
-import { Mic, Users, Hospital } from 'lucide-react';
+import { Mic, Users, Hospital, ArrowRight, User, Heart, Star } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -62,98 +64,236 @@ const Login = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 6, mb: 6 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h4" textAlign="center" mb={2}>
-          🎤 SpeakUp
-        </Typography>
-        <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
-          Welcome back — sign in to continue practicing!
-        </Typography>
+    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center' }}>
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Card sx={{ 
+          p: 4,
+          borderRadius: 3,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+          backgroundColor: 'white',
+          border: '1px solid #E8E6E1'
+        }}>
+          {/* Header */}
+          <Box textAlign="center" mb={3}>
+            <Typography variant="h4" sx={{ 
+              color: '#3A3D42',
+              fontWeight: 'bold',
+              fontFamily: '"Outfit", "Inter", sans-serif',
+              mb: 1
+            }}>
+              Welcome Back 🎤
+            </Typography>
+            <Typography variant="body2" sx={{ 
+              color: '#5B7C99',
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+            }}>
+              Sign in to continue your speech practice journey
+            </Typography>
+          </Box>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+          {error && (
+            <Alert severity="error" sx={{ 
+              mb: 3,
+              borderRadius: 2,
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+            }}>
+              {error}
+            </Alert>
+          )}
 
-        <Box component="form" onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            margin="normal"
-            required
-            sx={{
-              '& .MuiOutlinedInput-root': {
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              margin="normal"
+              required
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                  '& fieldset': {
+                    borderColor: '#E8E6E1',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#5B7C99',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#5B7C99',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                  color: '#5B7C99',
+                }
+              }}
+            />
+
+            <TextField
+              fullWidth
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              margin="normal"
+              required
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                  '& fieldset': {
+                    borderColor: '#E8E6E1',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#5B7C99',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#5B7C99',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                  color: '#5B7C99',
+                }
+              }}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              disabled={loading}
+              endIcon={!loading && <ArrowRight size={18} />}
+              sx={{ 
+                mt: 3, 
+                height: 48,
+                backgroundColor: '#5B7C99',
+                textTransform: 'none',
+                fontWeight: 600,
+                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
                 borderRadius: 2,
-                backgroundColor: 'rgba(245,245,245,0.9)'
-              }
-            }}
-          />
+                fontSize: '1rem',
+                '&:hover': {
+                  backgroundColor: '#4A677F',
+                  boxShadow: '0 4px 12px rgba(91, 124, 153, 0.3)'
+                },
+                '&:disabled': {
+                  backgroundColor: '#E8E6E1',
+                  color: '#5B7C99'
+                }
+              }}
+            >
+              {loading ? <CircularProgress size={22} color="inherit" /> : 'Login'}
+            </Button>
+          </Box>
 
-          <TextField
-            fullWidth
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            margin="normal"
-            required
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                backgroundColor: 'rgba(245,245,245,0.9)'
-              }
-            }}
-          />
-
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            disabled={loading}
-            sx={{ mt: 3, height: 48 }}
-          >
-            {loading ? <CircularProgress size={22} color="inherit" /> : 'Login'}
-          </Button>
-        </Box>
-
-        <Box textAlign="center" mt={2}>
-          <Typography variant="body2" color="text.secondary">
-            Don't have an account?{' '}
-            <Link to="/role-selector" style={{ textDecoration: 'none', fontWeight: 600 }}>
-              Sign up here
-            </Link>
-          </Typography>
-        </Box>
-
-        <Box mt={4} display="flex" justifyContent="space-around" flexWrap="wrap">
-          <Box textAlign="center" sx={{ minWidth: 90 }}>
-            <Mic size={36} />
-            <Typography variant="caption" display="block">
-              Child
+          <Box textAlign="center" mt={3}>
+            <Typography variant="body2" sx={{ 
+              color: '#5B7C99',
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
+            }}>
+              Don't have an account?{' '}
+              <Button 
+                component={Link} 
+                to="/role-selector"
+                sx={{ 
+                  color: '#5B7C99', 
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  textTransform: 'none',
+                  padding: '4px 8px',
+                  minWidth: 'auto',
+                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                  '&:hover': {
+                    backgroundColor: '#5B7C9910',
+                    textDecoration: 'underline'
+                  }
+                }}
+              >
+                Sign up here
+              </Button>
             </Typography>
           </Box>
 
-          <Box textAlign="center" sx={{ minWidth: 90 }}>
-            <Users size={36} />
-            <Typography variant="caption" display="block">
-              Parent
-            </Typography>
+          {/* Role Icons */}
+          <Box mt={4} display="flex" justifyContent="space-around" flexWrap="wrap">
+            <Box textAlign="center" sx={{ minWidth: 90, mb: 2 }}>
+              <Box sx={{
+                width: 50,
+                height: 50,
+                borderRadius: '50%',
+                backgroundColor: '#5B7C9915',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 8px',
+                border: '1px solid #5B7C9920'
+              }}>
+                <Mic size={24} color="#5B7C99" />
+              </Box>
+              <Typography variant="caption" sx={{
+                color: '#5B7C99',
+                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                fontWeight: 600
+              }}>
+                Child
+              </Typography>
+            </Box>
+
+            <Box textAlign="center" sx={{ minWidth: 90, mb: 2 }}>
+              <Box sx={{
+                width: 50,
+                height: 50,
+                borderRadius: '50%',
+                backgroundColor: '#8FA99815',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 8px',
+                border: '1px solid #8FA99820'
+              }}>
+                <Users size={24} color="#8FA998" />
+              </Box>
+              <Typography variant="caption" sx={{
+                color: '#8FA998',
+                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                fontWeight: 600
+              }}>
+                Parent
+              </Typography>
+            </Box>
+
+            <Box textAlign="center" sx={{ minWidth: 90, mb: 2 }}>
+              <Box sx={{
+                width: 50,
+                height: 50,
+                borderRadius: '50%',
+                backgroundColor: '#C67B5C15',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 8px',
+                border: '1px solid #C67B5C20'
+              }}>
+                <Hospital size={24} color="#C67B5C" />
+              </Box>
+              <Typography variant="caption" sx={{
+                color: '#C67B5C',
+                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+                fontWeight: 600
+              }}>
+                Therapist
+              </Typography>
+            </Box>
           </Box>
 
-          <Box textAlign="center" sx={{ minWidth: 90 }}>
-            <Hospital size={36} />
-            <Typography variant="caption" display="block">
-              Therapist
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
-    </Container>
+          {/* Features */}
+        </Card>
+      </Container>
+    </Box>
   );
 };
 

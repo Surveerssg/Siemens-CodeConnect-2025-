@@ -49,24 +49,45 @@ const TherapistGoals = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
+    let mounted = true;
     const loadChildrenAndGoals = async () => {
       try {
-        setLoading(true);
+        if (mounted) setLoading(true);
         // Load children
         const childrenRes = await therapistAPI.listChildren();
+        if (!mounted) return;
         setChildren(childrenRes.data || []);
 
-        // Load existing therapist goals
+        // Load existing therapist goals (with attached assigned goal info)
         const goalsRes = await parentGoalsAPI.list();
-        setTherapistGoals(goalsRes.data || []);
+        if (!mounted) return;
+        // Normalize to ensure assignedStatus fields exist
+        const normalized = (goalsRes.data || []).map(g => ({
+          ...g,
+          assignedStatus: g.assignedStatus || null,
+          assignedProgress: typeof g.assignedProgress !== 'undefined' ? g.assignedProgress : null
+        }));
+        setTherapistGoals(normalized);
       } catch (e) {
         console.error('Failed to load data:', e);
-        setMessage({ type: 'error', text: 'Failed to load data' });
+        if (mounted) setMessage({ type: 'error', text: 'Failed to load data' });
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
+
+    // initial load
     loadChildrenAndGoals();
+
+    // Poll for updates every 8 seconds so therapist sees status changes
+    const pollInterval = setInterval(() => {
+      loadChildrenAndGoals();
+    }, 8000);
+
+    return () => {
+      mounted = false;
+      clearInterval(pollInterval);
+    };
   }, []);
 
   const childOptions = children.map(c => ({ 
@@ -158,6 +179,12 @@ const TherapistGoals = () => {
     return child?.name || childEmail || 'Unknown Child';
   };
 
+  const getDisplayedStatus = (goal) => {
+    // If an assigned status exists for the child, prefer it (completed/active)
+    if (goal.assignedStatus) return goal.assignedStatus;
+    return goal.status || 'active';
+  };
+
   return (
     <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -221,46 +248,67 @@ const TherapistGoals = () => {
             
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel sx={{
-                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                    color: '#5B7C99'
-                  }}>
-                    Select Child *
-                  </InputLabel>
-                  <Select 
-                    value={newGoal.children_email} 
-                    onChange={(e) => handleInputChange('children_email', e.target.value)}
-                    label="Select Child *"
-                    sx={{
-                      borderRadius: 2,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#E8E6E1',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#5B7C99',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#5B7C99',
-                      },
-                    }}
-                  >
-                    {childOptions.map(opt => (
-                      <MenuItem 
-                        key={opt.value} 
-                        value={opt.value}
-                        sx={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif' }}
-                      >
-                        <Box display="flex" alignItems="center">
-                          <User size={16} style={{ marginRight: 8, color: '#5B7C99' }} />
-                          {opt.label}
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
+  <FormControl fullWidth>
+    <InputLabel 
+      shrink={Boolean(newGoal.children_email)}
+      sx={{
+        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+        color: '#5B7C99',
+        backgroundColor: 'white',
+        paddingLeft: '4px',
+        paddingRight: '4px'
+      }}
+    >
+      Select Child *
+    </InputLabel>
+    <Select 
+      value={newGoal.children_email} 
+      onChange={(e) => handleInputChange('children_email', e.target.value)}
+      label="Select Child *"
+      displayEmpty
+      renderValue={(selected) => {
+        if (!selected) {
+          return (
+            <span style={{
+              color: '#5B7C99',
+              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+            }}>
+              Select Child *
+            </span>
+          );
+        }
+        const selectedChild = childOptions.find(opt => opt.value === selected);
+        return selectedChild ? selectedChild.label : selected;
+      }}
+      sx={{
+        borderRadius: 2,
+        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#E8E6E1',
+        },
+        '&:hover .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#5B7C99',
+        },
+        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#5B7C99',
+        },
+      }}
+    >
+      {childOptions.map(opt => (
+        <MenuItem 
+          key={opt.value} 
+          value={opt.value}
+          sx={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif' }}
+        >
+          <Box display="flex" alignItems="center">
+            <User size={16} style={{ marginRight: 8, color: '#5B7C99' }} />
+            {opt.label}
+          </Box>
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+</Grid>
               
               <Grid item xs={12} md={6}>
                 <TextField 
@@ -519,10 +567,10 @@ const TherapistGoals = () => {
                               }}
                             />
                             <Chip 
-                              label={goal.status} 
+                              label={getDisplayedStatus(goal)} 
                               size="small" 
                               sx={{ 
-                                backgroundColor: goal.status === 'active' ? '#8FA998' : '#E8E6E1',
+                                backgroundColor: getDisplayedStatus(goal) === 'active' ? '#8FA998' : '#E8E6E1',
                                 color: 'white',
                                 fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
                                 fontWeight: 600,
@@ -618,7 +666,7 @@ const TherapistGoals = () => {
                       fontWeight: 'bold',
                       fontFamily: '"Outfit", "Inter", sans-serif'
                     }}>
-                      {therapistGoals.filter(g => g.status === 'active').length}
+                      {therapistGoals.filter(g => (g.assignedStatus ? g.assignedStatus === 'active' : g.status === 'active')).length}
                     </Typography>
                     <Typography variant="body2" sx={{
                       color: '#8FA998',
