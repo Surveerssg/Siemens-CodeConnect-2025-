@@ -58,7 +58,13 @@ const AssignGoals = () => {
 
         // Load existing parent goals
         const goalsRes = await parentGoalsAPI.list();
-        setParentGoals(goalsRes.data || []);
+        // Normalize to ensure assignedStatus fields exist (therapist UI does this)
+        const normalized = (goalsRes.data || []).map(g => ({
+          ...g,
+          assignedStatus: g.assignedStatus || null,
+          assignedProgress: typeof g.assignedProgress !== 'undefined' ? g.assignedProgress : null
+        }));
+        setParentGoals(normalized);
       } catch (e) {
         console.error('Failed to load data:', e);
         setMessage({ type: 'error', text: 'Failed to load data' });
@@ -156,6 +162,12 @@ const AssignGoals = () => {
   const getChildName = (childEmail) => {
     const child = children.find(c => (c.email || c.childEmail) === childEmail);
     return child?.name || childEmail || 'Unknown Child';
+  };
+
+  const getDisplayedStatus = (goal) => {
+    // If an assigned status exists for the child, prefer it (completed/active)
+    if (goal.assignedStatus) return goal.assignedStatus;
+    return goal.status || 'active';
   };
 
   return (
@@ -519,10 +531,10 @@ const AssignGoals = () => {
                               }}
                             />
                             <Chip 
-                              label={goal.status} 
+                              label={getDisplayedStatus(goal)} 
                               size="small" 
                               sx={{ 
-                                backgroundColor: goal.status === 'active' ? '#8FA998' : '#E8E6E1',
+                                backgroundColor: getDisplayedStatus(goal) === 'active' ? '#8FA998' : '#E8E6E1',
                                 color: 'white',
                                 fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
                                 fontWeight: 600,
@@ -618,7 +630,7 @@ const AssignGoals = () => {
                       fontWeight: 'bold',
                       fontFamily: '"Outfit", "Inter", sans-serif'
                     }}>
-                      {parentGoals.filter(g => g.status === 'active').length}
+                      {parentGoals.filter(g => getDisplayedStatus(g) === 'active').length}
                     </Typography>
                     <Typography variant="body2" sx={{
                       color: '#8FA998',
