@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import { GameProvider } from './context/GameContext';
 import AppRoutes from './routes';
 import './styles/globals.css';
+import './index.css';
 
 const theme = createTheme({
   palette: {
