@@ -84,12 +84,12 @@ const ChildProgress = () => {
     { name: 'Assessments', value: 15, color: '#C67B5C' }
   ];
 
-  // Calculate stats from summary data
-  const totalXP = Number(summary?.games?.Total_XP || 0);
-  const totalDays = Number(summary?.progress?.Practice_Days || 0);
-  const avgScore = totalDays > 0 ? Math.round((totalXP / totalDays) * 100) / 100 : 0;
-  const bestScore = totalXP;
-  const practiceDays = totalDays;
+  // Calculate stats from summary data (use same mapping as other pages)
+  const totalXP = Number(summary?.games?.Total_XP || summary?.games?.Total_XP_Earned || 0);
+  const totalDays = Number(summary?.progress?.Practice_Days || summary?.progress?.Practice_Days || 0);
+  const avgScore = totalDays > 0 ? Math.round((totalXP / totalDays) * 100) / 100 : (summary?.progress?.Average_Score || 0);
+  const bestScore = summary?.progress?.Best_Score || summary?.games?.Best_Score || totalXP;
+  const practiceDays = totalDays || summary?.progress?.Practice_Days || 0;
   const currentLevel = Math.floor(totalXP / 1000) + 1;
   const levelProgress = (totalXP % 1000) / 10;
   const selectedChildData = children.find(child => child.value === selectedChild);
