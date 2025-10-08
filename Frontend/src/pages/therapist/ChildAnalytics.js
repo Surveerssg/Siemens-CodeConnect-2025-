@@ -167,6 +167,34 @@ const ChildAnalytics = () => {
               </Card>
             )}
 
+            {/* Stats Cards - shown under XP/Level and above charts */}
+            <Grid container spacing={3} mb={4}>
+              <Grid item xs={12} md={4}>
+                <Card sx={{ textAlign: 'center', p: 3 }}>
+                  <TrendingUp size={32} color="#8FA998" style={{ margin: '0 auto 12px' }} />
+                  <Typography variant="h6" gutterBottom>Average Score</Typography>
+                  <Typography variant="h2">{avgScore}</Typography>
+                  <Typography variant="body2">Per session</Typography>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Card sx={{ textAlign: 'center', p: 3 }}>
+                  <Award size={32} color="#C67B5C" style={{ margin: '0 auto 12px' }} />
+                  <Typography variant="h6" gutterBottom>Best Score</Typography>
+                  <Typography variant="h2">{bestScore}</Typography>
+                  <Typography variant="body2">Highest achievement</Typography>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Card sx={{ textAlign: 'center', p: 3 }}>
+                  <Calendar size={32} color="#5B7C99" style={{ margin: '0 auto 12px' }} />
+                  <Typography variant="h6" gutterBottom>Practice Days</Typography>
+                  <Typography variant="h2">{practiceDays}</Typography>
+                  <Typography variant="body2">This month</Typography>
+                </Card>
+              </Grid>
+            </Grid>
+
             <Grid container spacing={3} mb={4}>
               <Grid item xs={12} md={8}>
                 <Card>
