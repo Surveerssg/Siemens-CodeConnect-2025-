@@ -257,6 +257,13 @@ export const therapistAPI = {
     method: 'POST',
     body: JSON.stringify({ title, content }),
   }),
+  // Practice assignment endpoints (therapist)
+  assignPractice: (data) => apiRequest('/practice/assign', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  listChildPractice: (childId) => apiRequest(`/practice/child/${childId}`),
+  getAssignmentAttempts: (assignmentId) => apiRequest(`/practice/${assignmentId}/attempts`),
 };
 
 export default {
@@ -267,4 +274,14 @@ export default {
   goals: goalsAPI,
   parentGoals: parentGoalsAPI,
   parent: parentAPI,
+  practice: {
+    listAssigned: () => apiRequest('/practice/assigned'),
+    submitAttempt: (assignmentId, data) => apiRequest(`/practice/${assignmentId}/attempt`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    markComplete: (assignmentId) => apiRequest(`/practice/${assignmentId}/complete`, {
+      method: 'POST'
+    })
+  },
 };

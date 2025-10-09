@@ -28,6 +28,7 @@ import TherapistDashboard from './pages/therapist/TherapistDashboard';
 import AssignedChildren from './pages/therapist/AssignedChildren';
 import ChildAnalytics from './pages/therapist/ChildAnalytics';
 import TherapistNotes from './pages/therapist/Notes';
+import TherapistPractice from './pages/therapist/TherapistPractice';
 
 import Profile from './pages/common/Profile';
 import Settings from './pages/common/Settings';
@@ -194,6 +195,11 @@ const AppRoutes = () => {
       <Route path="/therapist/goals" element={
         <ProtectedRoute allowedRoles={[ROLES.THERAPIST]}>
           <TherapistGoals />
+        </ProtectedRoute>
+      } />
+      <Route path="/therapist/practice" element={
+        <ProtectedRoute allowedRoles={[ROLES.THERAPIST]}>
+          <TherapistPractice />
         </ProtectedRoute>
       } />
 

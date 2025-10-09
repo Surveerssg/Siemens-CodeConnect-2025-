@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Mic, StopCircle, Play, Volume2, RefreshCw, Star } from 'lucide-react';
+import api from '../../services/api';
 
 // Convert base64 to array buffer
 const base64ToArrayBuffer = (base64) => {
@@ -337,6 +339,7 @@ function LoadingModal({ tips, currentTip }) {
 }
 
 export default function Practice() {
+  const navigate = useNavigate();
   const [recording, setRecording] = useState(false);
   const [userAudioBlob, setUserAudioBlob] = useState(null);
   const [referenceAudioBlob, setReferenceAudioBlob] = useState(null);
@@ -351,13 +354,17 @@ export default function Practice() {
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [currentTip, setCurrentTip] = useState(0);
   const [scoringResult, setScoringResult] = useState(null);
+  const [assignedItems, setAssignedItems] = useState([]);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
+  const [refreshingAssignments, setRefreshingAssignments] = useState(false);
 
   const mediaRecorder = useRef(null);
   const audioChunks = useRef([]);
   const scoringMediaRecorder = useRef(null);
   const scoringAudioChunks = useRef([]);
   
-  const sampleText = "I am eating apple";
+  const [sampleText, setSampleText] = useState("I am eating apple");
+  const [submissionMessage, setSubmissionMessage] = useState('');
   
   const pronunciationTips = [
     "💡 Tip: Speak clearly and at a moderate pace",
@@ -406,6 +413,59 @@ export default function Practice() {
     } finally {
       setIsGeneratingReference(false);
       setTimeout(() => setApiStatus(''), 3000);
+    }
+  };
+
+  // Load assigned items for the logged-in child on mount
+  useEffect(() => {
+    let mounted = true;
+    const loadAssigned = async () => {
+      try {
+        const res = await api.practice.listAssigned();
+        if (mounted) setAssignedItems(res.data || []);
+      } catch (e) {
+        console.warn('Failed to load assigned practice items:', e);
+      }
+    };
+    loadAssigned();
+    return () => { mounted = false; };
+  }, []);
+
+  const handleSelectAssignment = (assignment) => {
+    if (!assignment) {
+      setSelectedAssignmentId(null);
+      setSelectedWord(null);
+      setSampleText("I am eating apple");
+      return;
+    }
+
+    // For words: mark completed on the backend without creating an attempt document
+    if (assignment.type === 'word') {
+      (async () => {
+        try {
+          setRefreshingAssignments(true);
+          await api.practice.markComplete(assignment.id);
+          const refreshed = await api.practice.listAssigned();
+          setAssignedItems(refreshed.data || []);
+        } catch (e) {
+          console.warn('Failed to mark word complete:', e);
+        } finally {
+          setRefreshingAssignments(false);
+        }
+      })();
+    }
+
+    setSelectedAssignmentId(assignment.id);
+    if (assignment.type === 'word') {
+      const w = { id: assignment.id, text: assignment.text };
+      setSelectedWord(w);
+      handleGenerateReferenceAudio(w);
+    } else {
+      // for sentence: don't auto-create attempts on select; just set the sample text
+      setSelectedWord(null);
+      if (assignment.text && assignment.text.trim().length > 0) {
+        setSampleText(assignment.text);
+      }
     }
   };
 
@@ -489,6 +549,7 @@ export default function Practice() {
     setScoringAudioBlob(null);
     setScoringResult(null);
     setShowLoadingModal(false);
+    setSampleText("I am eating apple");
   };
   
   const handleScoringRecord = async () => {
@@ -545,9 +606,10 @@ export default function Practice() {
     }, 3000);
     
     try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
-      formData.append('text', sampleText);
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'recording.webm');
+  // send the dynamic sample text (either selected assignment sentence or default)
+  formData.append('text', sampleText);
       
       const response = await fetch('https://pronunciation-score-final.onrender.com/analyze/', {
         method: 'POST',
@@ -560,6 +622,32 @@ export default function Practice() {
       
       const result = await response.json();
       setScoringResult(result);
+      try {
+        if (selectedAssignmentId) {
+          await api.practice.submitAttempt(selectedAssignmentId, { score: result.final_score, predicted_text: result.predicted_text });
+          setRefreshingAssignments(true);
+          const refreshed = await api.practice.listAssigned();
+          setAssignedItems(refreshed.data || []);
+          setRefreshingAssignments(false);
+          setSubmissionMessage('Attempt saved for the selected assignment');
+          setTimeout(() => setSubmissionMessage(''), 4000);
+        } else {
+          // fallback to exact text match
+          const assignedRes = await api.practice.listAssigned();
+          const match = (assignedRes.data || []).find(a => a.type === 'sentence' && a.text && a.text.trim().toLowerCase() === sampleText.trim().toLowerCase());
+          if (match) await api.practice.submitAttempt(match.id, { score: result.final_score, predicted_text: result.predicted_text });
+          if (match) {
+            setRefreshingAssignments(true);
+            const refreshed2 = await api.practice.listAssigned();
+            setAssignedItems(refreshed2.data || []);
+            setRefreshingAssignments(false);
+            setSubmissionMessage('Attempt saved for your assignment');
+            setTimeout(() => setSubmissionMessage(''), 4000);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to submit practice attempt to backend:', e);
+      }
       
     } catch (error) {
       console.error('Error calling pronunciation API:', error);
@@ -588,6 +676,14 @@ export default function Practice() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
+          <div className="flex items-start justify-between mb-4">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="text-sm text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100 hover:bg-indigo-100"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
           <div className="flex items-center justify-center gap-3 mb-4">
             <Volume2 size={48} className="text-indigo-600" />
             <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
@@ -602,9 +698,46 @@ export default function Practice() {
               {apiStatus}
             </div>
           )}
+          {submissionMessage && (
+            <div className="mt-4 text-sm text-green-700 bg-green-50 px-4 py-2 rounded-full inline-block">
+              {submissionMessage}
+            </div>
+          )}
         </div>
 
         {/* Mode Selection */}
+        {/* Assigned Items */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Your Assigned Practice</h2>
+          {assignedItems.length === 0 ? (
+            <p className="text-gray-600">No assigned words or sentences yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {assignedItems.map(ai => (
+                <div key={ai.id} className={`p-3 rounded-lg border ${selectedAssignmentId === ai.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-semibold text-gray-800">{ai.type === 'sentence' ? 'Sentence' : 'Word'}</div>
+                      <div className="text-sm text-gray-700">{ai.text}</div>
+                      {ai.latestScore !== null && ai.latestScore !== undefined && (
+                        <div className="text-xs text-gray-500 mt-1">Latest score: {ai.latestScore}%</div>
+                      )}
+                    </div>
+                    <div>
+                      <button
+                        onClick={() => handleSelectAssignment(selectedAssignmentId === ai.id ? null : ai)}
+                        className={`px-3 py-1 rounded-full text-sm ${selectedAssignmentId === ai.id ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                        disabled={refreshingAssignments}
+                      >
+                        {refreshingAssignments ? 'Refreshing...' : (selectedAssignmentId === ai.id ? 'Selected' : 'Select')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
             Select Practice Mode

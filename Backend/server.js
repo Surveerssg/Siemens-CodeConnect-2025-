@@ -17,6 +17,7 @@ const goalRoutes = require('./routes/goals');
 const parentGoalsRoutes = require('./routes/parentGoals');
 const parentChildrenRoutes = require('./routes/parentChildren');
 const therapistChildrenRoutes = require('./routes/therapistChildren');
+const practiceRoutes = require('./routes/practice');
 // Initialize Express app
 const app = express();
 
@@ -74,6 +75,7 @@ app.use('/api/goals', goalRoutes);
 app.use('/api/parent/goals', parentGoalsRoutes);
 app.use('/api/parent/children', parentChildrenRoutes);
 app.use('/api/therapist/children', therapistChildrenRoutes);
+app.use('/api/practice', practiceRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

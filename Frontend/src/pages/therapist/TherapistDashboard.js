@@ -102,6 +102,21 @@ const TherapistDashboard = () => {
             >
               Settings
             </Button>
+            <Button
+              onClick={() => navigate('/therapist/practice')}
+              variant="contained"
+              sx={{
+                backgroundColor: '#8FA998',
+                color: 'white',
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: 2,
+                px: 3,
+                '&:hover': { backgroundColor: '#7D9786' }
+              }}
+            >
+              Assign Practice
+            </Button>
             <Button 
               startIcon={<LogOut size={20} />} 
               onClick={handleLogout}
