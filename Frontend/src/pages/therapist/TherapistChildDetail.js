@@ -10,6 +10,9 @@ const TherapistChildDetail = () => {
   const { childId } = useParams();
   const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
+  const [assignments, setAssignments] = useState([]);
+  const [attemptsMap, setAttemptsMap] = useState({});
+  const [expandedAssignment, setExpandedAssignment] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -18,6 +21,12 @@ const TherapistChildDetail = () => {
         setLoading(true);
         const res = await therapistAPI.getChildSummary(childId);
         setSummary(res.data || null);
+        try {
+          const aRes = await therapistAPI.listChildPractice(childId);
+          setAssignments(aRes.data || []);
+        } catch (e) {
+          console.warn('Failed to load practice assignments:', e);
+        }
       } catch (e) {
         console.error('Failed to load child summary:', e);
       } finally {
@@ -366,6 +375,71 @@ const TherapistChildDetail = () => {
       }}>
         Recent Activities
       </Typography>
+      {/* Assigned Practice Items */}
+      <Typography variant="h6" gutterBottom sx={{ color: '#3A3D42', fontWeight: 700, mb: 2 }}>
+        Assigned Practice Items ({assignments.length})
+      </Typography>
+        <Card sx={{ mb: 3, borderRadius: 2, p: 2, backgroundColor: 'white', border: '1px solid #E8E6E1' }}>
+        <CardContent>
+          {assignments.length === 0 ? (
+            <Typography variant="body2" sx={{ color: '#5B7C99' }}>No practice items assigned yet.</Typography>
+          ) : (
+              assignments.slice(0,6).map(a => (
+                <Box key={a.id} mb={2} sx={{ borderRadius: 2, p: 2, backgroundColor: '#FBFDFF', border: '1px solid #EEF2FF' }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box>
+                      <Typography variant="body1" sx={{ fontWeight: 700 }}>{a.type === 'sentence' ? 'Sentence' : 'Word'}: {a.text}</Typography>
+                      <Typography variant="caption" sx={{ color: '#5B7C99' }}>{new Date(a.createdAt || Date.now()).toLocaleString()}</Typography>
+                    </Box>
+                    <Box textAlign="right">
+                      <Typography variant="body2" sx={{ color: a.status === 'completed' ? '#16A34A' : '#8FA998', fontWeight: 700 }}>
+                        {a.status === 'completed' ? 'Completed' : (a.type === 'sentence' ? (a.latestScore ? `${a.latestScore}%` : 'Active') : 'Active')}
+                      </Typography>
+                      <Box mt={1}>
+                        {a.type === 'sentence' ? (
+                          <Button size="small" variant="outlined" onClick={async () => {
+                            const target = expandedAssignment === a.id ? null : a.id;
+                            setExpandedAssignment(target);
+                            if (target) {
+                              try {
+                                const res = await therapistAPI.getAssignmentAttempts(a.id);
+                                setAttemptsMap(prev => ({ ...prev, [a.id]: res.data || [] }));
+                              } catch (e) {
+                                console.warn('Failed to fetch attempts for assignment', a.id, e);
+                              }
+                            }
+                          }}>{expandedAssignment === a.id ? 'Hide history' : 'View history'}</Button>
+                        ) : null}
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {expandedAssignment === a.id && (
+                    <Box mt={2}>
+                      {(attemptsMap[a.id] || []).length === 0 ? (
+                        <Typography variant="body2" sx={{ color: '#6B7280' }}>No attempts yet.</Typography>
+                      ) : (
+                        (attemptsMap[a.id] || []).map(at => (
+                          <Box key={at.id} display="flex" justifyContent="space-between" alignItems="center" py={1}>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 700 }}>{at.score !== null ? `${at.score}%` : '—'}</Typography>
+                              <Typography variant="caption" sx={{ color: '#6B7280' }}>{new Date(at.timestamp || Date.now()).toLocaleString()}</Typography>
+                            </Box>
+                            <Box sx={{ maxWidth: '60%' }}>
+                              <Typography variant="body2" sx={{ color: '#374151' }}>
+                                Heard: {at.predicted_text || '—'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        ))
+                      )}
+                    </Box>
+                  )}
+                </Box>
+              ))
+          )}
+        </CardContent>
+      </Card>
       <Card sx={{ 
         borderRadius: 3,
         boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
