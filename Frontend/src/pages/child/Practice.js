@@ -375,6 +375,18 @@ export default function Practice() {
     "✨ Tip: Practice the sentence before recording"
   ];
 
+  // Use assigned word items from the therapist if available; otherwise fall back to dummy words
+  const displayWords = (assignedItems || []).filter(a => a.type === 'word' && a.text && a.text.trim().length > 0).map(a => ({
+    id: a.id,
+    text: a.text,
+    // keep optional UI helpers empty (we'll provide fallbacks in JSX)
+    color: a.color || 'text-indigo-500',
+    borderColor: a.borderColor || 'border-indigo-200',
+    bgColor: a.bgColor || 'bg-indigo-50'
+  }));
+
+  const wordsToShow = (displayWords.length > 0) ? displayWords : words;
+
   const handleGenerateReferenceAudio = async (word) => {
     setSelectedWord(word);
     setUserAudioBlob(null);
@@ -957,7 +969,7 @@ export default function Practice() {
                 Choose a Word
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {words.map(word => (
+                {wordsToShow.map(word => (
                   <button
                     key={word.id}
                     onClick={() => handleGenerateReferenceAudio(word)}
