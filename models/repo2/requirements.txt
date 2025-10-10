@@ -1,0 +1,12 @@
+fastapi==0.111.0
+uvicorn[standard]==0.23.2
+soundfile==0.12.1
+requests==2.32.0
+numpy>=1.25,<2.0
+scipy>=1.10,<2.0
+vosk==0.3.45
+librosa>=0.10.0,<0.11.0
+ PyWavelets==1.7.0
+editdistance==0.8.1
+
+
