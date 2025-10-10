@@ -64,6 +64,17 @@ const GamesMenu = () => {
       xp: 100,
       unlockXP: 250
     }
+    ,
+    {
+      id: 'maingame',
+      title: 'Huge Kombat',
+      description: 'Arcade-style combat game built with PixiJS',
+      icon: '🥋',
+      color: '#2ECC71',
+      difficulty: 'Hard',
+      xp: 120,
+      unlockXP: 250
+    }
   ];
 
   // Achievement templates (show locked ones as goals)
