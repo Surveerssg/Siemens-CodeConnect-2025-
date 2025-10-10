@@ -68,6 +68,13 @@ const ChildDashboard = () => {
       action: () => navigate('/practice')
     },
     {
+      title: 'Lip Sync',
+      description: 'Practice speaking with visual lip-sync feedback',
+      icon: <Mic size={40} color="#D26FA6" />,
+      color: '#D26FA6',
+      action: () => navigate('/lipsync')
+    },
+    {
       title: 'Play Games',
       description: 'Have fun while learning!',
       icon: <Gamepad2 size={40} color="#C67B5C" />,
