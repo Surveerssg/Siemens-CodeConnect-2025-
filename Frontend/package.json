@@ -21,6 +21,8 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/face_mesh": "^0.4.1633559619",
     "@mui/material": "^7.3.4",
     "chart.js": "^4.5.0",
     "dotenv": "^17.2.3",

@@ -24,6 +24,7 @@ import ChildProgress from './pages/parent/ChildProgress';
 import AssignGoals from './pages/parent/AssignGoals';
 import ChildDetail from './pages/parent/ChildDetail';
 import Notes from './pages/parent/Notes';
+import LipSyncPage from './pages/child/LipSyncPage';
 
 import TherapistDashboard from './pages/therapist/TherapistDashboard';
 import AssignedChildren from './pages/therapist/AssignedChildren';
@@ -93,6 +94,11 @@ const AppRoutes = () => {
       <Route path="/practice" element={
         <ProtectedRoute allowedRoles={[ROLES.CHILD]}>
           <Practice />
+        </ProtectedRoute>
+      } />
+       <Route path="/lipsync" element={
+        <ProtectedRoute allowedRoles={[ROLES.CHILD]}>
+          <LipSyncPage />
         </ProtectedRoute>
       } />
       
