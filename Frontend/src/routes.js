@@ -17,6 +17,7 @@ import GamesMenu from './pages/child/games/GamesMenu';
 import WordMatch from './pages/child/games/WordMatch';
 import BalloonPop from './pages/child/games/BalloonPop';
 import TreasureHunt from './pages/child/games/TreasureHunt';
+import IframeGame from './pages/child/games/PhaserArena';
 
 import ParentDashboard from './pages/parent/ParentDashboard';
 import ChildProgress from './pages/parent/ChildProgress';
@@ -127,6 +128,12 @@ const AppRoutes = () => {
       <Route path="/games/treasure-hunt" element={
         <ProtectedRoute allowedRoles={[ROLES.CHILD]}>
           <TreasureHunt />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/games/maingame" element={
+        <ProtectedRoute allowedRoles={[ROLES.CHILD]}>
+          <IframeGame />
         </ProtectedRoute>
       } />
       
