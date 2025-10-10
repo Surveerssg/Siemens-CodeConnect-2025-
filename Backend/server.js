@@ -104,7 +104,15 @@ app.get('/', (req, res) => {
     }
   });
 });
+// ✅ Serve frontend build AFTER all APIs
+app.use(express.static(path.join(__dirname, '../Frontend/dist')));
 
+// ✅ React Router fallback
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api'))
+    return res.status(404).json({ error: 'API route not found' });
+  res.sendFile(path.join(__dirname, '../Frontend/dist', 'index.html'));
+});
 // 404 handler
 app.use(notFound);
 
