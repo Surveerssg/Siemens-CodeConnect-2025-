@@ -15,6 +15,54 @@
   myFont.load().then(() => {
     const script = document.createElement('script');
     script.src = 'bundle.js';
+    // After bundle loads, try to patch the game's youWin to notify parent
+    script.onload = () => {
+      try {
+        (function waitForGame() {
+          if (window.game) {
+            try {
+              // Patch youWin to notify parent of a finished game (win)
+              if (typeof window.game.youWin === 'function') {
+                try {
+                  const originalYouWin = window.game.youWin.bind(window.game);
+                  window.game.youWin = function(winner) {
+                    try { originalYouWin(winner); } catch (e) { console.error('youWin original error', e); }
+                    try {
+                      // winner === 0 is player win
+                      const result = (typeof winner !== 'undefined' && Number(winner) === 0) ? 'win' : 'win';
+                      window.parent.postMessage({ type: 'GAME_FINISHED', result, xp: result === 'win' ? 100 : 0 }, '*');
+                      console.log('Posted GAME_FINISHED (win) to parent');
+                    } catch (err) { console.error('Failed to post GAME_FINISHED (win)', err); }
+                  };
+                  console.log('Patched window.game.youWin to post GAME_FINISHED');
+                } catch (err) { console.error('Error patching youWin', err); }
+              }
+
+              // Patch gameOver to notify parent of a finished game (lose)
+              if (typeof window.game.gameOver === 'function') {
+                try {
+                  const originalGameOver = window.game.gameOver.bind(window.game);
+                  window.game.gameOver = function() {
+                    try { originalGameOver(); } catch (e) { console.error('gameOver original error', e); }
+                    try {
+                      window.parent.postMessage({ type: 'GAME_FINISHED', result: 'lose', xp: 0 }, '*');
+                      console.log('Posted GAME_FINISHED (lose) to parent');
+                    } catch (err) { console.error('Failed to post GAME_FINISHED (lose)', err); }
+                  };
+                  console.log('Patched window.game.gameOver to post GAME_FINISHED');
+                } catch (err) { console.error('Error patching gameOver', err); }
+              }
+            } catch (err) {
+              console.error('Error patching game methods', err);
+            }
+          } else {
+            setTimeout(waitForGame, 200);
+          }
+        })();
+      } catch (err) {
+        console.error('Error in bundle onload hook', err);
+      }
+    };
     document.body.appendChild(script);
   });
 </script>
