@@ -584,13 +584,23 @@ const LipSyncPage = () => {
         {activeTab === "practice" && (
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="flex flex-col items-center">
-              <video ref={videoRef} style={{ display: "none" }} width="640" height="480" />
-              <canvas 
-                ref={canvasRef} 
-                width="640" 
-                height="480"
-                className="border-4 border-purple-500 rounded-lg shadow-2xl"
-              />
+              <div className="relative w-[640px] h-[480px]">
+                <video
+                  ref={videoRef}
+                  className="w-full h-full rounded-lg object-cover"
+                  width="640"
+                  height="480"
+                  playsInline
+                  muted
+                  autoPlay
+                />
+                <canvas 
+                  ref={canvasRef} 
+                  width="640" 
+                  height="480"
+                  className="absolute inset-0 w-full h-full border-4 border-purple-500 rounded-lg shadow-2xl pointer-events-none"
+                />
+              </div>
               {isRecording && (
                 <div className="mt-4 bg-red-600 text-white px-6 py-2 rounded-full font-bold animate-pulse">
                   🔴 RECORDING
