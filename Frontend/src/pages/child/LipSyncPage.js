@@ -263,10 +263,91 @@ const LipSyncPage = () => {
   }, [analyzeRecording]);
 
   // Audio Recording Functions
+  const pickSupportedAudioMime = () => {
+    const candidates = [
+      'audio/ogg;codecs=opus',
+      'audio/ogg',
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4',
+      'audio/webm;codecs=opus',
+      'audio/webm'
+    ];
+    for (const type of candidates) {
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    }
+    return '';
+  };
+
+  // Convert an arbitrary audio Blob to WAV using Web Audio API
+  const convertToWav = async (inputBlob) => {
+    const arrayBuffer = await inputBlob.arrayBuffer();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+    const numChannels = audioBuffer.numberOfChannels;
+    const sampleRate = audioBuffer.sampleRate;
+    const length = audioBuffer.length;
+
+    // Interleave channels
+    const interleaved = new Float32Array(length * numChannels);
+    for (let channel = 0; channel < numChannels; channel++) {
+      const channelData = audioBuffer.getChannelData(channel);
+      for (let i = 0; i < length; i++) {
+        interleaved[i * numChannels + channel] = channelData[i];
+      }
+    }
+
+    // PCM16 encoding
+    const bytesPerSample = 2;
+    const blockAlign = numChannels * bytesPerSample;
+    const byteRate = sampleRate * blockAlign;
+    const dataSize = interleaved.length * bytesPerSample;
+    const buffer = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(buffer);
+
+    // RIFF header
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true);
+    writeString(view, 8, 'WAVE');
+
+    // fmt chunk
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
+    view.setUint16(20, 1, true);  // AudioFormat (1 = PCM)
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, 16, true); // BitsPerSample
+
+    // data chunk
+    writeString(view, 36, 'data');
+    view.setUint32(40, dataSize, true);
+
+    // Write PCM samples
+    let offset = 44;
+    for (let i = 0; i < interleaved.length; i++) {
+      const s = Math.max(-1, Math.min(1, interleaved[i]));
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      offset += 2;
+    }
+
+    return new Blob([view], { type: 'audio/wav' });
+
+    function writeString(dataview, offsetPos, string) {
+      for (let i = 0; i < string.length; i++) {
+        dataview.setUint8(offsetPos + i, string.charCodeAt(i));
+      }
+    }
+  };
+
   const startAudioRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const preferredType = pickSupportedAudioMime();
+      const mediaRecorder = preferredType ? new MediaRecorder(stream, { mimeType: preferredType }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -277,7 +358,9 @@ const LipSyncPage = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        // Keep the original recorded type; we'll convert to WAV at upload time if needed
+        const recordedType = mediaRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: recordedType });
         setAudioBlob(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
@@ -309,17 +392,40 @@ const LipSyncPage = () => {
     setCurrentTipIndex(0);
 
     const formData = new FormData();
-    formData.append('audio', audioBlob, 'recording.wav');
-    formData.append('video_choice', 'video1');
+    // Ensure server-supported format. Convert to WAV client-side if needed.
+    let uploadBlob = audioBlob;
+    const supportedServerTypes = ['audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/ogg', 'audio/m4a', 'audio/aac', 'audio/wma', 'audio/flac', 'audio/mp4'];
+    const typeLower = (audioBlob.type || '').toLowerCase();
+    const isSupported = supportedServerTypes.some(t => typeLower.includes(t.split('/')[1]) || typeLower === t);
+    if (!isSupported) {
+      try {
+        uploadBlob = await convertToWav(audioBlob);
+      } catch (e) {
+        console.error('Failed to convert audio to WAV:', e);
+      }
+    }
+
+    const finalType = uploadBlob.type || 'audio/wav';
+    const finalExt = finalType.includes('wav') ? 'wav' : finalType.includes('mp3') || finalType.includes('mpeg') ? 'mp3' : finalType.includes('ogg') ? 'ogg' : finalType.includes('m4a') ? 'm4a' : finalType.includes('aac') ? 'aac' : finalType.includes('wma') ? 'wma' : finalType.includes('flac') ? 'flac' : finalType.includes('mp4') ? 'mp4' : 'wav';
+    const audioFile = new File([uploadBlob], `recording.${finalExt}`, { type: finalType });
+    formData.append('audio', audioFile);
 
     try {
-      const response = await fetch('https://lipsync-lnjz.onrender.com/generate-lipsync/', {
+      const response = await fetch('https://lipsync-lnjz.onrender.com/generate-lipsync/?video_choice=video1', {
         method: 'POST',
         body: formData
       });
 
       if (!response.ok) {
-        throw new Error('Generation failed');
+        // Try to surface error details from FastAPI (e.g., 422 validation errors)
+        let message = 'Generation failed';
+        try {
+          const err = await response.json();
+          if (err?.detail) {
+            message = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+          }
+        } catch (_) {}
+        throw new Error(message);
       }
 
       const data = await response.json();
@@ -327,7 +433,7 @@ const LipSyncPage = () => {
       setShowWaitingModal(false);
     } catch (error) {
       console.error("Error generating lip sync:", error);
-      setGenerationError("Failed to generate video. Please try again.");
+      setGenerationError(error?.message || "Failed to generate video. Please try again.");
       setShowWaitingModal(false);
     } finally {
       setIsGenerating(false);
