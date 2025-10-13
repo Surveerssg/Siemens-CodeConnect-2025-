@@ -2,26 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { progressAPI, gamesAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  Container, 
-  Typography, 
-  Box, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  LinearProgress
-} from '@mui/material';
-import { 
-  ArrowLeft, 
-  TrendingUp, 
-  Calendar,
-  Award
-} from 'lucide-react';
+import { ArrowLeft, TrendingUp, Calendar, Award, Trophy, Flame, Sparkles } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const Progress = () => {
@@ -86,128 +67,204 @@ const Progress = () => {
   const levelProgress = (totalXP % 1000) / 10;
   const selectedChildData = user ? { label: user.displayName || user.email || user.uid } : null;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-bounce">📈</div>
+          <p className="text-2xl font-bold text-gray-700">Loading your progress...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
-        <Box display="flex" alignItems="center" mb={4}>
-          <Button
-            startIcon={<ArrowLeft size={20} />}
-            onClick={() => navigate('/parent')}
-            sx={{ color: '#5B7C99', mr: 2, textTransform: 'none', fontWeight: 600 }}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
           >
-            Back to Dashboard
-          </Button>
-          <Typography variant="h4" sx={{ color: '#3A3D42', fontWeight: 'bold' }}>
-            Progress Tracking 📈
-          </Typography>
-        </Box>
+            <ArrowLeft size={20} />
+            <span>Back to Dashboard</span>
+          </button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800">
+              Progress Tracking
+            </h1>
+            <span className="text-4xl sm:text-5xl animate-bounce">📈</span>
+          </div>
+        </div>
 
-        {/* Child Selector */}
-          {/* No selector for child page — show current user's data */}
-
-        {loading ? (
-          <Box textAlign="center" py={4}>
-            <Typography>Loading progress data...</Typography>
-          </Box>
-        ) : (
-          <>
-            {/* Level Progress Card */}
-            {selectedChildData && (
-              <Card sx={{ mb: 4 }}>
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={3}>
-                    <Box sx={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: '#5B7C99', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2rem', fontWeight: 'bold' }}>
-                      {selectedChildData.label.charAt(0).toUpperCase()}
-                    </Box>
-                    <Box flexGrow={1}>
-                      <Typography variant="h5">{selectedChildData.label}</Typography>
-                      <Typography variant="h6">Level {currentLevel} • {totalXP} XP Total</Typography>
-                      <LinearProgress variant="determinate" value={levelProgress} sx={{ height: 8, borderRadius: 4 }} />
-                      <Typography variant="body2">{1000 - (totalXP % 1000)} XP to Level {currentLevel + 1}</Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Stats Cards */}
-            <Grid container spacing={3} mb={4}>
-              <Grid item xs={12} md={4}>
-                <Card sx={{ textAlign: 'center', p: 3 }}>
-                  <TrendingUp size={32} color="#8FA998" style={{ margin: '0 auto 12px' }} />
-                  <Typography variant="h6" gutterBottom>Average Score</Typography>
-                  <Typography variant="h2">{avgScore}</Typography>
-                  <Typography variant="body2">Per session</Typography>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Card sx={{ textAlign: 'center', p: 3 }}>
-                  <Award size={32} color="#C67B5C" style={{ margin: '0 auto 12px' }} />
-                  <Typography variant="h6" gutterBottom>Best Score</Typography>
-                  <Typography variant="h2">{bestScore}</Typography>
-                  <Typography variant="body2">Highest achievement</Typography>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Card sx={{ textAlign: 'center', p: 3 }}>
-                  <Calendar size={32} color="#5B7C99" style={{ margin: '0 auto 12px' }} />
-                  <Typography variant="h6" gutterBottom>Practice Days</Typography>
-                  <Typography variant="h2">{practiceDays}</Typography>
-                  <Typography variant="body2">This month</Typography>
-                </Card>
-              </Grid>
-            </Grid>
-
-            {/* Charts Section */}
-            <Grid container spacing={3} mb={4}>
-              <Grid item xs={12} md={8}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom>Weekly Progress</Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={weeklyProgressData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="day" />
-                        <YAxis />
-                        <Tooltip />
-                        <Line type="monotone" dataKey="score" stroke="#8FA998" strokeWidth={3} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h5" gutterBottom>Activity Distribution</Typography>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={activityDistribution}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {activityDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </>
+        {/* Level Progress Card */}
+        {selectedChildData && (
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg mb-8 border border-gray-100 hover:shadow-xl transition-all duration-300">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl sm:text-5xl font-bold shadow-lg">
+                {selectedChildData.label.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-grow text-center sm:text-left w-full">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+                  {selectedChildData.label}
+                </h2>
+                <p className="text-xl sm:text-2xl font-bold text-blue-600 mb-3">
+                  Level {currentLevel} • {totalXP} XP Total
+                </p>
+                <div className="w-full bg-gray-200 rounded-full h-4 sm:h-5 overflow-hidden mb-2">
+                  <div 
+                    className="bg-gradient-to-r from-green-400 to-green-500 h-full rounded-full transition-all duration-500"
+                    style={{ width: `${levelProgress}%` }}
+                  />
+                </div>
+                <p className="text-sm sm:text-base font-semibold text-gray-600">
+                  {1000 - (totalXP % 1000)} XP to Level {currentLevel + 1}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
-      </Container>
-    </Box>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
+          {/* Average Score Card */}
+          <div className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">📊</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <TrendingUp size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Average Score</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {avgScore}
+              </p>
+              <div className="pt-4 border-t-2 border-white/30">
+                <p className="text-sm sm:text-base font-semibold">
+                  Per session 🎯
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Best Score Card */}
+          <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🏆</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Award size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Best Score</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {bestScore}
+              </p>
+              <div className="pt-4 border-t-2 border-white/30">
+                <p className="text-sm sm:text-base font-semibold">
+                  Highest achievement ⭐
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Practice Days Card */}
+          <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">📅</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Calendar size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Practice Days</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {practiceDays}
+              </p>
+              <div className="pt-4 border-t-2 border-white/30">
+                <p className="text-sm sm:text-base font-semibold">
+                  This month 🔥
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          {/* Weekly Progress Chart */}
+          <div className="lg:col-span-2 bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              Weekly Progress
+              <Sparkles className="text-yellow-500 w-6 h-6 sm:w-7 sm:h-7" />
+            </h2>
+            
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={weeklyProgressData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="day" 
+                  stroke="#6b7280"
+                  style={{ fontSize: '14px', fontWeight: '600' }}
+                />
+                <YAxis 
+                  stroke="#6b7280"
+                  style={{ fontSize: '14px', fontWeight: '600' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '2px solid #3b82f6',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#3b82f6" 
+                  strokeWidth={3}
+                  dot={{ fill: '#3b82f6', r: 5 }}
+                  activeDot={{ r: 7 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Activity Distribution */}
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">
+              Activity Distribution
+            </h2>
+            
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={activityDistribution}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelStyle={{ fontSize: '12px', fontWeight: '600' }}
+                >
+                  {activityDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '2px solid #3b82f6',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
