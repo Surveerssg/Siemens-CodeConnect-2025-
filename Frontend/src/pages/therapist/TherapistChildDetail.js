@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { therapistAPI, goalsAPI } from '../../services/api';
+import { motion } from 'framer-motion';
 import { 
-  Container, Typography, Box, Grid, Card, CardContent, Button, LinearProgress, CardActions 
-} from '@mui/material';
-import { ArrowLeft, TrendingUp, Target, Award, Play, Calendar, Star, Users } from 'lucide-react';
+  ArrowLeft, TrendingUp, Target, Award, Calendar, Star, Sparkles, Trophy, Flame
+} from 'lucide-react';
 
 const TherapistChildDetail = () => {
   const { childId } = useParams();
@@ -43,36 +43,35 @@ const TherapistChildDetail = () => {
     { activity: 'Practiced consonant blends', time: '3 days ago', score: 78, type: 'practice' }
   ];
 
-  const progressData = [
-    { day: 'Mon', score: 75, words: 12 },
-    { day: 'Tue', score: 82, words: 15 },
-    { day: 'Wed', score: 68, words: 10 },
-    { day: 'Thu', score: 91, words: 18 },
-    { day: 'Fri', score: 88, words: 16 },
-    { day: 'Sat', score: 95, words: 20 },
-    { day: 'Sun', score: 78, words: 14 }
-  ];
-
   const quickActions = [
     { 
       title: 'View Progress', 
       description: 'See detailed progress reports', 
-      icon: <TrendingUp size={32} color="#5B7C99" />, 
-      color: '#5B7C99', 
+      icon: TrendingUp, 
+      color: 'from-blue-400 to-blue-600',
+      hoverColor: 'hover:shadow-blue-200',
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
       action: () => navigate('/therapist/analytics') 
     },
     { 
       title: 'Set Goals', 
       description: 'Assign practice goals', 
-      icon: <Target size={32} color="#8FA998" />, 
-      color: '#8FA998', 
+      icon: Target, 
+      color: 'from-green-400 to-green-600',
+      hoverColor: 'hover:shadow-green-200',
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600',
       action: () => navigate('/therapist/goals') 
     },
     { 
       title: 'Add Notes', 
       description: 'Record observations', 
-      icon: <Award size={32} color="#C67B5C" />, 
-      color: '#C67B5C', 
+      icon: Award, 
+      color: 'from-orange-400 to-orange-600',
+      hoverColor: 'hover:shadow-orange-200',
+      iconBg: 'bg-orange-100',
+      iconColor: 'text-orange-600',
       action: () => navigate('/therapist/notes') 
     }
   ];
@@ -85,444 +84,320 @@ const TherapistChildDetail = () => {
   const currentLevel = Math.floor(totalXP / 1000) + 1;
   const levelProgress = (totalXP % 1000) / 10;
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100
+      }
+    }
+  };
+
   return (
-   <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
-  <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box display="flex" alignItems="center" mb={4}>
-        <Button 
-          startIcon={<ArrowLeft size={20} />} 
-          onClick={() => navigate('/therapist')} 
-          sx={{ 
-            color: '#5B7C99', 
-            mr: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-            '&:hover': {
-              backgroundColor: '#E8E6E1'
-            }
-          }}
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-4 mb-8"
         >
-          Back to Dashboard
-        </Button>
-        <Typography variant="h4" sx={{ 
-          color: '#3A3D42', 
-          fontWeight: 'bold',
-          fontFamily: '"Outfit", "Inter", sans-serif'
-        }}>
-          Child Overview
-        </Typography>
-      </Box>
+          <button
+            onClick={() => navigate('/therapist')}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
+          >
+            <ArrowLeft size={20} />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+          </button>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 flex items-center gap-3">
+            Child Overview
+            <Sparkles className="text-yellow-500 w-7 h-7" />
+          </h1>
+        </motion.div>
 
-      {/* Stats Overview */}
-      <Typography variant="h5" gutterBottom sx={{ 
-        color: '#3A3D42', 
-        fontWeight: 'bold', 
-        mb: 3,
-        fontFamily: '"Outfit", "Inter", sans-serif'
-      }}>
-        Weekly Progress Overview
-      </Typography>
-      
-      <Grid container spacing={3} mb={4}>
-        {/* Level Progress Card */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ 
-            borderRadius: 3,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-            backgroundColor: 'white',
-            border: '1px solid #E8E6E1',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-            }
-          }}>
-            <CardContent sx={{ p: 3, textAlign: 'center' }}>
-              <Box sx={{ 
-                width: 80, 
-                height: 80, 
-                mx: 'auto', 
-                mb: 2, 
-                backgroundColor: '#5B7C99', 
-                borderRadius: '50%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '2rem',
-                fontWeight: 'bold'
-              }}>
-                {currentLevel}
-              </Box>
-              <Typography variant="h6" sx={{ 
-                color: '#5B7C99',
-                fontFamily: '"Outfit", "Inter", sans-serif',
-                fontWeight: 600,
-                mb: 1
-              }}>
-                Level {currentLevel}
-              </Typography>
-              <Typography variant="body2" sx={{
-                color: '#5B7C99',
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                mb: 2
-              }}>
-                {totalXP} XP Total
-              </Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={levelProgress} 
-                sx={{ 
-                  height: 8, 
-                  borderRadius: 4, 
-                  backgroundColor: '#E8E6E1',
-                  '& .MuiLinearProgress-bar': { 
-                    backgroundColor: '#8FA998',
-                    borderRadius: 4
-                  }
-                }} 
-              />
-              <Typography variant="body2" sx={{ 
-                mt: 1, 
-                color: '#5B7C99',
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                fontWeight: 600
-              }}>
-                {1000 - (totalXP % 1000)} XP to next level
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Stats Cards */}
-        <Grid item xs={12} md={8}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
-              <Card sx={{ 
-                p: 2,
-                borderRadius: 3,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                backgroundColor: 'white',
-                border: '1px solid #E8E6E1',
-                textAlign: 'center',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <TrendingUp size={24} color="#8FA998" style={{ margin: '0 auto 8px' }} />
-                <Typography variant="body2" sx={{
-                  color: '#8FA998',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  Average Score
-                </Typography>
-                <Typography variant="h4" sx={{ 
-                  color: '#8FA998',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 'bold'
-                }}>
-                  {avgScore}
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card sx={{ 
-                p: 2,
-                borderRadius: 3,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                backgroundColor: 'white',
-                border: '1px solid #E8E6E1',
-                textAlign: 'center',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <Star size={24} color="#C67B5C" style={{ margin: '0 auto 8px' }} />
-                <Typography variant="body2" sx={{
-                  color: '#C67B5C',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  Best Score
-                </Typography>
-                <Typography variant="h4" sx={{ 
-                  color: '#C67B5C',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 'bold'
-                }}>
-                  {bestScore}
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card sx={{ 
-                p: 2,
-                borderRadius: 3,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                backgroundColor: 'white',
-                border: '1px solid #E8E6E1',
-                textAlign: 'center',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <Calendar size={24} color="#5B7C99" style={{ margin: '0 auto 8px' }} />
-                <Typography variant="body2" sx={{
-                  color: '#5B7C99',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  Practice Days
-                </Typography>
-                <Typography variant="h4" sx={{ 
-                  color: '#5B7C99',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 'bold'
-                }}>
-                  {practiceDays}
-                </Typography>
-              </Card>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
-
-      {/* Quick Actions */}
-      <Typography variant="h5" gutterBottom sx={{ 
-        color: '#3A3D42', 
-        fontWeight: 'bold', 
-        mb: 3,
-        fontFamily: '"Outfit", "Inter", sans-serif'
-      }}>
-        Quick Actions
-      </Typography>
-      <Grid container spacing={3} mb={4}>
-        {quickActions.map((action, index) => (
-          <Grid item xs={12} md={4} key={index}>
-            <Card 
-              onClick={action.action} 
-              sx={{ 
-                cursor: 'pointer', 
-                borderRadius: 3,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                backgroundColor: 'white',
-                border: '1px solid #E8E6E1',
-                transition: 'all 0.3s ease',
-                '&:hover': { 
-                  transform: 'translateY(-6px)', 
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-                }
-              }}
-            >
-              <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                <Box sx={{ 
-                  width: 60, 
-                  height: 60, 
-                  mx: 'auto', 
-                  mb: 2, 
-                  backgroundColor: '#FAF8F5', 
-                  borderRadius: 3, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  border: `2px solid ${action.color}20`,
-                  transition: 'transform 0.3s ease', 
-                  '&:hover': { 
-                    transform: 'scale(1.1)',
-                    backgroundColor: `${action.color}10`
-                  } 
-                }}>
-                  {action.icon}
-                </Box>
-                <Typography variant="h6" sx={{ 
-                  color: '#3A3D42',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  {action.title}
-                </Typography>
-                <Typography variant="body2" sx={{
-                  color: '#5B7C99',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                }}>
-                  {action.description}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Recent Activities */}
-      <Typography variant="h5" gutterBottom sx={{ 
-        color: '#3A3D42', 
-        fontWeight: 'bold', 
-        mb: 3,
-        fontFamily: '"Outfit", "Inter", sans-serif'
-      }}>
-        Recent Activities
-      </Typography>
-      {/* Assigned Practice Items */}
-      <Typography variant="h6" gutterBottom sx={{ color: '#3A3D42', fontWeight: 700, mb: 2 }}>
-        Assigned Practice Items ({assignments.length})
-      </Typography>
-        <Card sx={{ mb: 3, borderRadius: 2, p: 2, backgroundColor: 'white', border: '1px solid #E8E6E1' }}>
-        <CardContent>
-          {assignments.length === 0 ? (
-            <Typography variant="body2" sx={{ color: '#5B7C99' }}>No practice items assigned yet.</Typography>
-          ) : (
-              assignments.slice(0,6).map(a => (
-                <Box key={a.id} mb={2} sx={{ borderRadius: 2, p: 2, backgroundColor: '#FBFDFF', border: '1px solid #EEF2FF' }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Box>
-                      <Typography variant="body1" sx={{ fontWeight: 700 }}>{a.type === 'sentence' ? 'Sentence' : 'Word'}: {a.text}</Typography>
-                      <Typography variant="caption" sx={{ color: '#5B7C99' }}>{new Date(a.createdAt || Date.now()).toLocaleString()}</Typography>
-                    </Box>
-                    <Box textAlign="right">
-                      <Typography variant="body2" sx={{ color: a.status === 'completed' ? '#16A34A' : '#8FA998', fontWeight: 700 }}>
-                        {a.status === 'completed' ? 'Completed' : (a.type === 'sentence' ? (a.latestScore ? `${a.latestScore}%` : 'Active') : 'Active')}
-                      </Typography>
-                      <Box mt={1}>
-                        {a.type === 'sentence' ? (
-                          <Button size="small" variant="outlined" onClick={async () => {
-                            const target = expandedAssignment === a.id ? null : a.id;
-                            setExpandedAssignment(target);
-                            if (target) {
-                              try {
-                                const res = await therapistAPI.getAssignmentAttempts(a.id);
-                                setAttemptsMap(prev => ({ ...prev, [a.id]: res.data || [] }));
-                              } catch (e) {
-                                console.warn('Failed to fetch attempts for assignment', a.id, e);
-                              }
-                            }
-                          }}>{expandedAssignment === a.id ? 'Hide history' : 'View history'}</Button>
-                        ) : null}
-                      </Box>
-                    </Box>
-                  </Box>
-
-                  {expandedAssignment === a.id && (
-                    <Box mt={2}>
-                      {(attemptsMap[a.id] || []).length === 0 ? (
-                        <Typography variant="body2" sx={{ color: '#6B7280' }}>No attempts yet.</Typography>
-                      ) : (
-                        (attemptsMap[a.id] || []).map(at => (
-                          <Box key={at.id} display="flex" justifyContent="space-between" alignItems="center" py={1}>
-                            <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 700 }}>{at.score !== null ? `${at.score}%` : '—'}</Typography>
-                              <Typography variant="caption" sx={{ color: '#6B7280' }}>{new Date(at.timestamp || Date.now()).toLocaleString()}</Typography>
-                            </Box>
-                            <Box sx={{ maxWidth: '60%' }}>
-                              <Typography variant="body2" sx={{ color: '#374151' }}>
-                                Heard: {at.predicted_text || '—'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        ))
-                      )}
-                    </Box>
+        {/* Stats Overview */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="mb-8"
+        >
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            Weekly Progress Overview
+            <Trophy className="text-purple-500 w-7 h-7" />
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Level Card */}
+            <motion.div variants={itemVariants} className="md:col-span-1">
+              <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-blue-100">
+                <div className="text-center">
+                  <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-5xl shadow-lg">
+                    👶
+                  </div>
+                  {loading ? (
+                    <p className="text-3xl font-bold text-gray-400">Loading...</p>
+                  ) : (
+                    <>
+                      <h3 className="text-4xl font-bold text-blue-600 mb-2">
+                        Level {currentLevel}
+                      </h3>
+                      <p className="text-lg font-semibold text-gray-700 mb-4">
+                        {totalXP} XP Total
+                      </p>
+                      <div className="w-full bg-gray-200 rounded-full h-3 mb-3 overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${levelProgress}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className="bg-gradient-to-r from-green-400 to-green-500 h-full rounded-full"
+                        />
+                      </div>
+                      <p className="text-sm font-medium text-gray-600">
+                        {1000 - (totalXP % 1000)} XP to next level
+                      </p>
+                    </>
                   )}
-                </Box>
-              ))
-          )}
-        </CardContent>
-      </Card>
-      <Card sx={{ 
-        borderRadius: 3,
-        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-        backgroundColor: 'white',
-        border: '1px solid #E8E6E1'
-      }}>
-        <CardContent sx={{ p: 3 }}>
-          {recentActivities.length === 0 ? (
-            <Typography variant="body2" sx={{
-              color: '#5B7C99',
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-              textAlign: 'center',
-              py: 2
-            }}>
-              No recent activities yet.
-            </Typography>
-          ) : (
-            <Box>
-              {recentActivities.map((activity, index) => (
-                <Box 
-                  key={index}
-                  display="flex" 
-                  alignItems="center" 
-                  justifyContent="space-between"
-                  p={2}
-                  mb={1}
-                  sx={{ 
-                    backgroundColor: '#FAF8F5',
-                    borderRadius: 2,
-                    border: '1px solid #E8E6E1',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      backgroundColor: '#F5F5F5',
-                      transform: 'translateX(4px)'
-                    }
-                  }}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Stats Cards */}
+            <motion.div variants={itemVariants} className="md:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-gradient-to-br from-green-400 to-teal-500 rounded-3xl p-6 shadow-lg text-white relative overflow-hidden"
                 >
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Box sx={{ 
-                      width: 40, 
-                      height: 40, 
-                      borderRadius: '50%', 
-                      backgroundColor: activity.type === 'achievement' ? '#E8F5E8' : 
-                                     activity.type === 'game' ? '#E8F0F8' : '#FFE8E8',
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      fontSize: '1.2rem'
-                    }}>
-                      {activity.type === 'achievement' ? '⭐' : activity.type === 'game' ? '🎮' : '📝'}
-                    </Box>
-                    <Box>
-                      <Typography variant="h6" sx={{ 
-                        color: '#3A3D42',
-                        fontFamily: '"Outfit", "Inter", sans-serif',
-                        fontWeight: 600,
-                        fontSize: '1rem'
-                      }}>
-                        {activity.activity}
-                      </Typography>
-                      <Typography variant="body2" sx={{
-                        color: '#5B7C99',
-                        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                      }}>
-                        {activity.time}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Typography variant="h6" sx={{ 
-                    color: '#8FA998',
-                    fontFamily: '"Outfit", "Inter", sans-serif',
-                    fontWeight: 600
-                  }}>
-                    {activity.score}%
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          )}
-        </CardContent>
-      </Card>
-    </Container>
-    </Box>
+                  <div className="absolute top-0 right-0 text-8xl opacity-10 -mt-4 -mr-4">📊</div>
+                  <div className="relative">
+                    <TrendingUp className="w-8 h-8 mb-2" />
+                    <p className="text-sm font-semibold mb-1 opacity-90">Average Score</p>
+                    <p className="text-4xl font-black">{avgScore}</p>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-6 shadow-lg text-white relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 text-8xl opacity-10 -mt-4 -mr-4">⭐</div>
+                  <div className="relative">
+                    <Star className="w-8 h-8 mb-2" />
+                    <p className="text-sm font-semibold mb-1 opacity-90">Best Score</p>
+                    <p className="text-4xl font-black">{bestScore}</p>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-gradient-to-br from-purple-400 to-purple-600 rounded-3xl p-6 shadow-lg text-white relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 text-8xl opacity-10 -mt-4 -mr-4">📅</div>
+                  <div className="relative">
+                    <Calendar className="w-8 h-8 mb-2" />
+                    <p className="text-sm font-semibold mb-1 opacity-90">Practice Days</p>
+                    <p className="text-4xl font-black">{practiceDays}</p>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="mb-8"
+        >
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            Quick Actions
+            <Target className="text-green-500 w-7 h-7" />
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {quickActions.map((action, index) => (
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                whileHover={{ scale: 1.05, y: -8 }}
+                onClick={action.action}
+                className={`group bg-white rounded-3xl p-6 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer ${action.hoverColor} border border-gray-100`}
+              >
+                <div className={`w-16 h-16 mx-auto mb-4 ${action.iconBg} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                  <action.icon className={`${action.iconColor} w-8 h-8`} />
+                </div>
+                <h3 className="text-lg font-bold text-gray-800 mb-2 text-center">
+                  {action.title}
+                </h3>
+                <p className="text-sm text-gray-600 text-center">
+                  {action.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Assigned Practice Items */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mb-8"
+        >
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            Assigned Practice Items ({assignments.length})
+            <Award className="text-blue-500 w-7 h-7" />
+          </h2>
+          <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
+            {assignments.length === 0 ? (
+              <p className="text-gray-600 text-center py-8">No practice items assigned yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {assignments.slice(0, 6).map((a, idx) => (
+                  <motion.div
+                    key={a.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-100"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-lg font-bold text-gray-800">
+                          {a.type === 'sentence' ? 'Sentence' : 'Word'}: {a.text}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {new Date(a.createdAt || Date.now()).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-sm font-bold ${
+                          a.status === 'completed' ? 'text-green-600' : 'text-blue-600'
+                        }`}>
+                          {a.status === 'completed' ? 'Completed ✓' : (a.type === 'sentence' ? (a.latestScore ? `${a.latestScore}%` : 'Active') : 'Active')}
+                        </p>
+                        {a.type === 'sentence' && (
+                          <button
+                            onClick={async () => {
+                              const target = expandedAssignment === a.id ? null : a.id;
+                              setExpandedAssignment(target);
+                              if (target) {
+                                try {
+                                  const res = await therapistAPI.getAssignmentAttempts(a.id);
+                                  setAttemptsMap(prev => ({ ...prev, [a.id]: res.data || [] }));
+                                } catch (e) {
+                                  console.warn('Failed to fetch attempts for assignment', a.id, e);
+                                }
+                              }
+                            }}
+                            className="mt-2 px-4 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors"
+                          >
+                            {expandedAssignment === a.id ? 'Hide history' : 'View history'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {expandedAssignment === a.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        className="mt-4 pt-4 border-t border-blue-200"
+                      >
+                        {(attemptsMap[a.id] || []).length === 0 ? (
+                          <p className="text-gray-600 text-sm">No attempts yet.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {(attemptsMap[a.id] || []).map(at => (
+                              <div key={at.id} className="flex justify-between items-center py-2 px-3 bg-white rounded-lg">
+                                <div>
+                                  <p className="text-sm font-bold text-gray-800">
+                                    {at.score !== null ? `${at.score}%` : '—'}
+                                  </p>
+                                  <p className="text-xs text-gray-600">
+                                    {new Date(at.timestamp || Date.now()).toLocaleString()}
+                                  </p>
+                                </div>
+                                <div className="max-w-[60%]">
+                                  <p className="text-sm text-gray-700">
+                                    Heard: {at.predicted_text || '—'}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Recent Activities */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            Recent Activities
+            <Flame className="text-orange-500 w-7 h-7" />
+          </h2>
+          <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
+            {recentActivities.length === 0 ? (
+              <p className="text-gray-600 text-center py-8">No recent activities yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {recentActivities.map((activity, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ x: 8, scale: 1.02 }}
+                    className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
+                        activity.type === 'achievement' ? 'bg-yellow-100' :
+                        activity.type === 'game' ? 'bg-blue-100' : 'bg-green-100'
+                      }`}>
+                        {activity.type === 'achievement' ? '⭐' : activity.type === 'game' ? '🎮' : '📝'}
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-gray-800">{activity.activity}</p>
+                        <p className="text-sm text-gray-600">{activity.time}</p>
+                      </div>
+                    </div>
+                    <div className="text-2xl font-black text-green-600">
+                      {activity.score}%
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 };
 
