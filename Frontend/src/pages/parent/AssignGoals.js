@@ -2,24 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { parentGoalsAPI, parentAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  Container, 
-  Typography, 
-  Box, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  LinearProgress,
-  Divider,
-  Alert
-} from '@mui/material';
+import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
   Plus,
@@ -27,8 +10,9 @@ import {
   User,
   Target,
   Award,
-  TrendingUp,
-  Star
+  Trash2,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
 
 const AssignGoals = () => {
@@ -52,13 +36,10 @@ const AssignGoals = () => {
     const loadChildrenAndGoals = async () => {
       try {
         setLoading(true);
-        // Load children
         const childrenRes = await parentAPI.listChildren();
         setChildren(childrenRes.data || []);
 
-        // Load existing parent goals
         const goalsRes = await parentGoalsAPI.list();
-        // Normalize to ensure assignedStatus fields exist (therapist UI does this)
         const normalized = (goalsRes.data || []).map(g => ({
           ...g,
           assignedStatus: g.assignedStatus || null,
@@ -104,7 +85,6 @@ const AssignGoals = () => {
 
       const res = await parentGoalsAPI.create(payload);
       
-      // Add to local state
       const createdGoal = { 
         id: res.data.parentGoalId, 
         ...payload,
@@ -114,7 +94,6 @@ const AssignGoals = () => {
       
       setParentGoals(prev => [createdGoal, ...prev]);
       
-      // Reset form
       setNewGoal({
         title: '',
         description: '',
@@ -125,7 +104,6 @@ const AssignGoals = () => {
       
       setMessage({ type: 'success', text: 'Goal assigned successfully!' });
       
-      // Clear message after 3 seconds
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     } catch (e) {
       console.error('Failed to assign goal:', e);
@@ -165,521 +143,324 @@ const AssignGoals = () => {
   };
 
   const getDisplayedStatus = (goal) => {
-    // If an assigned status exists for the child, prefer it (completed/active)
     if (goal.assignedStatus) return goal.assignedStatus;
     return goal.status || 'active';
   };
 
-  return (
-    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Header */}
-        <Box display="flex" alignItems="center" mb={4}>
-          <Button
-            startIcon={<ArrowLeft size={20} />}
-            onClick={() => navigate('/parent')}
-            sx={{ 
-              color: '#5B7C99', 
-              mr: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-              '&:hover': {
-                backgroundColor: '#E8E6E1'
-              }
-            }}
-          >
-            Back to Dashboard
-          </Button>
-          <Typography variant="h4" sx={{ 
-            color: '#3A3D42', 
-            fontWeight: 'bold',
-            fontFamily: '"Outfit", "Inter", sans-serif'
-          }}>
-            Assign Goals to Children 🎯
-          </Typography>
-        </Box>
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
 
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-[Arial,sans-serif]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
+        >
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/parent')}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
+            >
+              <ArrowLeft size={20} />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
+              Assign Goals to Children
+            </h1>
+          </div>
+        </motion.div>
+
+        {/* Alert Message */}
         {message.text && (
-          <Alert severity={message.type} sx={{ 
-            mb: 3,
-            borderRadius: 2,
-            fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-          }}>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`mb-6 p-4 rounded-xl border ${
+              message.type === 'success' 
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                : 'bg-red-50 border-red-200 text-red-800'
+            }`}
+          >
             {message.text}
-          </Alert>
+          </motion.div>
         )}
 
-        {/* Create New Goal */}
-        <Card sx={{ 
-          mb: 4,
-          borderRadius: 3,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-          backgroundColor: 'white',
-          border: '1px solid #E8E6E1'
-        }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h5" sx={{ 
-              mb: 3, 
-              color: '#3A3D42',
-              fontFamily: '"Outfit", "Inter", sans-serif',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
-              <Plus size={24} style={{ marginRight: 12 }} />
-              Create New Goal
-            </Typography>
-            
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel sx={{
-                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                    color: '#5B7C99'
-                  }}>
-                    Select Child *
-                  </InputLabel>
-                  <Select 
-                    value={newGoal.children_email} 
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* Create New Goal Card */}
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 mb-8"
+          >
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <Plus className="text-white w-7 h-7" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">Create New Goal</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              {/* Select Child */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Select Child *
+                </label>
+                <div className="relative">
+                  <select
+                    value={newGoal.children_email}
                     onChange={(e) => handleInputChange('children_email', e.target.value)}
-                    label="Select Child *"
-                    sx={{
-                      borderRadius: 2,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#E8E6E1',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#5B7C99',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#5B7C99',
-                      },
-                    }}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors text-base font-medium appearance-none bg-white"
                   >
+                    <option value="">Choose a child...</option>
                     {childOptions.map(opt => (
-                      <MenuItem 
-                        key={opt.value} 
-                        value={opt.value}
-                        sx={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif' }}
-                      >
-                        <Box display="flex" alignItems="center">
-                          <User size={16} style={{ marginRight: 8, color: '#5B7C99' }} />
-                          {opt.label}
-                        </Box>
-                      </MenuItem>
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
                     ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField 
-                  fullWidth 
-                  label="Goal Title *" 
-                  value={newGoal.title} 
+                  </select>
+                  <User className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+                </div>
+              </div>
+
+              {/* Goal Title */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Goal Title *
+                </label>
+                <input
+                  type="text"
+                  value={newGoal.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '& fieldset': {
-                        borderColor: '#E8E6E1',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      color: '#5B7C99',
-                    }
-                  }}
+                  placeholder="Enter goal title"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors text-base"
                 />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField 
-                  fullWidth 
-                  label="Description" 
-                  multiline
-                  rows={2}
-                  value={newGoal.description} 
+              </div>
+
+              {/* Description */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={newGoal.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '& fieldset': {
-                        borderColor: '#E8E6E1',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      color: '#5B7C99',
-                    }
-                  }}
+                  placeholder="Enter goal description"
+                  rows={3}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors text-base resize-none"
                 />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <TextField 
-                  fullWidth 
-                  type="number" 
-                  label="Target Value *" 
-                  value={newGoal.target} 
+              </div>
+
+              {/* Target Value */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Target Value *
+                </label>
+                <input
+                  type="number"
+                  value={newGoal.target}
                   onChange={(e) => handleInputChange('target', e.target.value)}
-                  InputProps={{ inputProps: { min: 1 } }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '& fieldset': {
-                        borderColor: '#E8E6E1',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      color: '#5B7C99',
-                    }
-                  }}
+                  min="1"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors text-base"
                 />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <TextField 
-                  fullWidth 
-                  type="number" 
-                  label="XP Reward" 
-                  value={newGoal.xp_reward} 
+              </div>
+
+              {/* XP Reward */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  XP Reward
+                </label>
+                <input
+                  type="number"
+                  value={newGoal.xp_reward}
                   onChange={(e) => handleInputChange('xp_reward', e.target.value)}
-                  InputProps={{ inputProps: { min: 0 } }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '& fieldset': {
-                        borderColor: '#E8E6E1',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      color: '#5B7C99',
-                    }
-                  }}
+                  min="0"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors text-base"
                 />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <Button 
-                  variant="contained" 
-                  onClick={handleAssignGoal} 
+              </div>
+
+              {/* Assign Button */}
+              <div className="md:col-span-2">
+                <button
+                  onClick={handleAssignGoal}
                   disabled={!newGoal.children_email || !newGoal.title || !newGoal.target}
-                  sx={{ 
-                    height: '56px', 
-                    width: '100%',
-                    backgroundColor: '#8FA998',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                    borderRadius: 2,
-                    '&:hover': {
-                      backgroundColor: '#7D9786',
-                      boxShadow: '0 4px 12px rgba(143, 169, 152, 0.3)'
-                    },
-                    '&:disabled': {
-                      backgroundColor: '#E8E6E1',
-                      color: '#8FA998'
-                    }
-                  }}
+                  className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   Assign Goal
-                </Button>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+                </button>
+              </div>
+            </div>
+          </motion.div>
 
-        {/* Assigned Goals List */}
-        <Card sx={{
-          borderRadius: 3,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-          backgroundColor: 'white',
-          border: '1px solid #E8E6E1'
-        }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h5" sx={{ 
-              mb: 3, 
-              color: '#3A3D42',
-              fontFamily: '"Outfit", "Inter", sans-serif',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
-              <Target size={24} style={{ marginRight: 12 }} />
-              Your Assigned Goals ({parentGoals.length})
-            </Typography>
+          {/* Assigned Goals List */}
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 mb-8"
+          >
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <Target className="text-white w-7 h-7" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+                Your Assigned Goals ({parentGoals.length})
+              </h2>
+            </div>
 
             {parentGoals.length === 0 ? (
-              <Box textAlign="center" py={4}>
-                <Typography variant="body2" sx={{ 
-                  color: '#5B7C99',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                }}>
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Target className="text-slate-400" size={40} />
+                </div>
+                <p className="text-lg text-slate-600">
                   No goals assigned yet. Create your first goal above!
-                </Typography>
-              </Box>
+                </p>
+              </div>
             ) : (
-              <Box>
-                {parentGoals.map(goal => (
-                  <Card 
-                    key={goal.id} 
-                    sx={{ 
-                      mb: 2, 
-                      borderRadius: 2,
-                      border: '1px solid #E8E6E1',
-                      backgroundColor: '#FAF8F5',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateX(4px)',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                      }
-                    }}
+              <div className="space-y-4">
+                {parentGoals.map((goal, index) => (
+                  <motion.div
+                    key={goal.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                   >
-                    <CardContent sx={{ p: 2 }}>
-                      <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} md={8}>
-                          <Typography variant="h6" sx={{ 
-                            color: '#3A3D42', 
-                            mb: 1,
-                            fontFamily: '"Outfit", "Inter", sans-serif',
-                            fontWeight: 600
-                          }}>
-                            {goal.title}
-                          </Typography>
-                          
-                          {goal.description && (
-                            <Typography variant="body2" sx={{ 
-                              color: '#5B7C99',
-                              mb: 1,
-                              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                            }}>
-                              {goal.description}
-                            </Typography>
-                          )}
-                          
-                          <Box display="flex" alignItems="center" flexWrap="wrap" gap={1} sx={{ mb: 1 }}>
-                            <Chip 
-                              icon={<User size={14} color="#5B7C99" />}
-                              label={getChildName(goal.children_email)} 
-                              size="small" 
-                              variant="outlined"
-                              sx={{ 
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600,
-                                color: '#5B7C99',
-                                borderColor: '#5B7C99',
-                                borderRadius: 1
-                              }}
-                            />
-                            <Chip 
-                              icon={<Target size={14} color="#8FA998" />}
-                              label={`Target: ${goal.target}`} 
-                              size="small" 
-                              variant="outlined"
-                              sx={{ 
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600,
-                                color: '#8FA998',
-                                borderColor: '#8FA998',
-                                borderRadius: 1
-                              }}
-                            />
-                            <Chip 
-                              icon={<Award size={14} color="#C67B5C" />}
-                              label={`${goal.xp_reward} XP`} 
-                              size="small" 
-                              variant="outlined"
-                              sx={{ 
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600,
-                                color: '#C67B5C',
-                                borderColor: '#C67B5C',
-                                borderRadius: 1
-                              }}
-                            />
-                            <Chip 
-                              label={getDisplayedStatus(goal)} 
-                              size="small" 
-                              sx={{ 
-                                backgroundColor: getDisplayedStatus(goal) === 'active' ? '#8FA998' : '#E8E6E1',
-                                color: 'white',
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600,
-                                borderRadius: 1
-                              }}
-                            />
-                          </Box>
-                          
-                          <Box display="flex" alignItems="center">
-                            <Calendar size={14} style={{ marginRight: 4, color: '#5B7C99' }} />
-                            <Typography variant="caption" sx={{
-                              color: '#5B7C99',
-                              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                              fontWeight: 600
-                            }}>
-                              Created: {formatDate(goal.createdAt)}
-                            </Typography>
-                          </Box>
-                        </Grid>
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">
+                          {goal.title}
+                        </h3>
                         
-                        <Grid item xs={12} md={4}>
-                          <Box display="flex" flexDirection="column" gap={1}>
-                            <Button 
-                              variant="outlined" 
-                              size="small"
-                              onClick={() => handleDeleteGoal(goal.id)}
-                              sx={{
-                                color: '#C67B5C',
-                                borderColor: '#C67B5C',
-                                textTransform: 'none',
-                                fontWeight: 600,
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                borderRadius: 2,
-                                '&:hover': {
-                                  backgroundColor: '#FFE8E8',
-                                  borderColor: '#C67B5C'
-                                }
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          </Box>
-                        </Grid>
-                      </Grid>
-                    </CardContent>
-                  </Card>
+                        {goal.description && (
+                          <p className="text-slate-600 mb-3">
+                            {goal.description}
+                          </p>
+                        )}
+                        
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <span className="inline-flex items-center gap-2 px-3 py-1 bg-white border-2 border-blue-200 rounded-lg text-sm font-semibold text-blue-700">
+                            <User size={14} />
+                            {getChildName(goal.children_email)}
+                          </span>
+                          <span className="inline-flex items-center gap-2 px-3 py-1 bg-white border-2 border-emerald-200 rounded-lg text-sm font-semibold text-emerald-700">
+                            <Target size={14} />
+                            Target: {goal.target}
+                          </span>
+                          <span className="inline-flex items-center gap-2 px-3 py-1 bg-white border-2 border-amber-200 rounded-lg text-sm font-semibold text-amber-700">
+                            <Award size={14} />
+                            {goal.xp_reward} XP
+                          </span>
+                          <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-semibold ${
+                            getDisplayedStatus(goal) === 'completed' 
+                              ? 'bg-emerald-500 text-white' 
+                              : 'bg-indigo-500 text-white'
+                          }`}>
+                            {getDisplayedStatus(goal) === 'completed' ? <CheckCircle size={14} /> : <Clock size={14} />}
+                            {getDisplayedStatus(goal)}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center text-sm text-slate-600">
+                          <Calendar size={14} className="mr-2" />
+                          Created: {formatDate(goal.createdAt)}
+                        </div>
+                      </div>
+                      
+                      <div className="lg:ml-4">
+                        <button
+                          onClick={() => handleDeleteGoal(goal.id)}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-semibold hover:bg-red-100 transition-all duration-200 hover:scale-105"
+                        >
+                          <Trash2 size={18} />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
                 ))}
-              </Box>
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </motion.div>
 
-        {/* Statistics Card */}
-        {parentGoals.length > 0 && (
-          <Card sx={{ 
-            mt: 4,
-            borderRadius: 3,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-            backgroundColor: 'white',
-            border: '1px solid #E8E6E1'
-          }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h5" gutterBottom sx={{ 
-                color: '#3A3D42', 
-                fontWeight: 'bold', 
-                mb: 3,
-                fontFamily: '"Outfit", "Inter", sans-serif'
-              }}>
-                Goals Overview
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box textAlign="center" p={2}>
-                    <Typography variant="h4" sx={{ 
-                      color: '#5B7C99', 
-                      fontWeight: 'bold',
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      {parentGoals.length}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: '#5B7C99',
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                    }}>
-                      Total Goals
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box textAlign="center" p={2}>
-                    <Typography variant="h4" sx={{ 
-                      color: '#8FA998', 
-                      fontWeight: 'bold',
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      {parentGoals.filter(g => getDisplayedStatus(g) === 'active').length}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: '#8FA998',
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                    }}>
-                      Active Goals
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box textAlign="center" p={2}>
-                    <Typography variant="h4" sx={{ 
-                      color: '#C67B5C', 
-                      fontWeight: 'bold',
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      {new Set(parentGoals.map(g => g.children_email)).size}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: '#C67B5C',
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                    }}>
-                      Children with Goals
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box textAlign="center" p={2}>
-                    <Typography variant="h4" sx={{ 
-                      color: '#5B7C99', 
-                      fontWeight: 'bold',
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      {parentGoals.reduce((sum, goal) => sum + parseInt(goal.xp_reward), 0)}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: '#5B7C99',
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                    }}>
-                      Total XP Available
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        )}
-      </Container>
-    </Box>
+          {/* Statistics Card */}
+          {parentGoals.length > 0 && (
+            <motion.div
+              variants={itemVariants}
+              className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200"
+            >
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-6">Goals Overview</h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 text-center border border-blue-200">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <Target className="text-white w-6 h-6" />
+                  </div>
+                  <p className="text-4xl font-bold text-indigo-600 mb-1">
+                    {parentGoals.length}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-600">Total Goals</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 text-center border border-emerald-200">
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle className="text-white w-6 h-6" />
+                  </div>
+                  <p className="text-4xl font-bold text-emerald-600 mb-1">
+                    {parentGoals.filter(g => getDisplayedStatus(g) === 'active').length}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-600">Active Goals</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-6 text-center border border-violet-200">
+                  <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <User className="text-white w-6 h-6" />
+                  </div>
+                  <p className="text-4xl font-bold text-violet-600 mb-1">
+                    {new Set(parentGoals.map(g => g.children_email)).size}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-600">Children with Goals</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 text-center border border-amber-200">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <Award className="text-white w-6 h-6" />
+                  </div>
+                  <p className="text-4xl font-bold text-amber-600 mb-1">
+                    {parentGoals.reduce((sum, goal) => sum + parseInt(goal.xp_reward), 0)}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-600">Total XP Available</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
+      </div>
+    </div>
   );
 };
 

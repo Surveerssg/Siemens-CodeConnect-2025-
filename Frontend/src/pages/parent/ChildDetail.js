@@ -1,10 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { parentAPI, goalsAPI } from '../../services/api';
+import { motion } from 'framer-motion';
 import { 
-  Container, Typography, Box, Grid, Card, CardContent, Button, LinearProgress, CardActions 
-} from '@mui/material';
-import { ArrowLeft, TrendingUp, Target, Award, Play, Calendar, Star, Users } from 'lucide-react';
+  ArrowLeft, 
+  TrendingUp, 
+  Target, 
+  Award, 
+  Calendar, 
+  Star, 
+  Zap,
+  Trophy,
+  Activity,
+  CheckCircle,
+  Gamepad2,
+  BookOpen
+} from 'lucide-react';
 
 const ChildDetail = () => {
   const { childId } = useParams();
@@ -27,7 +38,7 @@ const ChildDetail = () => {
     load();
   }, [childId]);
 
-  // Mock data for recent activities and progress
+  // Mock data for recent activities
   const recentActivities = [
     { activity: 'Completed vowel exercises', time: '2 hours ago', score: 95, type: 'practice' },
     { activity: 'Played Word Match game', time: '1 day ago', score: 88, type: 'game' },
@@ -35,36 +46,26 @@ const ChildDetail = () => {
     { activity: 'Practiced consonant blends', time: '3 days ago', score: 78, type: 'practice' }
   ];
 
-  const progressData = [
-    { day: 'Mon', score: 75, words: 12 },
-    { day: 'Tue', score: 82, words: 15 },
-    { day: 'Wed', score: 68, words: 10 },
-    { day: 'Thu', score: 91, words: 18 },
-    { day: 'Fri', score: 88, words: 16 },
-    { day: 'Sat', score: 95, words: 20 },
-    { day: 'Sun', score: 78, words: 14 }
-  ];
-
   const quickActions = [
     { 
       title: 'View Progress', 
       description: 'See detailed progress reports', 
-      icon: <TrendingUp size={32} color="#5B7C99" />, 
-      color: '#5B7C99', 
+      icon: TrendingUp, 
+      gradient: 'from-indigo-500 to-blue-600',
       action: () => navigate('/parent/progress') 
     },
     { 
       title: 'Set Goals', 
       description: 'Assign practice goals', 
-      icon: <Target size={32} color="#8FA998" />, 
-      color: '#8FA998', 
+      icon: Target, 
+      gradient: 'from-emerald-500 to-teal-600',
       action: () => navigate('/parent/goals') 
     },
     { 
       title: 'Add Notes', 
       description: 'Record observations', 
-      icon: <Award size={32} color="#C67B5C" />, 
-      color: '#C67B5C', 
+      icon: Award, 
+      gradient: 'from-amber-500 to-orange-600',
       action: () => navigate('/parent/notes') 
     }
   ];
@@ -78,379 +79,282 @@ const ChildDetail = () => {
   const currentLevel = Math.floor(totalXP / 1000) + 1;
   const levelProgress = (totalXP % 1000) / 10;
 
+  const getActivityIcon = (type) => {
+    switch(type) {
+      case 'achievement':
+        return { icon: Trophy, color: 'from-amber-500 to-orange-600', bg: 'bg-amber-50', text: 'text-amber-600' };
+      case 'game':
+        return { icon: Gamepad2, color: 'from-violet-500 to-purple-600', bg: 'bg-violet-50', text: 'text-violet-600' };
+      default:
+        return { icon: BookOpen, color: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50', text: 'text-blue-600' };
+    }
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
-   <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
-  <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box display="flex" alignItems="center" mb={4}>
-        <Button 
-          startIcon={<ArrowLeft size={20} />} 
-          onClick={() => navigate('/parent')} 
-          sx={{ 
-            color: '#5B7C99', 
-            mr: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-            '&:hover': {
-              backgroundColor: '#E8E6E1'
-            }
-          }}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-[Arial,sans-serif]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
         >
-          Back to Dashboard
-        </Button>
-        <Typography variant="h4" sx={{ 
-          color: '#3A3D42', 
-          fontWeight: 'bold',
-          fontFamily: '"Outfit", "Inter", sans-serif'
-        }}>
-          Child Overview
-        </Typography>
-      </Box>
-
-      {/* Stats Overview */}
-      <Typography variant="h5" gutterBottom sx={{ 
-        color: '#3A3D42', 
-        fontWeight: 'bold', 
-        mb: 3,
-        fontFamily: '"Outfit", "Inter", sans-serif'
-      }}>
-        Weekly Progress Overview
-      </Typography>
-      
-      <Grid container spacing={3} mb={4}>
-        {/* Level Progress Card */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ 
-            borderRadius: 3,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-            backgroundColor: 'white',
-            border: '1px solid #E8E6E1',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-            }
-          }}>
-            <CardContent sx={{ p: 3, textAlign: 'center' }}>
-              <Box sx={{ 
-                width: 80, 
-                height: 80, 
-                mx: 'auto', 
-                mb: 2, 
-                backgroundColor: '#5B7C99', 
-                borderRadius: '50%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '2rem',
-                fontWeight: 'bold'
-              }}>
-                {currentLevel}
-              </Box>
-              <Typography variant="h6" sx={{ 
-                color: '#5B7C99',
-                fontFamily: '"Outfit", "Inter", sans-serif',
-                fontWeight: 600,
-                mb: 1
-              }}>
-                Level {currentLevel}
-              </Typography>
-              <Typography variant="body2" sx={{
-                color: '#5B7C99',
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                mb: 2
-              }}>
-                {totalXP} XP Total
-              </Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={levelProgress} 
-                sx={{ 
-                  height: 8, 
-                  borderRadius: 4, 
-                  backgroundColor: '#E8E6E1',
-                  '& .MuiLinearProgress-bar': { 
-                    backgroundColor: '#8FA998',
-                    borderRadius: 4
-                  }
-                }} 
-              />
-              <Typography variant="body2" sx={{ 
-                mt: 1, 
-                color: '#5B7C99',
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                fontWeight: 600
-              }}>
-                {1000 - (totalXP % 1000)} XP to next level
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Stats Cards */}
-        <Grid item xs={12} md={8}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
-              <Card sx={{ 
-                p: 2,
-                borderRadius: 3,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                backgroundColor: 'white',
-                border: '1px solid #E8E6E1',
-                textAlign: 'center',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <TrendingUp size={24} color="#8FA998" style={{ margin: '0 auto 8px' }} />
-                <Typography variant="body2" sx={{
-                  color: '#8FA998',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  Average Score
-                </Typography>
-                <Typography variant="h4" sx={{ 
-                  color: '#8FA998',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 'bold'
-                }}>
-                  {avgScore}
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card sx={{ 
-                p: 2,
-                borderRadius: 3,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                backgroundColor: 'white',
-                border: '1px solid #E8E6E1',
-                textAlign: 'center',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <Star size={24} color="#C67B5C" style={{ margin: '0 auto 8px' }} />
-                <Typography variant="body2" sx={{
-                  color: '#C67B5C',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  Best Score
-                </Typography>
-                <Typography variant="h4" sx={{ 
-                  color: '#C67B5C',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 'bold'
-                }}>
-                  {bestScore}
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card sx={{ 
-                p: 2,
-                borderRadius: 3,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                backgroundColor: 'white',
-                border: '1px solid #E8E6E1',
-                textAlign: 'center',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <Calendar size={24} color="#5B7C99" style={{ margin: '0 auto 8px' }} />
-                <Typography variant="body2" sx={{
-                  color: '#5B7C99',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  Practice Days
-                </Typography>
-                <Typography variant="h4" sx={{ 
-                  color: '#5B7C99',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 'bold'
-                }}>
-                  {practiceDays}
-                </Typography>
-              </Card>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
-
-      {/* Quick Actions */}
-      <Typography variant="h5" gutterBottom sx={{ 
-        color: '#3A3D42', 
-        fontWeight: 'bold', 
-        mb: 3,
-        fontFamily: '"Outfit", "Inter", sans-serif'
-      }}>
-        Quick Actions
-      </Typography>
-      <Grid container spacing={3} mb={4}>
-        {quickActions.map((action, index) => (
-          <Grid item xs={12} md={4} key={index}>
-            <Card 
-              onClick={action.action} 
-              sx={{ 
-                cursor: 'pointer', 
-                borderRadius: 3,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                backgroundColor: 'white',
-                border: '1px solid #E8E6E1',
-                transition: 'all 0.3s ease',
-                '&:hover': { 
-                  transform: 'translateY(-6px)', 
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-                }
-              }}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/parent')}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
             >
-              <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                <Box sx={{ 
-                  width: 60, 
-                  height: 60, 
-                  mx: 'auto', 
-                  mb: 2, 
-                  backgroundColor: '#FAF8F5', 
-                  borderRadius: 3, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  border: `2px solid ${action.color}20`,
-                  transition: 'transform 0.3s ease', 
-                  '&:hover': { 
-                    transform: 'scale(1.1)',
-                    backgroundColor: `${action.color}10`
-                  } 
-                }}>
-                  {action.icon}
-                </Box>
-                <Typography variant="h6" sx={{ 
-                  color: '#3A3D42',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  {action.title}
-                </Typography>
-                <Typography variant="body2" sx={{
-                  color: '#5B7C99',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                }}>
-                  {action.description}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+              <ArrowLeft size={20} />
+              <span className="hidden sm:inline">Back to Dashboard</span>
+            </button>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
+              Child Overview
+            </h1>
+          </div>
+        </motion.div>
 
-      {/* Recent Activities */}
-      <Typography variant="h5" gutterBottom sx={{ 
-        color: '#3A3D42', 
-        fontWeight: 'bold', 
-        mb: 3,
-        fontFamily: '"Outfit", "Inter", sans-serif'
-      }}>
-        Recent Activities
-      </Typography>
-      <Card sx={{ 
-        borderRadius: 3,
-        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-        backgroundColor: 'white',
-        border: '1px solid #E8E6E1'
-      }}>
-        <CardContent sx={{ p: 3 }}>
-          {recentActivities.length === 0 ? (
-            <Typography variant="body2" sx={{
-              color: '#5B7C99',
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-              textAlign: 'center',
-              py: 2
-            }}>
-              No recent activities yet.
-            </Typography>
-          ) : (
-            <Box>
-              {recentActivities.map((activity, index) => (
-                <Box 
-                  key={index}
-                  display="flex" 
-                  alignItems="center" 
-                  justifyContent="space-between"
-                  p={2}
-                  mb={1}
-                  sx={{ 
-                    backgroundColor: '#FAF8F5',
-                    borderRadius: 2,
-                    border: '1px solid #E8E6E1',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      backgroundColor: '#F5F5F5',
-                      transform: 'translateX(4px)'
-                    }
-                  }}
-                >
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Box sx={{ 
-                      width: 40, 
-                      height: 40, 
-                      borderRadius: '50%', 
-                      backgroundColor: activity.type === 'achievement' ? '#E8F5E8' : 
-                                     activity.type === 'game' ? '#E8F0F8' : '#FFE8E8',
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      fontSize: '1.2rem'
-                    }}>
-                      {activity.type === 'achievement' ? '⭐' : activity.type === 'game' ? '🎮' : '📝'}
-                    </Box>
-                    <Box>
-                      <Typography variant="h6" sx={{ 
-                        color: '#3A3D42',
-                        fontFamily: '"Outfit", "Inter", sans-serif',
-                        fontWeight: 600,
-                        fontSize: '1rem'
-                      }}>
-                        {activity.activity}
-                      </Typography>
-                      <Typography variant="body2" sx={{
-                        color: '#5B7C99',
-                        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                      }}>
-                        {activity.time}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Typography variant="h6" sx={{ 
-                    color: '#8FA998',
-                    fontFamily: '"Outfit", "Inter", sans-serif',
-                    fontWeight: 600
-                  }}>
-                    {activity.score}%
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          )}
-        </CardContent>
-      </Card>
-    </Container>
-    </Box>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            <p className="mt-4 text-lg text-slate-600 font-medium">Loading overview...</p>
+          </div>
+        ) : (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Weekly Progress Overview Section */}
+            <motion.div variants={itemVariants} className="mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-6">
+                Weekly Progress Overview
+              </h2>
+            </motion.div>
+
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 mb-8">
+              {/* Level Progress Card */}
+              <motion.div
+                variants={itemVariants}
+                className="lg:col-span-4"
+              >
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 h-full">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center text-4xl font-bold text-white shadow-lg mb-4">
+                      {currentLevel}
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">
+                      Level {currentLevel}
+                    </h3>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Zap size={18} className="text-amber-500" />
+                      <p className="text-lg text-slate-600 font-medium">
+                        {totalXP} XP Total
+                      </p>
+                    </div>
+                    <div className="w-full space-y-2">
+                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${levelProgress}%` }}
+                          transition={{ duration: 1, delay: 0.5 }}
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
+                        />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-600">
+                        {1000 - (totalXP % 1000)} XP to next level
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Stats Cards */}
+              <div className="lg:col-span-8">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <motion.div
+                    variants={itemVariants}
+                    className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 group"
+                  >
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                        <TrendingUp className="text-white w-7 h-7" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-600 mb-2">
+                        Average Score
+                      </h3>
+                      <p className="text-3xl font-bold text-emerald-600">
+                        {avgScore}
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    variants={itemVariants}
+                    className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 group"
+                  >
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                        <Star className="text-white w-7 h-7" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-600 mb-2">
+                        Best Score
+                      </h3>
+                      <p className="text-3xl font-bold text-amber-600">
+                        {bestScore}
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    variants={itemVariants}
+                    className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 group"
+                  >
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                        <Calendar className="text-white w-7 h-7" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-600 mb-2">
+                        Practice Days
+                      </h3>
+                      <p className="text-3xl font-bold text-indigo-600">
+                        {practiceDays}
+                      </p>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <motion.div variants={itemVariants} className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <Activity className="text-white w-5 h-5" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+                  Quick Actions
+                </h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                {quickActions.map((action, index) => {
+                  const Icon = action.icon;
+                  return (
+                    <motion.div
+                      key={index}
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <button
+                        onClick={action.action}
+                        className="w-full bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 group"
+                      >
+                        <div className="flex flex-col items-center text-center">
+                          <div className={`w-16 h-16 bg-gradient-to-br ${action.gradient} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                            <Icon className="text-white w-8 h-8" />
+                          </div>
+                          <h3 className="text-xl font-bold text-slate-800 mb-2">
+                            {action.title}
+                          </h3>
+                          <p className="text-sm text-slate-600">
+                            {action.description}
+                          </p>
+                        </div>
+                      </button>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+
+            {/* Recent Activities */}
+            <motion.div variants={itemVariants}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-fuchsia-500 to-pink-600 rounded-xl flex items-center justify-center">
+                  <CheckCircle className="text-white w-5 h-5" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+                  Recent Activities
+                </h2>
+              </div>
+
+              <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200">
+                {recentActivities.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
+                      <Activity className="w-12 h-12 text-slate-400" />
+                    </div>
+                    <p className="text-lg text-slate-600">No recent activities yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recentActivities.map((activity, index) => {
+                      const activityType = getActivityIcon(activity.type);
+                      const ActivityIcon = activityType.icon;
+                      
+                      return (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 group"
+                        >
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${activityType.color} group-hover:scale-110 transition-transform duration-300`}>
+                              <ActivityIcon className="text-white w-6 h-6" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-base sm:text-lg font-semibold text-slate-800 mb-1 truncate">
+                                {activity.activity}
+                              </h4>
+                              <p className="text-sm text-slate-600">
+                                {activity.time}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                            <span className="text-xl sm:text-2xl font-bold text-indigo-600">
+                              {activity.score}
+                            </span>
+                            <span className="text-sm text-slate-600 font-medium">%</span>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </div>
+    </div>
   );
 };
 

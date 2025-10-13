@@ -1,31 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { parentAPI } from '../../services/api';
-import { 
-  Container, 
-  Typography, 
-  Box, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  LinearProgress
-} from '@mui/material';
+import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
   TrendingUp, 
   Calendar,
-  Star,
-  Target,
   Award,
-  Users
+  Target,
+  Activity,
+  Zap,
+  Trophy,
+  Star
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const ChildProgress = () => {
   const navigate = useNavigate();
@@ -67,7 +55,7 @@ const ChildProgress = () => {
     loadSummary();
   }, [selectedChild]);
 
-  // Mock data for charts and additional metrics
+  // Mock data for charts
   const weeklyProgressData = [
     { day: 'Mon', score: 75, words: 12 },
     { day: 'Tue', score: 82, words: 15 },
@@ -79,12 +67,12 @@ const ChildProgress = () => {
   ];
 
   const activityDistribution = [
-    { name: 'Practice', value: 60, color: '#8FA998' },
-    { name: 'Games', value: 25, color: '#5B7C99' },
-    { name: 'Assessments', value: 15, color: '#C67B5C' }
+    { name: 'Practice', value: 60, color: '#6366f1' },
+    { name: 'Games', value: 25, color: '#8b5cf6' },
+    { name: 'Assessments', value: 15, color: '#ec4899' }
   ];
 
-  // Calculate stats from summary data (use same mapping as other pages)
+  // Calculate stats from summary data
   const totalXP = Number(summary?.games?.Total_XP || summary?.games?.Total_XP_Earned || 0);
   const totalDays = Number(summary?.progress?.Practice_Days || summary?.progress?.Practice_Days || 0);
   const avgScore = totalDays > 0 ? Math.round((totalXP / totalDays) * 100) / 100 : (summary?.progress?.Average_Score || 0);
@@ -94,445 +82,296 @@ const ChildProgress = () => {
   const levelProgress = (totalXP % 1000) / 10;
   const selectedChildData = children.find(child => child.value === selectedChild);
 
+  const getInitials = (text) => {
+    if (!text) return '?';
+    return text.charAt(0).toUpperCase();
+  };
+
+  const avatarColors = [
+    'from-cyan-500 to-blue-600',
+    'from-violet-500 to-purple-600',
+    'from-fuchsia-500 to-pink-600',
+    'from-emerald-500 to-teal-600',
+    'from-amber-500 to-orange-600',
+  ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
-    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-[Arial,sans-serif]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
-        <Box display="flex" alignItems="center" mb={4}>
-          <Button
-            startIcon={<ArrowLeft size={20} />}
-            onClick={() => navigate('/parent')}
-            sx={{ 
-              color: '#5B7C99', 
-              mr: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-              '&:hover': {
-                backgroundColor: '#E8E6E1'
-              }
-            }}
-          >
-            Back to Dashboard
-          </Button>
-          <Typography variant="h4" sx={{ 
-            color: '#3A3D42',
-            fontWeight: 'bold',
-            fontFamily: '"Outfit", "Inter", sans-serif'
-          }}>
-            Progress Tracking 📈
-          </Typography>
-        </Box>
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
+        >
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/parent')}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
+            >
+              <ArrowLeft size={20} />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
+              Progress Tracking 📈
+            </h1>
+          </div>
+        </motion.div>
 
         {/* Child Selector */}
-        <Grid container spacing={3} mb={4}>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel sx={{
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                color: '#5B7C99'
-              }}>
-                Select Child
-              </InputLabel>
-              <Select
-                value={selectedChild}
-                onChange={(e) => setSelectedChild(e.target.value)}
-                label="Select Child"
-                sx={{
-                  borderRadius: 2,
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#E8E6E1',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#5B7C99',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#5B7C99',
-                  },
-                }}
-              >
-                {children.map((child) => (
-                  <MenuItem 
-                    key={child.value} 
-                    value={child.value}
-                    sx={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif' }}
-                  >
-                    {child.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mb-8"
+        >
+          <div className="bg-white rounded-2xl p-6 shadow-xl border border-slate-200">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Select Child
+            </label>
+            <select
+              value={selectedChild}
+              onChange={(e) => setSelectedChild(e.target.value)}
+              className="w-full sm:w-96 px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors text-base font-medium"
+            >
+              {children.map((child) => (
+                <option key={child.value} value={child.value}>
+                  {child.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </motion.div>
 
         {loading ? (
-          <Box textAlign="center" py={4}>
-            <Typography sx={{
-              color: '#5B7C99',
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-            }}>
-              Loading progress data...
-            </Typography>
-          </Box>
+          <div className="text-center py-12">
+            <div className="inline-block w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            <p className="mt-4 text-lg text-slate-600 font-medium">Loading progress data...</p>
+          </div>
         ) : (
-          <>
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {/* Level Progress Card */}
             {selectedChildData && (
-              <Card sx={{ 
-                mb: 4,
-                borderRadius: 3,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                backgroundColor: 'white',
-                border: '1px solid #E8E6E1'
-              }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Box display="flex" alignItems="center" gap={3}>
-                    <Box sx={{ 
-                      width: 80, 
-                      height: 80, 
-                      backgroundColor: '#5B7C99', 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontSize: '2rem',
-                      fontWeight: 'bold',
-                      flexShrink: 0
-                    }}>
-                      {selectedChildData.label.charAt(0).toUpperCase()}
-                    </Box>
-                    <Box flexGrow={1}>
-                      <Typography variant="h5" sx={{ 
-                        color: '#3A3D42',
-                        fontFamily: '"Outfit", "Inter", sans-serif',
-                        fontWeight: 'bold',
-                        mb: 1
-                      }}>
-                        {selectedChildData.label}
-                      </Typography>
-                      <Typography variant="h6" sx={{ 
-                        color: '#5B7C99',
-                        fontFamily: '"Outfit", "Inter", sans-serif',
-                        fontWeight: 600,
-                        mb: 2
-                      }}>
-                        Level {currentLevel} • {totalXP} XP Total
-                      </Typography>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={levelProgress} 
-                        sx={{ 
-                          height: 8, 
-                          borderRadius: 4, 
-                          backgroundColor: '#E8E6E1',
-                          '& .MuiLinearProgress-bar': { 
-                            backgroundColor: '#8FA998',
-                            borderRadius: 4
-                          }
-                        }} 
-                      />
-                      <Typography variant="body2" sx={{ 
-                        mt: 1, 
-                        color: '#5B7C99',
-                        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                        fontWeight: 600
-                      }}>
+              <motion.div
+                variants={itemVariants}
+                className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-slate-200 mb-8"
+              >
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br ${avatarColors[children.findIndex(c => c.value === selectedChild) % avatarColors.length]} rounded-2xl flex items-center justify-center text-3xl sm:text-4xl font-bold text-white shadow-lg flex-shrink-0`}>
+                    {getInitials(selectedChildData.label)}
+                  </div>
+                  <div className="flex-1 w-full text-center sm:text-left">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">
+                      {selectedChildData.label}
+                    </h2>
+                    <div className="flex flex-col sm:flex-row items-center gap-2 mb-4 justify-center sm:justify-start">
+                      <span className="text-lg sm:text-xl font-semibold text-indigo-600">
+                        Level {currentLevel}
+                      </span>
+                      <span className="hidden sm:inline text-slate-400">•</span>
+                      <span className="text-base sm:text-lg text-slate-600 flex items-center gap-1">
+                        <Zap size={18} className="text-amber-500" />
+                        {totalXP} XP Total
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${levelProgress}%` }}
+                          transition={{ duration: 1, delay: 0.5 }}
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
+                        />
+                      </div>
+                      <p className="text-sm font-medium text-slate-600">
                         {1000 - (totalXP % 1000)} XP to Level {currentLevel + 1}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             )}
 
             {/* Stats Cards */}
-            <Grid container spacing={3} mb={4}>
-              <Grid item xs={12} md={4}>
-                <Card sx={{ 
-                  textAlign: 'center', 
-                  p: 3,
-                  borderRadius: 3,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                  backgroundColor: 'white',
-                  border: '1px solid #E8E6E1',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-                  }
-                }}>
-                  <TrendingUp size={32} color="#8FA998" style={{ margin: '0 auto 12px' }} />
-                  <Typography variant="h6" gutterBottom sx={{ 
-                    color: '#8FA998',
-                    fontFamily: '"Outfit", "Inter", sans-serif',
-                    fontWeight: 600
-                  }}>
-                    Average Score
-                  </Typography>
-                  <Typography variant="h2" sx={{ 
-                    color: '#8FA998', 
-                    fontWeight: 'bold',
-                    fontFamily: '"Outfit", "Inter", sans-serif',
-                    mb: 1
-                  }}>
-                    {avgScore}
-                  </Typography>
-                  <Typography variant="body2" sx={{
-                    color: '#8FA998',
-                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                  }}>
-                    Per session
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Card sx={{ 
-                  textAlign: 'center', 
-                  p: 3,
-                  borderRadius: 3,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                  backgroundColor: 'white',
-                  border: '1px solid #E8E6E1',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-                  }
-                }}>
-                  <Award size={32} color="#C67B5C" style={{ margin: '0 auto 12px' }} />
-                  <Typography variant="h6" gutterBottom sx={{ 
-                    color: '#C67B5C',
-                    fontFamily: '"Outfit", "Inter", sans-serif',
-                    fontWeight: 600
-                  }}>
-                    Best Score
-                  </Typography>
-                  <Typography variant="h2" sx={{ 
-                    color: '#C67B5C', 
-                    fontWeight: 'bold',
-                    fontFamily: '"Outfit", "Inter", sans-serif',
-                    mb: 1
-                  }}>
-                    {bestScore}
-                  </Typography>
-                  <Typography variant="body2" sx={{
-                    color: '#C67B5C',
-                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                  }}>
-                    Highest achievement
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Card sx={{ 
-                  textAlign: 'center', 
-                  p: 3,
-                  borderRadius: 3,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                  backgroundColor: 'white',
-                  border: '1px solid #E8E6E1',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-                  }
-                }}>
-                  <Calendar size={32} color="#5B7C99" style={{ margin: '0 auto 12px' }} />
-                  <Typography variant="h6" gutterBottom sx={{ 
-                    color: '#5B7C99',
-                    fontFamily: '"Outfit", "Inter", sans-serif',
-                    fontWeight: 600
-                  }}>
-                    Practice Days
-                  </Typography>
-                  <Typography variant="h2" sx={{ 
-                    color: '#5B7C99', 
-                    fontWeight: 'bold',
-                    fontFamily: '"Outfit", "Inter", sans-serif',
-                    mb: 1
-                  }}>
-                    {practiceDays}
-                  </Typography>
-                  <Typography variant="body2" sx={{
-                    color: '#5B7C99',
-                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                  }}>
-                    This month
-                  </Typography>
-                </Card>
-              </Grid>
-            </Grid>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+              <motion.div
+                variants={itemVariants}
+                className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 group"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <TrendingUp className="text-white w-8 h-8" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-700 mb-2">Average Score</h3>
+                  <p className="text-4xl font-bold text-emerald-600 mb-1">{avgScore}</p>
+                  <p className="text-sm text-slate-600">Per session</p>
+                </div>
+              </motion.div>
+
+              <motion.div
+                variants={itemVariants}
+                className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 group"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Award className="text-white w-8 h-8" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-700 mb-2">Best Score</h3>
+                  <p className="text-4xl font-bold text-amber-600 mb-1">{bestScore}</p>
+                  <p className="text-sm text-slate-600">Highest achievement</p>
+                </div>
+              </motion.div>
+
+              <motion.div
+                variants={itemVariants}
+                className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 group"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Calendar className="text-white w-8 h-8" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-700 mb-2">Practice Days</h3>
+                  <p className="text-4xl font-bold text-indigo-600 mb-1">{practiceDays}</p>
+                  <p className="text-sm text-slate-600">This month</p>
+                </div>
+              </motion.div>
+            </div>
 
             {/* Charts Section */}
-            <Grid container spacing={3} mb={4}>
-              <Grid item xs={12} md={8}>
-                <Card sx={{
-                  borderRadius: 3,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                  backgroundColor: 'white',
-                  border: '1px solid #E8E6E1'
-                }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="h5" gutterBottom sx={{ 
-                      color: '#3A3D42',
-                      fontWeight: 'bold',
-                      mb: 3,
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      Weekly Progress
-                    </Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={weeklyProgressData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E8E6E1" />
-                        <XAxis 
-                          dataKey="day" 
-                          stroke="#5B7C99"
-                          tick={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', fill: '#5B7C99' }}
-                        />
-                        <YAxis 
-                          stroke="#5B7C99"
-                          tick={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif', fill: '#5B7C99' }}
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            borderRadius: 8,
-                            border: '1px solid #E8E6E1',
-                            fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                          }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="score" 
-                          stroke="#8FA998" 
-                          strokeWidth={3}
-                          dot={{ fill: '#8FA998', strokeWidth: 2, r: 6 }}
-                          activeDot={{ r: 8, fill: '#C67B5C' }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+              <motion.div
+                variants={itemVariants}
+                className="lg:col-span-2 bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200"
+              >
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-800 mb-6">Weekly Progress</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={weeklyProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis 
+                      dataKey="day" 
+                      stroke="#64748b"
+                      style={{ fontSize: '14px', fontFamily: 'Arial, sans-serif' }}
+                    />
+                    <YAxis 
+                      stroke="#64748b"
+                      style={{ fontSize: '14px', fontFamily: 'Arial, sans-serif' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        borderRadius: 12,
+                        border: '1px solid #e2e8f0',
+                        fontFamily: 'Arial, sans-serif',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="score" 
+                      stroke="#6366f1" 
+                      strokeWidth={3}
+                      dot={{ fill: '#6366f1', strokeWidth: 2, r: 6 }}
+                      activeDot={{ r: 8, fill: '#8b5cf6' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </motion.div>
 
-              <Grid item xs={12} md={4}>
-                <Card sx={{
-                  borderRadius: 3,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                  backgroundColor: 'white',
-                  border: '1px solid #E8E6E1'
-                }}>
-                  <CardContent sx={{ p: 3, textAlign: 'center' }}>
-                    <Typography variant="h5" gutterBottom sx={{ 
-                      color: '#3A3D42',
-                      fontWeight: 'bold',
-                      mb: 3,
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      Activity Distribution
-                    </Typography>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={activityDistribution}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {activityDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+              <motion.div
+                variants={itemVariants}
+                className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200"
+              >
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-800 mb-6 text-center">Activity Distribution</h3>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={activityDistribution}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      style={{ fontSize: '12px', fontFamily: 'Arial, sans-serif' }}
+                    >
+                      {activityDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </motion.div>
+            </div>
 
             {/* Additional Metrics */}
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card sx={{
-                  borderRadius: 3,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                  backgroundColor: 'white',
-                  border: '1px solid #E8E6E1'
-                }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="h5" gutterBottom sx={{ 
-                      color: '#3A3D42',
-                      fontWeight: 'bold',
-                      mb: 3,
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      Words Mastered
-                    </Typography>
-                    <Box textAlign="center" py={2}>
-                      <Typography variant="h2" sx={{ 
-                        color: '#5B7C99',
-                        fontFamily: '"Outfit", "Inter", sans-serif',
-                        fontWeight: 'bold',
-                        mb: 1
-                      }}>
-                        {summary?.progress?.Words_Learned || 0}
-                      </Typography>
-                      <Typography variant="body2" sx={{
-                        color: '#5B7C99',
-                        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                      }}>
-                        Total words successfully practiced
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <motion.div
+                variants={itemVariants}
+                className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-slate-200 group"
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <Target className="text-white w-7 h-7" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800">Words Mastered</h3>
+                </div>
+                <div className="text-center py-4">
+                  <p className="text-5xl font-bold text-violet-600 mb-2">
+                    {summary?.progress?.Words_Learned || 0}
+                  </p>
+                  <p className="text-sm text-slate-600">Total words successfully practiced</p>
+                </div>
+              </motion.div>
 
-              <Grid item xs={12} md={6}>
-                <Card sx={{
-                  borderRadius: 3,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                  backgroundColor: 'white',
-                  border: '1px solid #E8E6E1'
-                }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="h5" gutterBottom sx={{ 
-                      color: '#3A3D42',
-                      fontWeight: 'bold',
-                      mb: 3,
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      Current Streak
-                    </Typography>
-                    <Box textAlign="center" py={2}>
-                      <Typography variant="h2" sx={{ 
-                        color: '#C67B5C',
-                        fontFamily: '"Outfit", "Inter", sans-serif',
-                        fontWeight: 'bold',
-                        mb: 1
-                      }}>
-                        {summary?.progress?.Current_Streak || 0}
-                      </Typography>
-                      <Typography variant="body2" sx={{
-                        color: '#C67B5C',
-                        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                      }}>
-                        Consecutive days of practice
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </>
+              <motion.div
+                variants={itemVariants}
+                className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-slate-200 group"
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-fuchsia-500 to-pink-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <Trophy className="text-white w-7 h-7" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800">Current Streak</h3>
+                </div>
+                <div className="text-center py-4">
+                  <p className="text-5xl font-bold text-fuchsia-600 mb-2">
+                    {summary?.progress?.Current_Streak || 0}
+                  </p>
+                  <p className="text-sm text-slate-600">Consecutive days of practice</p>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
         )}
-      </Container>
-    </Box>
+      </div>
+    </div>
   );
 };
 
