@@ -20,7 +20,9 @@ import {
   Star,
   Lock,
   Trophy,
-  Zap
+  Zap,
+  Target,
+  Flame
 } from 'lucide-react';
 import { gamesAPI } from '../../../services/api';
 
@@ -40,6 +42,7 @@ const GamesMenu = () => {
       description: 'Match the spoken word with the correct picture!',
       icon: '🎯',
       color: '#FF6B6B',
+      gradient: 'from-red-400 to-pink-600',
       difficulty: 'Easy',
       xp: 25,
       unlockXP: 0
@@ -50,6 +53,7 @@ const GamesMenu = () => {
       description: 'Pop balloons by saying the words correctly!',
       icon: '🎈',
       color: '#4ECDC4',
+      gradient: 'from-cyan-400 to-teal-600',
       difficulty: 'Medium',
       xp: 50,
       unlockXP: 100
@@ -60,17 +64,18 @@ const GamesMenu = () => {
       description: 'Find the treasure by speaking the magic words!',
       icon: '🏴‍☠️',
       color: '#9B59B6',
+      gradient: 'from-purple-400 to-indigo-600',
       difficulty: 'Hard',
       xp: 100,
       unlockXP: 250
-    }
-    ,
+    },
     {
       id: 'maingame',
       title: 'Huge Kombat',
       description: 'Arcade-style combat game built with PixiJS',
       icon: '🥋',
       color: '#2ECC71',
+      gradient: 'from-green-400 to-emerald-600',
       difficulty: 'Hard',
       xp: 120,
       unlockXP: 250
@@ -162,234 +167,230 @@ const GamesMenu = () => {
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
-      case 'Easy': return '#4CAF50';
-      case 'Medium': return '#FF9800';
-      case 'Hard': return '#F44336';
-      default: return '#9E9E9E';
+      case 'Easy': return 'from-green-400 to-green-600';
+      case 'Medium': return 'from-orange-400 to-orange-600';
+      case 'Hard': return 'from-red-400 to-red-600';
+      default: return 'from-gray-400 to-gray-600';
     }
   };
 
   return (
-    <Container maxWidth="lg" sx={{ 
-      minHeight: '100vh',
-      position: 'relative',
-      zIndex: 2,
-      py: 4
-    }}>
-      <Box display="flex" alignItems="center" mb={4}>
-        <Button
-          startIcon={<ArrowLeft size={20} />}
-          onClick={() => navigate('/dashboard')}
-          sx={{ color: '#4ECDC4', mr: 2 }}
-        >
-          Back to Dashboard
-        </Button>
-        <Typography variant="h4" sx={{ 
-          color: '#2C3E50',
-          fontWeight: 'bold'
-        }}>
-          Game Center 🎮
-        </Typography>
-      </Box>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
+          >
+            <ArrowLeft size={20} />
+            <span>Back to Dashboard</span>
+          </button>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 flex items-center gap-3">
+            Game Center 
+            <span className="text-4xl sm:text-5xl animate-bounce">🎮</span>
+          </h1>
+        </div>
 
-      {/* Stats cards */}
-      <Grid container spacing={4} mb={4}>
-  {/* Total XP */}
-        <Grid item xs={12} md={4}>
-          <Card className="game-card" sx={{ 
-            background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4)',
-            color: 'white',
-            textAlign: 'center',
-            p: 3
-          }}>
-            <Typography variant="h6" gutterBottom>
-              <Gamepad2 size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              Total XP
-            </Typography>
-            <Typography variant="h2" sx={{ fontWeight: 'bold' }}>
-              {gameProgress.totalXP}
-            </Typography>
-            <Typography variant="body2">
-              Keep playing to earn more!
-            </Typography>
-          </Card>
-        </Grid>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
+          {/* Total XP */}
+          <div className="bg-gradient-to-br from-blue-400 to-purple-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">⚡</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Zap size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Total XP</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {gameProgress.totalXP}
+              </p>
+              <p className="text-lg sm:text-xl font-semibold">
+                Keep playing to earn more!
+              </p>
+            </div>
+          </div>
 
-        {/* Games Played */}
-        <Grid item xs={12} md={4}>
-          <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#4ECDC4' }}>
-              <Trophy size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              Games Played
-            </Typography>
-            <Typography variant="h2" sx={{ color: '#4ECDC4', fontWeight: 'bold' }}>
-              {loading ? '—' : gamesPlayed}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Start playing to increase!
-            </Typography>
-          </Card>
-        </Grid>
+          {/* Games Played */}
+          <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🎮</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Gamepad2 size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Games Played</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {loading ? '—' : gamesPlayed}
+              </p>
+              <p className="text-lg sm:text-xl font-semibold">
+                Start playing to increase!
+              </p>
+            </div>
+          </div>
 
-        {/* Achievements */}
-        <Grid item xs={12} md={4}>
-          <Card className="game-card" sx={{ textAlign: 'center', p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#9B59B6' }}>
-              <Star size={24} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              Achievements
-            </Typography>
-            <Typography variant="h2" sx={{ color: '#9B59B6', fontWeight: 'bold' }}>
-              {loading ? '—' : (achievements.filter(a => a.earned).length)}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              out of {loading ? '—' : achievements.length} total
-            </Typography>
-          </Card>
-        </Grid>
-      </Grid>
+          {/* Achievements */}
+          <div className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden sm:col-span-2 lg:col-span-1">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🏆</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Trophy size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Achievements</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {loading ? '—' : achievements.filter(a => a.earned).length}
+              </p>
+              <p className="text-lg sm:text-xl font-semibold">
+                out of {loading ? '—' : achievements.length} total
+              </p>
+            </div>
+          </div>
+        </div>
 
-      {/* Available Games */}
-      <Typography variant="h5" gutterBottom sx={{ 
-        color: '#2C3E50',
-        fontWeight: 'bold',
-        mb: 3
-      }}>
-        Available Games
-      </Typography>
+        {/* Available Games */}
+        <div className="mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-3">
+            Available Games
+            <Star className="text-yellow-500 w-7 h-7 sm:w-8 sm:h-8" />
+          </h2>
 
-      <Grid container spacing={3} mb={4}>
-        {(loading ? [1,2,3] : games).map((game, idx) => (
-          <Grid item xs={12} md={4} key={game.id}>
-            <Card 
-              className="game-card"
-              sx={{ 
-                cursor: game.unlocked ? 'pointer' : 'not-allowed',
-                opacity: game.unlocked ? 1 : 0.6,
-                background: game.unlocked 
-                  ? `linear-gradient(135deg, ${game.color}15, ${game.color}05)`
-                  : 'linear-gradient(135deg, #E0E0E0, #BDBDBD)',
-                border: `2px solid ${game.unlocked ? `${game.color}30` : '#E0E0E0'}`,
-                '&:hover': game.unlocked ? {
-                  transform: 'translateY(-8px) scale(1.02)',
-                  border: `3px solid ${game.color}`,
-                  boxShadow: `0 20px 40px ${game.color}30`
-                } : {}
-              }}
-              onClick={() => game.unlocked && navigate(`/games/${game.id}`)}
-            >
-              <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                <Typography variant="h1" sx={{ mb: 2, fontSize: '4rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {(loading ? [1,2,3,4] : games).map((game, idx) => (
+              <div
+                key={game.id || idx}
+                onClick={() => !loading && game.unlocked && navigate(`/games/${game.id}`)}
+                className={`group bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 ${
+                  !loading && game.unlocked 
+                    ? 'cursor-pointer hover:-translate-y-2 border-2 border-transparent hover:border-blue-400' 
+                    : 'opacity-60 cursor-not-allowed border-2 border-gray-200'
+                }`}
+              >
+                {/* Game Icon */}
+                <div className={`text-6xl sm:text-7xl mb-4 text-center ${
+                  !loading && game.unlocked ? '' : 'grayscale opacity-50'
+                }`}>
                   {loading ? '🎮' : game.icon}
-                </Typography>
-                <Typography variant="h5" gutterBottom sx={{ 
-                  color: game.unlocked ? game.color : '#9E9E9E',
-                  fontWeight: 'bold'
-                }}>
-                  {game.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {game.description}
-                </Typography>
+                </div>
 
-                <Box display="flex" justifyContent="center" gap={1} mb={2}>
-                  <Chip
-                    label={game.difficulty}
-                    size="small"
-                    sx={{ 
-                      background: getDifficultyColor(game.difficulty),
-                      color: 'white',
-                      fontWeight: 'bold'
-                    }}
-                  />
-                  <Chip
-                    label={`${loading ? '—' : game.xp} XP`}
-                    size="small"
-                    sx={{ 
-                      background: '#4ECDC4',
-                      color: 'white',
-                      fontWeight: 'bold'
-                    }}
-                  />
-                </Box>
+                {/* Game Title */}
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 text-center">
+                  {loading ? 'Loading...' : game.title}
+                </h3>
 
-                {!game.unlocked && (
-                  <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
-                    <Lock size={20} color="#9E9E9E" style={{ marginRight: 8 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      Unlock at {game.id === 'balloon-pop' ? '100' : '250'} XP
-                    </Typography>
-                  </Box>
+                {/* Game Description */}
+                <p className="text-xs sm:text-sm text-gray-600 mb-4 text-center line-clamp-2">
+                  {loading ? '' : game.description}
+                </p>
+
+                {/* Badges */}
+                <div className="flex justify-center gap-2 mb-4 flex-wrap">
+                  <span className={`px-3 py-1 bg-gradient-to-r ${
+                    loading ? 'from-gray-400 to-gray-600' : getDifficultyColor(game.difficulty)
+                  } text-white rounded-full text-xs font-bold`}>
+                    {loading ? 'Easy' : game.difficulty}
+                  </span>
+                  <span className="px-3 py-1 bg-gradient-to-r from-cyan-400 to-blue-500 text-white rounded-full text-xs font-bold">
+                    {loading ? '—' : game.xp} XP
+                  </span>
+                </div>
+
+                {/* Lock/Unlock Status */}
+                {!loading && !game.unlocked && (
+                  <div className="flex items-center justify-center gap-2 mb-4 text-gray-500">
+                    <Lock size={16} />
+                    <span className="text-xs font-semibold">
+                      Unlock at {game.unlockXP} XP
+                    </span>
+                  </div>
                 )}
 
+                {/* Best Score */}
                 {!loading && game.bestScore > 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    Best Score: {game.bestScore}
-                  </Typography>
+                  <div className="text-center mb-4">
+                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                      Best: {game.bestScore} 🏆
+                    </span>
+                  </div>
                 )}
-              </CardContent>
-              
-              <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
-                <Button
-                  startIcon={(!loading && game.unlocked) ? <Play size={16} /> : <Lock size={16} />}
-                  disabled={loading ? true : !game.unlocked}
-                  sx={{ 
-                    color: (!loading && game.unlocked) ? game.color : '#9E9E9E',
-                    fontWeight: 'bold'
-                  }}
+
+                {/* Play Button */}
+                <button
+                  disabled={loading || !game.unlocked}
+                  className={`w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                    loading || !game.unlocked
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : `bg-gradient-to-r ${game.gradient} text-white hover:scale-105 shadow-md hover:shadow-lg`
+                  }`}
                 >
-                  {loading ? 'Loading' : (game.unlocked ? 'Play Game' : 'Locked')}
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                  {loading ? (
+                    'Loading...'
+                  ) : game.unlocked ? (
+                    <>
+                      <Play size={16} />
+                      Play Game
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={16} />
+                      Locked
+                    </>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
 
-      {/* Game Achievements */}
-      <Typography variant="h5" gutterBottom sx={{ 
-        color: '#2C3E50',
-        fontWeight: 'bold',
-        mb: 3
-      }}>
-        Game Achievements
-      </Typography>
+        {/* Game Achievements */}
+        <div>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-3">
+            Game Achievements
+            <Trophy className="text-yellow-500 w-7 h-7 sm:w-8 sm:h-8" />
+          </h2>
 
-      <Grid container spacing={2}>
-        {(loading ? [1,2,3] : achievements).map((achievement, index) => (
-          <Grid item xs={12} sm={6} md={4} key={achievement?.name || index}>
-            <Card 
-              className="game-card"
-              sx={{ 
-                opacity: achievement?.earned ? 1 : 0.6,
-                background: achievement?.earned 
-                  ? 'linear-gradient(135deg, #FFD700, #FFA500)' 
-                  : 'linear-gradient(135deg, #E0E0E0, #BDBDBD)',
-                color: 'white'
-              }}
-            >
-              <CardContent sx={{ textAlign: 'center', p: 2 }}>
-                <Typography variant="h3" sx={{ mb: 1 }}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            {(loading ? [1,2,3,4,5] : achievements).map((achievement, index) => (
+              <div
+                key={achievement?.key || index}
+                className={`bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 text-center ${
+                  achievement?.earned 
+                    ? 'border-2 border-yellow-400 hover:scale-105' 
+                    : 'opacity-60 border-2 border-gray-200'
+                }`}
+              >
+                {/* Achievement Icon */}
+                <div className={`text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4 ${
+                  achievement?.earned ? '' : 'grayscale opacity-50'
+                }`}>
                   {loading ? '🏆' : achievement.icon}
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+                </div>
+
+                {/* Achievement Name */}
+                <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-2">
                   {loading ? 'Loading...' : achievement.name}
-                </Typography>
-                <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
-                  {loading ? '' : achievement.description}
-                </Typography>
-                <Typography variant="caption" sx={{ 
-                  display: 'block', 
-                  mt: 1,
-                  fontWeight: 'bold'
-                }}>
-                  {loading ? '' : (achievement.earned ? `✅ Earned${achievement.date ? ' on ' + new Date(achievement.date).toLocaleDateString() : '!'}` : '🔒 Locked — Goal: ' + achievement.description)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Container>
+                </h3>
+
+                {/* Achievement Status */}
+                <p className={`text-xs sm:text-sm font-semibold mb-2 ${
+                  achievement?.earned ? 'text-green-600' : 'text-gray-500'
+                }`}>
+                  {loading ? '' : (achievement.earned ? 'Earned! 🎉' : 'Keep trying!')}
+                </p>
+
+                {/* Achievement Description/Date */}
+                {!loading && (
+                  <p className="text-xs text-gray-600">
+                    {achievement.earned && achievement.date 
+                      ? new Date(achievement.date).toLocaleDateString()
+                      : achievement.description
+                    }
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -4,18 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useGame } from '../../context/GameContext';
 import { gamesAPI } from '../../services/api';
 import { 
-  Container, 
-  Typography, 
-  Box, 
-  Grid, 
-  Card, 
-  CardContent, 
-  CardActions,
-  Button,
-  LinearProgress,
-  Chip
-} from '@mui/material';
-import { 
   Mic, 
   Gamepad2, 
   Target, 
@@ -24,7 +12,8 @@ import {
   Settings,
   LogOut,
   Flame,
-  Trophy
+  Trophy,
+  Sparkles
 } from 'lucide-react';
 
 const getAchievementIcon = (type) => {
@@ -63,42 +52,56 @@ const ChildDashboard = () => {
     {
       title: 'Practice Words',
       description: 'Start practicing with fun exercises!',
-      icon: <Mic size={40} color="#5B7C99" />,
-      color: '#5B7C99',
+      icon: Mic,
+      color: 'from-blue-400 to-blue-600',
+      hoverColor: 'hover:shadow-blue-200',
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
       action: () => navigate('/practice')
     },
     {
       title: 'Lip Sync',
       description: 'Practice speaking with visual lip-sync feedback',
-      icon: <Mic size={40} color="#D26FA6" />,
-      color: '#D26FA6',
+      icon: Mic,
+      color: 'from-pink-400 to-pink-600',
+      hoverColor: 'hover:shadow-pink-200',
+      iconBg: 'bg-pink-100',
+      iconColor: 'text-pink-600',
       action: () => navigate('/lipsync')
     },
     {
       title: 'Play Games',
       description: 'Have fun while learning!',
-      icon: <Gamepad2 size={40} color="#C67B5C" />,
-      color: '#C67B5C',
+      icon: Gamepad2,
+      color: 'from-orange-400 to-orange-600',
+      hoverColor: 'hover:shadow-orange-200',
+      iconBg: 'bg-orange-100',
+      iconColor: 'text-orange-600',
       action: () => navigate('/games')
     },
     {
       title: 'My Progress',
       description: 'See how well you\'re doing!',
-      icon: <TrendingUp size={40} color="#8FA998" />,
-      color: '#8FA998',
+      icon: TrendingUp,
+      color: 'from-green-400 to-green-600',
+      hoverColor: 'hover:shadow-green-200',
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600',
       action: () => navigate('/progress')
     },
     {
       title: 'My Goals',
       description: 'Check your daily goals!',
-      icon: <Target size={40} color="#5B7C99" />,
-      color: '#5B7C99',
+      icon: Target,
+      color: 'from-purple-400 to-purple-600',
+      hoverColor: 'hover:shadow-purple-200',
+      iconBg: 'bg-purple-100',
+      iconColor: 'text-purple-600',
       action: () => navigate('/goals')
     }
   ];
 
   const [achievements, setAchievements] = useState([]);
-  // Achievement templates (show locked ones as goals)
   const achievementTemplates = [
     { key: 'FIRST_GAME', name: 'First Game', description: 'Play your first game', icon: '🎮', condition: (ctx) => (ctx.gamesPlayed || 0) >= 1 },
     { key: 'SPEED_DEMON', name: 'Speed Demon', description: 'Complete 10 words in one session', icon: '⚡', condition: (ctx) => (ctx.history || []).some(h => (h.wordsPracticed || 0) >= 10) },
@@ -110,7 +113,6 @@ const ChildDashboard = () => {
   useEffect(() => {
     const loadAchievements = async () => {
       try {
-        // Fetch achievements and supporting data to evaluate locked goals
         const [achResp, historyResp, userGameResp] = await Promise.all([
           gamesAPI.getAchievements(),
           gamesAPI.getHistory(50, 0),
@@ -127,7 +129,6 @@ const ChildDashboard = () => {
           return acc;
         }, {});
 
-        // helper context
         const completedGamesCount = history.reduce((count, h) => {
           if (h.score && h.score > 0) return count + 1;
           return count;
@@ -151,7 +152,7 @@ const ChildDashboard = () => {
             earned,
             date: exists?.timestamp || null
           };
-        }).slice(0,4);
+        }).slice(0, 4);
 
         setAchievements(merged);
       } catch (error) {
@@ -164,402 +165,186 @@ const ChildDashboard = () => {
   }, []);
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh',
-      backgroundColor: '#FAF8F5',
-      position: 'relative'
-    }}>
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, py: 5 }}>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={5} flexWrap="wrap" gap={2}>
-          <Box>
-            <Typography variant="h3" component="h1" sx={{ 
-              color: '#3A3D42',
-              fontWeight: 700,
-              mb: 1,
-              fontFamily: '"Outfit", "Inter", sans-serif',
-              fontSize: { xs: '2rem', md: '2.5rem' }
-            }}>
-              Welcome back, {user?.displayName || 'Super Star'}! 🌟
-            </Typography>
-            <Typography variant="h6" sx={{ 
-              color: '#5B7C99',
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-              fontWeight: 400
-            }}>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div className="space-y-2">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 flex items-center gap-3">
+              Welcome back, {user?.displayName || 'Super Star'}! 
+              <span className="text-4xl sm:text-5xl animate-bounce">🌟</span>
+            </h1>
+            <p className="text-lg sm:text-xl text-blue-600 font-medium">
               Ready for another amazing day of learning?
-            </Typography>
-          </Box>
-          <Box display="flex" gap={2}>
-            <Button
-              startIcon={<Settings size={20} />}
+            </p>
+          </div>
+          <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+            <button
               onClick={() => navigate('/settings')}
-              variant="outlined"
-              sx={{ 
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-                backgroundColor: 'white',
-                color: '#5B7C99',
-                border: '1px solid #E8E6E1',
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                px: 3,
-                py: 1,
-                '&:hover': { 
-                  backgroundColor: '#F5F5F5',
-                  borderColor: '#5B7C99',
-                  boxShadow: '0 2px 8px rgba(91, 124, 153, 0.15)'
-                }
-              }}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
             >
-              Settings
-            </Button>
-            <Button
-              startIcon={<LogOut size={20} />}
+              <Settings size={18} />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
+            <button
               onClick={handleLogout}
-              variant="contained"
-              sx={{ 
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-                backgroundColor: '#5B7C99',
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                px: 3,
-                py: 1,
-                '&:hover': { 
-                  backgroundColor: '#4A677F',
-                  boxShadow: '0 4px 12px rgba(91, 124, 153, 0.3)'
-                }
-              }}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold shadow-md hover:shadow-xl transition-all duration-200 hover:scale-105"
             >
-              Logout
-            </Button>
-          </Box>
-        </Box>
+              <LogOut size={18} />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
+        </div>
 
         {/* Stats Cards */}
-        <Grid container spacing={3} mb={5}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
           {/* Level Card */}
-          <Grid item xs={12} md={4}>
-            <Card sx={{ 
-              borderRadius: 3, 
-              boxShadow: '0 2px 12px rgba(0,0,0,0.08)', 
-              textAlign: 'center', 
-              transition: 'all 0.3s ease', 
-              backgroundColor: 'white',
-              border: '1px solid #E8E6E1',
-              '&:hover': { 
-                transform: 'translateY(-4px)', 
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-              }
-            }}>
-              <CardContent sx={{ p: 4 }}>
-                <Box sx={{ 
-                  width: 100, 
-                  height: 100, 
-                  mx: 'auto', 
-                  mb: 3, 
-                  backgroundColor: '#5B7C99', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  fontSize: '3rem',
-                  color: 'white',
-                  boxShadow: '0 4px 12px rgba(91, 124, 153, 0.2)'
-                }}>
-                  👶
-                </Box>
-                {loading ? (
-                  <Typography variant="h3" fontWeight="bold" gutterBottom sx={{ color: '#5B7C99' }}>
-                    Loading...
-                  </Typography>
-                ) : (
-                  <>
-                    <Typography variant="h3" fontWeight="bold" gutterBottom sx={{ 
-                      color: '#5B7C99',
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      Level {gameProgress.currentLevel}
-                    </Typography>
-                    <Typography variant="body1" color="#3A3D42" mb={3} fontWeight={600} sx={{
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                    }}>
-                      {gameProgress.totalXP} XP Total
-                    </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={(gameProgress.totalXP % 1000) / 10} 
-                      sx={{ 
-                        height: 8, 
-                        borderRadius: 4, 
-                        backgroundColor: '#E8E6E1',
-                        '& .MuiLinearProgress-bar': { 
-                          backgroundColor: '#8FA998',
-                          borderRadius: 4
-                        }
-                      }} 
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-blue-100">
+            <div className="text-center">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-lg">
+                👶
+              </div>
+              {loading ? (
+                <p className="text-2xl sm:text-3xl font-bold text-gray-400">Loading...</p>
+              ) : (
+                <>
+                  <h3 className="text-3xl sm:text-4xl font-bold text-blue-600 mb-2">
+                    Level {gameProgress.currentLevel}
+                  </h3>
+                  <p className="text-base sm:text-lg font-semibold text-gray-700 mb-4">
+                    {gameProgress.totalXP} XP Total
+                  </p>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3 mb-3 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-green-400 to-green-500 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${(gameProgress.totalXP % 1000) / 10}%` }}
                     />
-                    <Typography variant="body2" color="#5B7C99" sx={{ mt: 2, fontWeight: 600 }}>
-                      {1000 - (gameProgress.totalXP % 1000)} XP to next level
-                    </Typography>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
+                  </div>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">
+                    {1000 - (gameProgress.totalXP % 1000)} XP to next level
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Streak Card */}
-          <Grid item xs={12} md={4}>
-            <Card sx={{ 
-              borderRadius: 3, 
-              boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-              backgroundColor: '#C67B5C', 
-              color: 'white', 
-              transition: 'all 0.3s ease', 
-              '&:hover': { 
-                transform: 'translateY(-4px)', 
-                boxShadow: '0 8px 24px rgba(198, 123, 92, 0.3)'
-              }
-            }}>
-              <CardContent sx={{ p: 4, position: 'relative' }}>
-                <Box sx={{ 
-                  position: 'absolute', 
-                  top: -20, 
-                  right: -20, 
-                  fontSize: '6rem', 
-                  opacity: 0.15
-                }}>
-                  🔥
-                </Box>
-                <Box sx={{ position: 'relative' }}>
-                  <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                    <Flame size={28} color="white" />
-                    <Typography variant="h5" fontWeight="700" sx={{
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      Current Streak
-                    </Typography>
-                  </Box>
-                  {loading ? (
-                    <Typography variant="h1" fontWeight="bold" mb={1} sx={{ fontSize: '3.5rem' }}>
-                      ...
-                    </Typography>
-                  ) : (
-                    <>
-                      <Typography variant="h1" fontWeight="bold" mb={1} sx={{ 
-                        fontSize: '3.5rem',
-                        fontFamily: '"Outfit", "Inter", sans-serif'
-                      }}>
-                        {gameProgress.currentStreak}
-                      </Typography>
-                      <Typography variant="h6" sx={{ opacity: 0.95, mb: 3 }}>
-                        days in a row!
-                      </Typography>
-                      <Box sx={{ pt: 2.5, borderTop: '2px solid rgba(255,255,255,0.25)' }}>
-                        <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 600 }}>
-                          Best streak: {gameProgress.bestStreak} days 🏆
-                        </Typography>
-                      </Box>
-                    </>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🔥</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Flame size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Current Streak</h3>
+              </div>
+              {loading ? (
+                <p className="text-4xl sm:text-5xl font-bold">...</p>
+              ) : (
+                <>
+                  <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                    {gameProgress.currentStreak}
+                  </p>
+                  <p className="text-lg sm:text-xl font-semibold mb-4">days in a row!</p>
+                  <div className="pt-4 border-t-2 border-white/30">
+                    <p className="text-sm sm:text-base font-semibold">
+                      Best streak: {gameProgress.bestStreak} days 🏆
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Badges Card */}
-          <Grid item xs={12} md={4}>
-            <Card sx={{ 
-              borderRadius: 3, 
-              boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-              backgroundColor: '#8FA998', 
-              color: 'white', 
-              transition: 'all 0.3s ease', 
-              '&:hover': { 
-                transform: 'translateY(-4px)', 
-                boxShadow: '0 8px 24px rgba(143, 169, 152, 0.3)'
-              }
-            }}>
-              <CardContent sx={{ p: 4, position: 'relative' }}>
-                <Box sx={{ 
-                  position: 'absolute', 
-                  top: -20, 
-                  right: -20, 
-                  fontSize: '6rem', 
-                  opacity: 0.15
-                }}>
-                  🏆
-                </Box>
-                <Box sx={{ position: 'relative' }}>
-                  <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                    <Trophy size={28} color="white" />
-                    <Typography variant="h5" fontWeight="700" sx={{
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      Recent Badges
-                    </Typography>
-                  </Box>
-                  <Box display="flex" flexWrap="wrap" gap={1.5} mb={3} mt={3}>
-                    {gameProgress.badges.slice(0, 3).map((badge, index) => (
-                      <Chip 
-                        key={index} 
-                        label={badge} 
-                        sx={{ 
-                          backgroundColor: 'rgba(255,255,255,0.25)', 
-                          color: 'white', 
-                          fontWeight: 700, 
-                          border: '1px solid rgba(255,255,255,0.4)', 
-                          fontSize: '0.875rem',
-                          py: 2.5,
-                          borderRadius: 2
-                        }} 
-                      />
-                    ))}
-                  </Box>
-                  <Box sx={{ pt: 2.5, borderTop: '2px solid rgba(255,255,255,0.25)' }}>
-                    <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 600 }}>
-                      {gameProgress.badges.length} badges earned ⭐
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+          <div className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden sm:col-span-2 lg:col-span-1">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🏆</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Recent Badges</h3>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-4 mt-4">
+                {gameProgress.badges.slice(0, 3).map((badge, index) => (
+                  <span 
+                    key={index}
+                    className="px-3 sm:px-4 py-2 bg-white/25 backdrop-blur-sm rounded-xl font-bold text-xs sm:text-sm border border-white/40"
+                  >
+                    {badge}
+                  </span>
+                ))}
+              </div>
+              <div className="pt-4 border-t-2 border-white/30">
+                <p className="text-sm sm:text-base font-semibold">
+                  {gameProgress.badges.length} badges earned ⭐
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Quick Actions */}
-        <Typography variant="h4" fontWeight="bold" gutterBottom mb={3} sx={{ 
-          color: '#3A3D42',
-          fontFamily: '"Outfit", "Inter", sans-serif'
-        }}>
-          Let's Play!
-        </Typography>
-        <Grid container spacing={3} mb={5}>
-          {quickActions.map((action, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card 
-                onClick={action.action} 
-                sx={{ 
-                  cursor: 'pointer', 
-                  borderRadius: 3, 
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)', 
-                  transition: 'all 0.3s ease', 
-                  backgroundColor: 'white',
-                  border: '1px solid #E8E6E1',
-                  '&:hover': { 
-                    transform: 'translateY(-6px)', 
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-                  }
-                }}
+        <div className="mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-3">
+            Let's Play! 
+            <Sparkles className="text-yellow-500 w-7 h-7 sm:w-8 sm:h-8" />
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            {quickActions.map((action, index) => (
+              <div
+                key={index}
+                onClick={action.action}
+                className={`group bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-2 ${action.hoverColor} border border-gray-100`}
               >
-                <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                  <Box sx={{ 
-                    width: 70, 
-                    height: 70, 
-                    mx: 'auto', 
-                    mb: 2, 
-                    backgroundColor: '#FAF8F5', 
-                    borderRadius: 3, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    border: `2px solid ${action.color}20`,
-                    transition: 'transform 0.3s ease', 
-                    '&:hover': { 
-                      transform: 'scale(1.05)',
-                      backgroundColor: `${action.color}10`
-                    } 
-                  }}>
-                    {action.icon}
-                  </Box>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ 
-                    color: '#3A3D42',
-                    fontFamily: '"Outfit", "Inter", sans-serif'
-                  }}>
-                    {action.title}
-                  </Typography>
-                  <Typography variant="body2" color="#5B7C99" mb={2} sx={{
-                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                  }}>
-                    {action.description}
-                  </Typography>
-                </CardContent>
-                <CardActions sx={{ justifyContent: 'center', pb: 2.5 }}>
-                  <Button 
-                    startIcon={<Play size={18} />} 
-                    sx={{ 
-                      color: action.color, 
-                      fontWeight: 700, 
-                      textTransform: 'none', 
-                      fontSize: '1rem',
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '&:hover': {
-                        backgroundColor: `${action.color}10`
-                      }
-                    }}
-                  >
-                    Start
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                <div className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 ${action.iconBg} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                  <action.icon className={`${action.iconColor} w-7 h-7 sm:w-8 sm:h-8`} />
+                </div>
+                <h3 className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 mb-1 sm:mb-2 text-center">
+                  {action.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 text-center line-clamp-2">
+                  {action.description}
+                </p>
+                <button className={`w-full flex items-center justify-center gap-2 py-2 sm:py-2.5 bg-gradient-to-r ${action.color} text-white rounded-xl font-semibold text-xs sm:text-sm hover:scale-105 transition-transform duration-200`}>
+                  <Play size={14} className="sm:w-4 sm:h-4" />
+                  Start
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Achievements */}
-        <Typography variant="h4" fontWeight="bold" gutterBottom mb={3} sx={{ 
-          color: '#3A3D42',
-          fontFamily: '"Outfit", "Inter", sans-serif'
-        }}>
-          Your Achievements
-        </Typography>
-        <Grid container spacing={3}>
-          {achievements.map((achievement, index) => (
-            <Grid item xs={6} sm={3} key={index}>
-              <Card sx={{ 
-                borderRadius: 3, 
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)', 
-                opacity: achievement.earned ? 1 : 0.6, 
-                backgroundColor: 'white', 
-                color: achievement.earned ? '#3A3D42' : '#8FA998', 
-                textAlign: 'center', 
-                transition: 'all 0.3s ease',
-                border: achievement.earned ? '2px solid #8FA998' : '1px solid #E8E6E1',
-                '&:hover': { 
-                  transform: 'scale(1.05)', 
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h1" sx={{ 
-                    mb: 2, 
-                    fontSize: '3rem', 
-                    filter: achievement.earned ? 'none' : 'grayscale(100%)',
-                    opacity: achievement.earned ? 1 : 0.5
-                  }}>
-                    {achievement.icon}
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold" gutterBottom sx={{
-                    fontFamily: '"Outfit", "Inter", sans-serif'
-                  }}>
-                    {achievement.name}
-                  </Typography>
-                  <Typography variant="body2" sx={{ 
-                    opacity: 0.8, 
-                    fontWeight: 600,
-                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                    color: achievement.earned ? '#C67B5C' : '#8FA998'
-                  }}>
-                    {achievement.earned ? 'Earned!' : 'Keep trying!'}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-    </Box>
+        <div>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-3">
+            Your Achievements
+            <Trophy className="text-yellow-500 w-7 h-7 sm:w-8 sm:h-8" />
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {achievements.map((achievement, index) => (
+              <div
+                key={index}
+                className={`bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 text-center ${
+                  achievement.earned 
+                    ? 'border-2 border-green-400 hover:scale-105' 
+                    : 'opacity-60 border border-gray-200'
+                }`}
+              >
+                <div className={`text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4 ${achievement.earned ? '' : 'grayscale opacity-50'}`}>
+                  {achievement.icon}
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-2">
+                  {achievement.name}
+                </h3>
+                <p className={`text-xs sm:text-sm font-semibold ${
+                  achievement.earned ? 'text-green-600' : 'text-gray-500'
+                }`}>
+                  {achievement.earned ? 'Earned! 🎉' : 'Keep trying!'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

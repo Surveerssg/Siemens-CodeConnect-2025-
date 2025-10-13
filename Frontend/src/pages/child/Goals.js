@@ -13,20 +13,19 @@ import {
   LinearProgress,
   Chip,
   Checkbox,
-  FormControlLabel,
-  Badge
+  FormControlLabel
 } from '@mui/material';
 import { 
   ArrowLeft, 
   Target, 
   CheckCircle, 
   Circle,
-  Star,
-  Trophy,
   Calendar,
   User,
   Award,
-  TrendingUp
+  Sparkles,
+  Trophy,
+  Flame
 } from 'lucide-react';
 
 const Goals = () => {
@@ -107,429 +106,255 @@ const Goals = () => {
       const date = typeof d === 'string' ? new Date(d) : d;
       if (!date) return null;
       return date.toLocaleDateString(undefined, { 
-        year: 'numeric', 
         month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: 'numeric'
       });
     } catch {
       return null;
     }
   };
 
-  const getGoalTypeColor = (type) => {
-    switch (type) {
-      case 'assigned': return '#5B7C99';
-      case 'daily': return '#8FA998';
-      case 'weekly': return '#C67B5C';
-      default: return '#5B7C99';
-    }
-  };
-
-  const getGoalTypeIcon = (type) => {
-    switch (type) {
-      case 'assigned': return '👨‍👦';
-      case 'daily': return '📅';
-      case 'weekly': return '📊';
-      default: return '🎯';
-    }
-  };
-
   const completedGoals = goals.filter(goal => goal.completed).length;
   const totalGoals = goals.length;
   const completionRate = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
-
+  const totalXPEarned = goals.filter(g => g.completed).reduce((sum, goal) => sum + goal.xp, 0);
   const assignedGoals = goals.filter(goal => goal.type === 'assigned');
 
   if (loading) {
     return (
-      <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Typography sx={{
-            color: '#5B7C99',
-            fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-            textAlign: 'center'
-          }}>
-            Loading goals...
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-bounce">🎯</div>
+          <Typography className="text-2xl font-bold text-gray-700">
+            Loading your goals...
           </Typography>
-        </Container>
-      </Box>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
-        <Box display="flex" alignItems="center" mb={4}>
-          <Button
-            startIcon={<ArrowLeft size={20} />}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
+          <button
             onClick={() => navigate('/dashboard')}
-            sx={{ 
-              color: '#5B7C99',
-              mr: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-              '&:hover': {
-                backgroundColor: '#E8E6E1'
-              }
-            }}
+            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
           >
-            Back to Dashboard
-          </Button>
-          <Typography variant="h4" sx={{ 
-            color: '#3A3D42', 
-            fontWeight: 'bold',
-            fontFamily: '"Outfit", "Inter", sans-serif'
-          }}>
-            My Goals 🎯
-          </Typography>
-        </Box>
+            <ArrowLeft size={20} />
+            <span>Back to Dashboard</span>
+          </button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800">
+              My Goals
+            </h1>
+            <span className="text-4xl sm:text-5xl animate-bounce">🎯</span>
+          </div>
+        </div>
 
         {/* Stats Cards */}
-        <Grid container spacing={3} mb={4}>
-          <Grid item xs={12} md={4}>
-            <Card sx={{ 
-              background: '#5B7C99', 
-              color: 'white', 
-              textAlign: 'center', 
-              p: 3,
-              borderRadius: 3,
-              boxShadow: '0 2px 12px rgba(91, 124, 153, 0.2)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 24px rgba(91, 124, 153, 0.3)'
-              }
-            }}>
-              <Target size={32} style={{ margin: '0 auto 12px' }} />
-              <Typography variant="h6" gutterBottom sx={{
-                fontFamily: '"Outfit", "Inter", sans-serif',
-                fontWeight: 600,
-                mb: 1
-              }}>
-                Goals Completed
-              </Typography>
-              <Typography variant="h2" sx={{ 
-                fontWeight: 'bold',
-                fontFamily: '"Outfit", "Inter", sans-serif',
-                mb: 1
-              }}>
-                {completedGoals}/{totalGoals}
-              </Typography>
-              <Typography variant="body2" sx={{
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                opacity: 0.9
-              }}>
-                {Math.round(completionRate)}% Complete
-              </Typography>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Card sx={{ 
-              textAlign: 'center', 
-              p: 3,
-              borderRadius: 3,
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-              backgroundColor: 'white',
-              border: '1px solid #E8E6E1',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-              }
-            }}>
-              <Award size={32} color="#8FA998" style={{ margin: '0 auto 12px' }} />
-              <Typography variant="h6" gutterBottom sx={{ 
-                color: '#8FA998',
-                fontFamily: '"Outfit", "Inter", sans-serif',
-                fontWeight: 600,
-                mb: 1
-              }}>
-                Total XP Earned
-              </Typography>
-              <Typography variant="h2" sx={{ 
-                color: '#8FA998', 
-                fontWeight: 'bold',
-                fontFamily: '"Outfit", "Inter", sans-serif',
-                mb: 1
-              }}>
-                {goals.filter(g => g.completed).reduce((sum, goal) => sum + goal.xp, 0)}
-              </Typography>
-              <Typography variant="body2" sx={{
-                color: '#8FA998',
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-              }}>
-                From completed goals
-              </Typography>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Card sx={{ 
-              textAlign: 'center', 
-              p: 3,
-              borderRadius: 3,
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-              backgroundColor: 'white',
-              border: '1px solid #E8E6E1',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-              }
-            }}>
-              <User size={32} color="#C67B5C" style={{ margin: '0 auto 12px' }} />
-              <Typography variant="h6" gutterBottom sx={{ 
-                color: '#C67B5C',
-                fontFamily: '"Outfit", "Inter", sans-serif',
-                fontWeight: 600,
-                mb: 1
-              }}>
-                Assigned Goals
-              </Typography>
-              <Typography variant="h2" sx={{ 
-                color: '#C67B5C', 
-                fontWeight: 'bold',
-                fontFamily: '"Outfit", "Inter", sans-serif',
-                mb: 1
-              }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
+          {/* Goals Completed Card */}
+          <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🎯</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Target size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Goals Completed</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {completedGoals}<span className="text-3xl sm:text-4xl opacity-75">/{totalGoals}</span>
+              </p>
+              <div className="pt-4 border-t-2 border-white/30">
+                <p className="text-sm sm:text-base font-semibold">
+                  {Math.round(completionRate)}% Complete 🌟
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* XP Earned Card */}
+          <div className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">⭐</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Award size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Total XP Earned</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {totalXPEarned}
+              </p>
+              <div className="pt-4 border-t-2 border-white/30">
+                <p className="text-sm sm:text-base font-semibold">
+                  From completed goals 🏆
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Assigned Goals Card */}
+          <div className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden sm:col-span-2 lg:col-span-1">
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">👨‍👦</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <User size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Assigned Goals</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
                 {assignedGoals.length}
-              </Typography>
-              <Typography variant="body2" sx={{
-                color: '#C67B5C',
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-              }}>
-                From parents
-              </Typography>
-            </Card>
-          </Grid>
-        </Grid>
+              </p>
+              <div className="pt-4 border-t-2 border-white/30">
+                <p className="text-sm sm:text-base font-semibold">
+                  From your parents 💜
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Assigned Goals Section */}
-        <Box mb={4}>
-          <Typography variant="h5" gutterBottom sx={{ 
-            color: '#3A3D42', 
-            fontWeight: 'bold', 
-            mb: 3,
-            fontFamily: '"Outfit", "Inter", sans-serif',
-            display: 'flex',
-            alignItems: 'center'
-          }}>
-            <User size={24} style={{ marginRight: 12 }} />
+        <div className="mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-3">
             Parent-Assigned Goals
-          </Typography>
+            <Sparkles className="text-yellow-500 w-7 h-7 sm:w-8 sm:h-8" />
+          </h2>
           
           {assignedGoals.length === 0 ? (
-            <Card sx={{ 
-              textAlign: 'center', 
-              p: 4,
-              borderRadius: 3,
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-              backgroundColor: 'white',
-              border: '1px solid #E8E6E1'
-            }}>
-              <Typography variant="h6" sx={{
-                color: '#5B7C99',
-                fontFamily: '"Outfit", "Inter", sans-serif',
-                fontWeight: 600
-              }}>
-                No goals assigned yet
-              </Typography>
-              <Typography variant="body2" sx={{
-                color: '#5B7C99',
-                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                mt: 1
-              }}>
-                Your parents will assign goals for you to complete!
-              </Typography>
-            </Card>
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 shadow-lg text-center border border-gray-100">
+              <div className="text-6xl sm:text-7xl mb-4">📭</div>
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3">
+                No Goals Yet!
+              </h3>
+              <p className="text-base sm:text-lg text-gray-600">
+                Your parents will assign goals for you to complete soon! 🎉
+              </p>
+            </div>
           ) : (
-            <Grid container spacing={3}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {assignedGoals.map(goal => (
-                <Grid item xs={12} md={6} key={goal.id}>
-                  <Card 
-                    sx={{ 
-                      borderRadius: 3,
-                      boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                      backgroundColor: goal.completed ? '#FAF8F5' : 'white',
-                      border: goal.completed ? '2px solid #8FA998' : '2px solid #5B7C99',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-                      }
-                    }}
-                  >
-                    <CardContent sx={{ p: 3 }}>
-                      <Box display="flex" alignItems="flex-start" mb={2}>
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={goal.completed}
-                              onChange={() => handleGoalToggle(goal.id)}
-                              icon={<Circle size={24} color="#5B7C99" />}
-                              checkedIcon={<CheckCircle size={24} color="#8FA998" />}
-                              sx={{ 
-                                color: goal.completed ? '#8FA998' : '#5B7C99',
-                                '&.Mui-checked': {
-                                  color: '#8FA998',
-                                },
-                              }}
-                            />
-                          }
-                          label=""
-                        />
-                        <Box flexGrow={1}>
-                          <Box display="flex" alignItems="center" mb={1} flexWrap="wrap" gap={1}>
-                            <Typography variant="h6" sx={{ 
-                              color: goal.completed ? '#8FA998' : '#3A3D42', 
-                              fontFamily: '"Outfit", "Inter", sans-serif',
-                              fontWeight: 600,
-                              textDecoration: goal.completed ? 'line-through' : 'none' 
-                            }}>
-                              {goal.title}
-                            </Typography>
-                            <Chip 
-                              label={getGoalTypeIcon(goal.type)} 
-                              size="small" 
-                              sx={{ 
-                                background: getGoalTypeColor(goal.type), 
-                                color: 'white', 
-                                fontWeight: 'bold',
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                borderRadius: 1
-                              }} 
-                            />
-                          </Box>
-                          
-                          <Typography variant="body2" sx={{ 
-                            color: '#5B7C99',
-                            mb: 2,
-                            fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                          }}>
-                            {goal.description}
-                          </Typography>
-                          
-                          <Box mb={2}>
-                            <Box display="flex" justifyContent="space-between" mb={1}>
-                              <Typography variant="body2" sx={{
-                                color: '#5B7C99',
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600
-                              }}>
-                                Progress: {goal.current}/{goal.target}
-                              </Typography>
-                              <Typography variant="body2" sx={{
-                                color: '#C67B5C',
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600
-                              }}>
-                                {goal.xp} XP
-                              </Typography>
-                            </Box>
-                            <LinearProgress 
-                              variant="determinate" 
-                              value={(goal.current / goal.target) * 100} 
-                              sx={{ 
-                                height: 8, 
-                                borderRadius: 4, 
-                                backgroundColor: '#E8E6E1',
-                                '& .MuiLinearProgress-bar': { 
-                                  backgroundColor: goal.completed ? '#8FA998' : '#5B7C99',
-                                  borderRadius: 4 
-                                } 
-                              }} 
-                            />
-                          </Box>
+                <div
+                  key={goal.id}
+                  className={`group bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+                    goal.completed 
+                      ? 'border-2 border-green-400' 
+                      : 'border-2 border-blue-200'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 mt-1">
+                      <button
+                        onClick={() => handleGoalToggle(goal.id)}
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                          goal.completed 
+                            ? 'bg-green-500 hover:bg-green-600' 
+                            : 'bg-gray-200 hover:bg-blue-500 hover:scale-110'
+                        }`}
+                      >
+                        {goal.completed ? (
+                          <CheckCircle size={20} className="text-white sm:w-6 sm:h-6" />
+                        ) : (
+                          <Circle size={20} className="text-gray-400 sm:w-6 sm:h-6" />
+                        )}
+                      </button>
+                    </div>
+                    
+                    <div className="flex-grow">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className={`text-lg sm:text-xl font-bold ${
+                          goal.completed ? 'text-green-600 line-through' : 'text-gray-800'
+                        }`}>
+                          {goal.title}
+                        </h3>
+                        <span className="text-2xl flex-shrink-0">👨‍👦</span>
+                      </div>
+                      
+                      <p className="text-sm sm:text-base text-gray-600 mb-4">
+                        {goal.description}
+                      </p>
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs sm:text-sm font-bold text-gray-700">
+                            Progress: {goal.current}/{goal.target}
+                          </span>
+                          <span className="text-xs sm:text-sm font-bold text-orange-600 flex items-center gap-1">
+                            <Trophy size={14} className="sm:w-4 sm:h-4" />
+                            {goal.xp} XP
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3 overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              goal.completed 
+                                ? 'bg-gradient-to-r from-green-400 to-green-500' 
+                                : 'bg-gradient-to-r from-blue-400 to-blue-600'
+                            }`}
+                            style={{ width: `${(goal.current / goal.target) * 100}%` }}
+                          />
+                        </div>
+                      </div>
 
-                          {goal.createdAt && (
-                            <Box display="flex" alignItems="center" sx={{ mt: 1 }}>
-                              <Calendar size={16} style={{ marginRight: 8, color: '#5B7C99' }} />
-                              <Typography variant="caption" sx={{
-                                color: '#5B7C99',
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600
-                              }}>
-                                Assigned: {formatDate(goal.createdAt)}
-                              </Typography>
-                            </Box>
-                          )}
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
+                      {/* Date */}
+                      {goal.createdAt && (
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+                          <Calendar size={14} className="sm:w-4 sm:h-4" />
+                          <span>Assigned: {formatDate(goal.createdAt)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ))}
-            </Grid>
+            </div>
           )}
-        </Box>
+        </div>
 
         {/* Progress Overview */}
         {totalGoals > 0 && (
-          <Card sx={{
-            borderRadius: 3,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-            backgroundColor: 'white',
-            border: '1px solid #E8E6E1'
-          }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h5" gutterBottom sx={{ 
-                color: '#3A3D42',
-                fontWeight: 'bold',
-                mb: 3,
-                fontFamily: '"Outfit", "Inter", sans-serif'
-              }}>
-                Goal Progress Overview
-              </Typography>
-              <Box mb={2}>
-                <Box display="flex" justifyContent="space-between" mb={1}>
-                  <Typography variant="h6" sx={{
-                    color: '#5B7C99',
-                    fontFamily: '"Outfit", "Inter", sans-serif',
-                    fontWeight: 600
-                  }}>
-                    Overall Completion
-                  </Typography>
-                  <Typography variant="h6" sx={{
-                    color: '#5B7C99',
-                    fontFamily: '"Outfit", "Inter", sans-serif',
-                    fontWeight: 600
-                  }}>
-                    {Math.round(completionRate)}%
-                  </Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={completionRate} 
-                  sx={{ 
-                    height: 16, 
-                    borderRadius: 8,
-                    backgroundColor: '#E8E6E1',
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: '#8FA998',
-                      borderRadius: 8
-                    }
-                  }} 
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              Overall Progress
+              <Trophy className="text-yellow-500 w-7 h-7" />
+            </h2>
+            
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-lg sm:text-xl font-bold text-gray-700">
+                  Completion Rate
+                </span>
+                <span className="text-2xl sm:text-3xl font-black text-blue-600">
+                  {Math.round(completionRate)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-4 sm:h-5 overflow-hidden mb-3">
+                <div 
+                  className="bg-gradient-to-r from-green-400 to-green-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${completionRate}%` }}
                 />
-                <Typography variant="body2" sx={{ 
-                  mt: 1, 
-                  textAlign: 'center',
-                  color: '#5B7C99',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                  fontWeight: 600
-                }}>
-                  {completedGoals} of {totalGoals} goals completed
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+              </div>
+              <p className="text-center text-base sm:text-lg font-bold text-gray-700">
+                {completedGoals} of {totalGoals} goals completed! 🎉
+              </p>
+            </div>
+
+            {/* Motivational Message */}
+            <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4 sm:p-6 text-center">
+              <p className="text-lg sm:text-xl font-bold text-gray-800">
+                {completionRate === 100 
+                  ? "Amazing work! You've completed all your goals! 🌟" 
+                  : completionRate >= 75 
+                  ? "You're doing great! Keep it up! 💪"
+                  : completionRate >= 50
+                  ? "Halfway there! You can do it! 🚀"
+                  : "Every goal completed is a step forward! 🌈"}
+              </p>
+            </div>
+          </div>
         )}
-      </Container>
-    </Box>
+      </div>
+    </div>
   );
 };
 
