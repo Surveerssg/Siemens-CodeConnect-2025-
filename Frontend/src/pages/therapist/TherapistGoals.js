@@ -1,722 +1,466 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { parentGoalsAPI, therapistAPI } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
-import { 
-  Container, 
-  Typography, 
-  Box, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  LinearProgress,
-  Divider,
-  Alert
-} from '@mui/material';
+import { useGame } from '../../context/GameContext';
+import { goalsAPI } from '../../services/api';
+import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
-  Plus,
+  Target, 
+  CheckCircle, 
+  Circle,
   Calendar,
   User,
-  Target,
   Award,
-  TrendingUp,
-  Star
+  Sparkles,
+  Trophy,
+  Flame
 } from 'lucide-react';
 
-const TherapistGoals = () => {
+const Goals = () => {
+  const { gameProgress } = useGame();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [therapistGoals, setTherapistGoals] = useState([]);
-  const [loading, setLoading] = useState(false);
+  
+  const [goals, setGoals] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [newGoal, setNewGoal] = useState({
-    title: '',
-    description: '',
-    target: '1',
-    xp_reward: '25',
-    children_email: ''
-  });
-
-  const [children, setChildren] = useState([]);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const toDateAny = (v) => {
+    if (!v) return null;
+    if (v instanceof Date) return v;
+    if (typeof v === 'string' || typeof v === 'number') {
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (v.seconds) return new Date(v.seconds * 1000);
+    if (v._seconds) return new Date(v._seconds * 1000);
+    return null;
+  };
 
   useEffect(() => {
-    let mounted = true;
-    const loadChildrenAndGoals = async () => {
+    const loadAssignedGoals = async () => {
       try {
-        if (mounted) setLoading(true);
-        // Load children
-        const childrenRes = await therapistAPI.listChildren();
-        if (!mounted) return;
-        setChildren(childrenRes.data || []);
-
-        // Load existing therapist goals (with attached assigned goal info)
-        const goalsRes = await parentGoalsAPI.list();
-        if (!mounted) return;
-        // Normalize to ensure assignedStatus fields exist
-        const normalized = (goalsRes.data || []).map(g => ({
-          ...g,
-          assignedStatus: g.assignedStatus || null,
-          assignedProgress: typeof g.assignedProgress !== 'undefined' ? g.assignedProgress : null
+        setLoading(true);
+        const res = await goalsAPI.listMyAssigned();
+        const mapped = (res.data || []).map(g => ({
+          id: g.id,
+          title: g.title,
+          description: g.description,
+          target: g.targetValue || 1,
+          current: g.progress || 0,
+          type: 'assigned',
+          completed: g.status === 'completed',
+          xp: g.xpReward || 0,
+          dueDate: toDateAny(g.dueDate),
+          createdAt: toDateAny(g.createdAt),
+          assignedBy: g.assignedByRole || 'parent',
+          parentGoalId: g.parentGoalId
         }));
-        setTherapistGoals(normalized);
+        setGoals(mapped);
       } catch (e) {
-        console.error('Failed to load data:', e);
-        if (mounted) setMessage({ type: 'error', text: 'Failed to load data' });
+        console.error('Failed to load assigned goals:', e);
       } finally {
-        if (mounted) setLoading(false);
+        setLoading(false);
       }
     };
-
-    // initial load
-    loadChildrenAndGoals();
-
-    // Poll for updates every 8 seconds so therapist sees status changes
-    const pollInterval = setInterval(() => {
-      loadChildrenAndGoals();
-    }, 8000);
-
-    return () => {
-      mounted = false;
-      clearInterval(pollInterval);
-    };
+    loadAssignedGoals();
   }, []);
 
-  const childOptions = children.map(c => ({ 
-    value: c.email || c.childEmail, 
-    label: c.name || c.email || 'Unknown Child' 
-  }));
-
-  const handleInputChange = (field, value) => {
-    setNewGoal(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleAssignGoal = async () => {
-    if (!newGoal.children_email || !newGoal.title || !newGoal.target) {
-      setMessage({ type: 'error', text: 'Please fill in all required fields' });
-      return;
-    }
-
+  const handleGoalToggle = async (goalId) => {
+    const goal = goals.find(g => g.id === goalId);
+    if (!goal) return;
+    
+    const newCompleted = !goal.completed;
+    const newProgress = newCompleted ? goal.target : 0;
+    
     try {
-      const payload = {
-        title: newGoal.title,
-        description: newGoal.description,
-        target: parseInt(newGoal.target),
-        xp_reward: parseInt(newGoal.xp_reward),
-        children_email: newGoal.children_email
-      };
-
-      const res = await parentGoalsAPI.create(payload);
-      
-      // Add to local state
-      const createdGoal = { 
-        id: res.data.therapistGoalId, 
-        ...payload,
-        createdAt: new Date(),
-        status: 'active'
-      };
-      
-      setTherapistGoals(prev => [createdGoal, ...prev]);
-      
-      // Reset form
-      setNewGoal({
-        title: '',
-        description: '',
-        target: '1',
-        xp_reward: '25',
-        children_email: ''
+      await goalsAPI.updateMyAssignedProgress(goalId, { 
+        status: newCompleted ? 'completed' : 'active', 
+        progress: newProgress 
       });
       
-      setMessage({ type: 'success', text: 'Goal assigned successfully!' });
-      
-      // Clear message after 3 seconds
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      setGoals(goals.map(g => 
+        g.id === goalId ? { 
+          ...g, 
+          completed: newCompleted, 
+          current: newProgress 
+        } : g
+      ));
     } catch (e) {
-      console.error('Failed to assign goal:', e);
-      setMessage({ type: 'error', text: e?.response?.data?.error || 'Failed to assign goal' });
+      console.error('Failed to update goal progress:', e);
     }
   };
 
-  const handleDeleteGoal = async (goalId) => {
-    if (!window.confirm('Are you sure you want to delete this goal?')) return;
-
+  const formatDate = (d) => {
     try {
-      await parentGoalsAPI.delete(goalId);
-      setTherapistGoals(prev => prev.filter(goal => goal.id !== goalId));
-      setMessage({ type: 'success', text: 'Goal deleted successfully!' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-    } catch (e) {
-      console.error('Failed to delete goal:', e);
-      setMessage({ type: 'error', text: 'Failed to delete goal' });
+      const date = typeof d === 'string' ? new Date(d) : d;
+      if (!date) return null;
+      return date.toLocaleDateString(undefined, { 
+        month: 'short', 
+        day: 'numeric'
+      });
+    } catch {
+      return null;
     }
   };
 
-  const formatDate = (date) => {
-    if (!date) return 'Unknown date';
-    const d = new Date(date);
-    return d.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const completedGoals = goals.filter(goal => goal.completed).length;
+  const totalGoals = goals.length;
+  const completionRate = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
+  const totalXPEarned = goals.filter(g => g.completed).reduce((sum, goal) => sum + goal.xp, 0);
+  const assignedGoals = goals.filter(goal => goal.type === 'assigned');
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
   };
 
-  const getChildName = (childEmail) => {
-    const child = children.find(c => (c.email || c.childEmail) === childEmail);
-    return child?.name || childEmail || 'Unknown Child';
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100
+      }
+    }
   };
 
-  const getDisplayedStatus = (goal) => {
-    // If an assigned status exists for the child, prefer it (completed/active)
-    if (goal.assignedStatus) return goal.assignedStatus;
-    return goal.status || 'active';
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif] flex items-center justify-center">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.2, 1],
+              rotate: [0, 10, -10, 0]
+            }}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="text-6xl mb-4"
+          >
+            🎯
+          </motion.div>
+          <p className="text-2xl font-bold text-gray-700">
+            Loading your goals...
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
-        <Box display="flex" alignItems="center" mb={4}>
-          <Button
-            startIcon={<ArrowLeft size={20} />}
-            onClick={() => navigate('/therapist')}
-            sx={{ 
-              color: '#5B7C99', 
-              mr: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-              '&:hover': {
-                backgroundColor: '#E8E6E1'
-              }
-            }}
-          >
-            Back to Dashboard
-          </Button>
-          <Typography variant="h4" sx={{ 
-            color: '#3A3D42', 
-            fontWeight: 'bold',
-            fontFamily: '"Outfit", "Inter", sans-serif'
-          }}>
-            Assign Goals to Children 🎯
-          </Typography>
-        </Box>
-
-        {message.text && (
-          <Alert severity={message.type} sx={{ 
-            mb: 3,
-            borderRadius: 2,
-            fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-          }}>
-            {message.text}
-          </Alert>
-        )}
-
-        {/* Create New Goal */}
-        <Card sx={{ 
-          mb: 4,
-          borderRadius: 3,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-          backgroundColor: 'white',
-          border: '1px solid #E8E6E1'
-        }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h5" sx={{ 
-              mb: 3, 
-              color: '#3A3D42',
-              fontFamily: '"Outfit", "Inter", sans-serif',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
-              <Plus size={24} style={{ marginRight: 12 }} />
-              Create New Goal
-            </Typography>
-            
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-  <FormControl fullWidth>
-    <InputLabel 
-      shrink={Boolean(newGoal.children_email)}
-      sx={{
-        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-        color: '#5B7C99',
-        backgroundColor: 'white',
-        paddingLeft: '4px',
-        paddingRight: '4px'
-      }}
-    >
-      Select Child *
-    </InputLabel>
-    <Select 
-      value={newGoal.children_email} 
-      onChange={(e) => handleInputChange('children_email', e.target.value)}
-      label="Select Child *"
-      displayEmpty
-      renderValue={(selected) => {
-        if (!selected) {
-          return (
-            <span style={{
-              color: '#5B7C99',
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-            }}>
-              Select Child *
-            </span>
-          );
-        }
-        const selectedChild = childOptions.find(opt => opt.value === selected);
-        return selectedChild ? selectedChild.label : selected;
-      }}
-      sx={{
-        borderRadius: 2,
-        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-        '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#E8E6E1',
-        },
-        '&:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#5B7C99',
-        },
-        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#5B7C99',
-        },
-      }}
-    >
-      {childOptions.map(opt => (
-        <MenuItem 
-          key={opt.value} 
-          value={opt.value}
-          sx={{ fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif' }}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8"
         >
-          <Box display="flex" alignItems="center">
-            <User size={16} style={{ marginRight: 8, color: '#5B7C99' }} />
-            {opt.label}
-          </Box>
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
-</Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField 
-                  fullWidth 
-                  label="Goal Title *" 
-                  value={newGoal.title} 
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '& fieldset': {
-                        borderColor: '#E8E6E1',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      color: '#5B7C99',
-                    }
-                  }}
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField 
-                  fullWidth 
-                  label="Description" 
-                  multiline
-                  rows={2}
-                  value={newGoal.description} 
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '& fieldset': {
-                        borderColor: '#E8E6E1',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      color: '#5B7C99',
-                    }
-                  }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <TextField 
-                  fullWidth 
-                  type="number" 
-                  label="Target Value *" 
-                  value={newGoal.target} 
-                  onChange={(e) => handleInputChange('target', e.target.value)}
-                  InputProps={{ inputProps: { min: 1 } }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '& fieldset': {
-                        borderColor: '#E8E6E1',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      color: '#5B7C99',
-                    }
-                  }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <TextField 
-                  fullWidth 
-                  type="number" 
-                  label="XP Reward" 
-                  value={newGoal.xp_reward} 
-                  onChange={(e) => handleInputChange('xp_reward', e.target.value)}
-                  InputProps={{ inputProps: { min: 0 } }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      '& fieldset': {
-                        borderColor: '#E8E6E1',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#5B7C99',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                      color: '#5B7C99',
-                    }
-                  }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <Button 
-                  variant="contained" 
-                  onClick={handleAssignGoal} 
-                  disabled={!newGoal.children_email || !newGoal.title || !newGoal.target}
-                  sx={{ 
-                    height: '56px', 
-                    width: '100%',
-                    backgroundColor: '#8FA998',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                    borderRadius: 2,
-                    '&:hover': {
-                      backgroundColor: '#7D9786',
-                      boxShadow: '0 4px 12px rgba(143, 169, 152, 0.3)'
-                    },
-                    '&:disabled': {
-                      backgroundColor: '#E8E6E1',
-                      color: '#8FA998'
-                    }
-                  }}
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
+          >
+            <ArrowLeft size={20} />
+            <span>Back to Dashboard</span>
+          </button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800">
+              My Goals
+            </h1>
+            <motion.span 
+              animate={{ 
+                rotate: [0, 10, -10, 0],
+                scale: [1, 1.1, 1]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="text-4xl sm:text-5xl"
+            >
+              🎯
+            </motion.span>
+          </div>
+        </motion.div>
+
+        {/* Stats Cards */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12"
+        >
+          {/* Goals Completed Card */}
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ scale: 1.05, y: -8 }}
+            className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 text-white relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🎯</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Target size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Goals Completed</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {completedGoals}<span className="text-3xl sm:text-4xl opacity-75">/{totalGoals}</span>
+              </p>
+              <div className="pt-4 border-t-2 border-white/30">
+                <p className="text-sm sm:text-base font-semibold">
+                  {Math.round(completionRate)}% Complete 🌟
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* XP Earned Card */}
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ scale: 1.05, y: -8 }}
+            className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 text-white relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">⭐</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Award size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Total XP Earned</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {totalXPEarned}
+              </p>
+              <div className="pt-4 border-t-2 border-white/30">
+                <p className="text-sm sm:text-base font-semibold">
+                  From completed goals 🏆
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Assigned Goals Card */}
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ scale: 1.05, y: -8 }}
+            className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 text-white relative overflow-hidden sm:col-span-2 lg:col-span-1"
+          >
+            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">👨‍👦</div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <User size={24} className="sm:w-7 sm:h-7" />
+                <h3 className="text-xl sm:text-2xl font-bold">Assigned Goals</h3>
+              </div>
+              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+                {assignedGoals.length}
+              </p>
+              <div className="pt-4 border-t-2 border-white/30">
+                <p className="text-sm sm:text-base font-semibold">
+                  From your parents 💜
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* Assigned Goals Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mb-8 sm:mb-12"
+        >
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-3">
+            Parent-Assigned Goals
+            <Sparkles className="text-yellow-500 w-7 h-7 sm:w-8 sm:h-8" />
+          </h2>
+          
+          {assignedGoals.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 shadow-lg text-center border border-gray-100"
+            >
+              <motion.div
+                animate={{ 
+                  y: [0, -10, 0]
+                }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="text-6xl sm:text-7xl mb-4"
+              >
+                📭
+              </motion.div>
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3">
+                No Goals Yet!
+              </h3>
+              <p className="text-base sm:text-lg text-gray-600">
+                Your parents will assign goals for you to complete soon! 🎉
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"
+            >
+              {assignedGoals.map((goal, index) => (
+                <motion.div
+                  key={goal.id}
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.02, y: -4 }}
+                  className={`group bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 ${
+                    goal.completed 
+                      ? 'border-2 border-green-400' 
+                      : 'border-2 border-blue-200'
+                  }`}
                 >
-                  Assign Goal
-                </Button>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 mt-1">
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleGoalToggle(goal.id)}
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                          goal.completed 
+                            ? 'bg-green-500 hover:bg-green-600' 
+                            : 'bg-gray-200 hover:bg-blue-500'
+                        }`}
+                      >
+                        {goal.completed ? (
+                          <CheckCircle size={20} className="text-white sm:w-6 sm:h-6" />
+                        ) : (
+                          <Circle size={20} className="text-gray-400 sm:w-6 sm:h-6 group-hover:text-white" />
+                        )}
+                      </motion.button>
+                    </div>
+                    
+                    <div className="flex-grow">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className={`text-lg sm:text-xl font-bold ${
+                          goal.completed ? 'text-green-600 line-through' : 'text-gray-800'
+                        }`}>
+                          {goal.title}
+                        </h3>
+                        <span className="text-2xl flex-shrink-0">👨‍👦</span>
+                      </div>
+                      
+                      <p className="text-sm sm:text-base text-gray-600 mb-4">
+                        {goal.description}
+                      </p>
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs sm:text-sm font-bold text-gray-700">
+                            Progress: {goal.current}/{goal.target}
+                          </span>
+                          <span className="text-xs sm:text-sm font-bold text-orange-600 flex items-center gap-1">
+                            <Trophy size={14} className="sm:w-4 sm:h-4" />
+                            {goal.xp} XP
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3 overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(goal.current / goal.target) * 100}%` }}
+                            transition={{ duration: 1, ease: "easeOut", delay: index * 0.1 }}
+                            className={`h-full rounded-full ${
+                              goal.completed 
+                                ? 'bg-gradient-to-r from-green-400 to-green-500' 
+                                : 'bg-gradient-to-r from-blue-400 to-blue-600'
+                            }`}
+                          />
+                        </div>
+                      </div>
 
-        {/* Assigned Goals List */}
-        <Card sx={{
-          borderRadius: 3,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-          backgroundColor: 'white',
-          border: '1px solid #E8E6E1'
-        }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h5" sx={{ 
-              mb: 3, 
-              color: '#3A3D42',
-              fontFamily: '"Outfit", "Inter", sans-serif',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
-              <Target size={24} style={{ marginRight: 12 }} />
-              Your Assigned Goals ({therapistGoals.length})
-            </Typography>
+                      {/* Date */}
+                      {goal.createdAt && (
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+                          <Calendar size={14} className="sm:w-4 sm:h-4" />
+                          <span>Assigned: {formatDate(goal.createdAt)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </motion.div>
 
-            {therapistGoals.length === 0 ? (
-              <Box textAlign="center" py={4}>
-                <Typography variant="body2" sx={{ 
-                  color: '#5B7C99',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                }}>
-                  No goals assigned yet. Create your first goal above!
-                </Typography>
-              </Box>
-            ) : (
-              <Box>
-                {therapistGoals.map(goal => (
-                  <Card 
-                    key={goal.id} 
-                    sx={{ 
-                      mb: 2, 
-                      borderRadius: 2,
-                      border: '1px solid #E8E6E1',
-                      backgroundColor: '#FAF8F5',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateX(4px)',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                      }
-                    }}
-                  >
-                    <CardContent sx={{ p: 2 }}>
-                      <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} md={8}>
-                          <Typography variant="h6" sx={{ 
-                            color: '#3A3D42', 
-                            mb: 1,
-                            fontFamily: '"Outfit", "Inter", sans-serif',
-                            fontWeight: 600
-                          }}>
-                            {goal.title}
-                          </Typography>
-                          
-                          {goal.description && (
-                            <Typography variant="body2" sx={{ 
-                              color: '#5B7C99',
-                              mb: 1,
-                              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                            }}>
-                              {goal.description}
-                            </Typography>
-                          )}
-                          
-                          <Box display="flex" alignItems="center" flexWrap="wrap" gap={1} sx={{ mb: 1 }}>
-                            <Chip 
-                              icon={<User size={14} color="#5B7C99" />}
-                              label={getChildName(goal.children_email)} 
-                              size="small" 
-                              variant="outlined"
-                              sx={{ 
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600,
-                                color: '#5B7C99',
-                                borderColor: '#5B7C99',
-                                borderRadius: 1
-                              }}
-                            />
-                            <Chip 
-                              icon={<Target size={14} color="#8FA998" />}
-                              label={`Target: ${goal.target}`} 
-                              size="small" 
-                              variant="outlined"
-                              sx={{ 
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600,
-                                color: '#8FA998',
-                                borderColor: '#8FA998',
-                                borderRadius: 1
-                              }}
-                            />
-                            <Chip 
-                              icon={<Award size={14} color="#C67B5C" />}
-                              label={`${goal.xp_reward} XP`} 
-                              size="small" 
-                              variant="outlined"
-                              sx={{ 
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600,
-                                color: '#C67B5C',
-                                borderColor: '#C67B5C',
-                                borderRadius: 1
-                              }}
-                            />
-                            <Chip 
-                              label={getDisplayedStatus(goal)} 
-                              size="small" 
-                              sx={{ 
-                                backgroundColor: getDisplayedStatus(goal) === 'active' ? '#8FA998' : '#E8E6E1',
-                                color: 'white',
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                fontWeight: 600,
-                                borderRadius: 1
-                              }}
-                            />
-                          </Box>
-                          
-                          <Box display="flex" alignItems="center">
-                            <Calendar size={14} style={{ marginRight: 4, color: '#5B7C99' }} />
-                            <Typography variant="caption" sx={{
-                              color: '#5B7C99',
-                              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                              fontWeight: 600
-                            }}>
-                              Created: {formatDate(goal.createdAt)}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        
-                        <Grid item xs={12} md={4}>
-                          <Box display="flex" flexDirection="column" gap={1}>
-                            <Button 
-                              variant="outlined" 
-                              size="small"
-                              onClick={() => handleDeleteGoal(goal.id)}
-                              sx={{
-                                color: '#C67B5C',
-                                borderColor: '#C67B5C',
-                                textTransform: 'none',
-                                fontWeight: 600,
-                                fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                                borderRadius: 2,
-                                '&:hover': {
-                                  backgroundColor: '#FFE8E8',
-                                  borderColor: '#C67B5C'
-                                }
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          </Box>
-                        </Grid>
-                      </Grid>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
+        {/* Progress Overview */}
+        {totalGoals > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100"
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              Overall Progress
+              <Trophy className="text-yellow-500 w-7 h-7" />
+            </h2>
+            
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-lg sm:text-xl font-bold text-gray-700">
+                  Completion Rate
+                </span>
+                <span className="text-2xl sm:text-3xl font-black text-blue-600">
+                  {Math.round(completionRate)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-4 sm:h-5 overflow-hidden mb-3">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${completionRate}%` }}
+                  transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
+                  className="bg-gradient-to-r from-green-400 to-green-500 h-full rounded-full"
+                />
+              </div>
+              <p className="text-center text-base sm:text-lg font-bold text-gray-700">
+                {completedGoals} of {totalGoals} goals completed! 🎉
+              </p>
+            </div>
 
-        {/* Statistics Card */}
-        {therapistGoals.length > 0 && (
-          <Card sx={{ 
-            mt: 4,
-            borderRadius: 3,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-            backgroundColor: 'white',
-            border: '1px solid #E8E6E1'
-          }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h5" gutterBottom sx={{ 
-                color: '#3A3D42', 
-                fontWeight: 'bold', 
-                mb: 3,
-                fontFamily: '"Outfit", "Inter", sans-serif'
-              }}>
-                Goals Overview
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box textAlign="center" p={2}>
-                    <Typography variant="h4" sx={{ 
-                      color: '#5B7C99', 
-                      fontWeight: 'bold',
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      {therapistGoals.length}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: '#5B7C99',
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                    }}>
-                      Total Goals
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box textAlign="center" p={2}>
-                    <Typography variant="h4" sx={{ 
-                      color: '#8FA998', 
-                      fontWeight: 'bold',
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      {therapistGoals.filter(g => (g.assignedStatus ? g.assignedStatus === 'active' : g.status === 'active')).length}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: '#8FA998',
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                    }}>
-                      Active Goals
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box textAlign="center" p={2}>
-                    <Typography variant="h4" sx={{ 
-                      color: '#C67B5C', 
-                      fontWeight: 'bold',
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      {new Set(therapistGoals.map(g => g.children_email)).size}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: '#C67B5C',
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                    }}>
-                      Children with Goals
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Box textAlign="center" p={2}>
-                    <Typography variant="h4" sx={{ 
-                      color: '#5B7C99', 
-                      fontWeight: 'bold',
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      {therapistGoals.reduce((sum, goal) => sum + parseInt(goal.xp_reward), 0)}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: '#5B7C99',
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                    }}>
-                      Total XP Available
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
+            {/* Motivational Message */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6 }}
+              className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4 sm:p-6 text-center border-2 border-purple-200"
+            >
+              <p className="text-lg sm:text-xl font-bold text-gray-800">
+                {completionRate === 100 
+                  ? "Amazing work! You've completed all your goals! 🌟" 
+                  : completionRate >= 75 
+                  ? "You're doing great! Keep it up! 💪"
+                  : completionRate >= 50
+                  ? "Halfway there! You can do it! 🚀"
+                  : "Every goal completed is a step forward! 🌈"}
+              </p>
+            </motion.div>
+          </motion.div>
         )}
-      </Container>
-    </Box>
+      </div>
+    </div>
   );
 };
 
-export default TherapistGoals;
+export default Goals;

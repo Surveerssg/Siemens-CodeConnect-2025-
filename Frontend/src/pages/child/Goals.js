@@ -2,7 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { goalsAPI } from '../../services/api';
-import { motion } from 'framer-motion';
+import { 
+  Container, 
+  Typography, 
+  Box, 
+  Card, 
+  CardContent, 
+  Button, 
+  Grid,
+  LinearProgress,
+  Chip,
+  Checkbox,
+  FormControlLabel
+} from '@mui/material';
 import { 
   ArrowLeft, 
   Target, 
@@ -108,54 +120,15 @@ const Goals = () => {
   const totalXPEarned = goals.filter(g => g.completed).reduce((sum, goal) => sum + goal.xp, 0);
   const assignedGoals = goals.filter(goal => goal.type === 'assigned');
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100
-      }
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif] flex items-center justify-center">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.2, 1],
-              rotate: [0, 10, -10, 0]
-            }}
-            transition={{ 
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="text-6xl mb-4"
-          >
-            🎯
-          </motion.div>
-          <p className="text-2xl font-bold text-gray-700">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-bounce">🎯</div>
+          <Typography className="text-2xl font-bold text-gray-700">
             Loading your goals...
-          </p>
-        </motion.div>
+          </Typography>
+        </div>
       </div>
     );
   }
@@ -164,11 +137,7 @@ const Goals = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8"
-        >
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
           <button
             onClick={() => navigate('/dashboard')}
             className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
@@ -180,36 +149,14 @@ const Goals = () => {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800">
               My Goals
             </h1>
-            <motion.span 
-              animate={{ 
-                rotate: [0, 10, -10, 0],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{ 
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="text-4xl sm:text-5xl"
-            >
-              🎯
-            </motion.span>
+            <span className="text-4xl sm:text-5xl animate-bounce">🎯</span>
           </div>
-        </motion.div>
+        </div>
 
         {/* Stats Cards */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12"
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
           {/* Goals Completed Card */}
-          <motion.div 
-            variants={itemVariants}
-            whileHover={{ scale: 1.05, y: -8 }}
-            className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 text-white relative overflow-hidden"
-          >
+          <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🎯</div>
             <div className="relative">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -225,14 +172,10 @@ const Goals = () => {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* XP Earned Card */}
-          <motion.div 
-            variants={itemVariants}
-            whileHover={{ scale: 1.05, y: -8 }}
-            className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 text-white relative overflow-hidden"
-          >
+          <div className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">⭐</div>
             <div className="relative">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -248,14 +191,10 @@ const Goals = () => {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Assigned Goals Card */}
-          <motion.div 
-            variants={itemVariants}
-            whileHover={{ scale: 1.05, y: -8 }}
-            className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 text-white relative overflow-hidden sm:col-span-2 lg:col-span-1"
-          >
+          <div className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden sm:col-span-2 lg:col-span-1">
             <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">👨‍👦</div>
             <div className="relative">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -271,60 +210,32 @@ const Goals = () => {
                 </p>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
         {/* Assigned Goals Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mb-8 sm:mb-12"
-        >
+        <div className="mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-3">
             Parent-Assigned Goals
             <Sparkles className="text-yellow-500 w-7 h-7 sm:w-8 sm:h-8" />
           </h2>
           
           {assignedGoals.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 shadow-lg text-center border border-gray-100"
-            >
-              <motion.div
-                animate={{ 
-                  y: [0, -10, 0]
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-                className="text-6xl sm:text-7xl mb-4"
-              >
-                📭
-              </motion.div>
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 shadow-lg text-center border border-gray-100">
+              <div className="text-6xl sm:text-7xl mb-4">📭</div>
               <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3">
                 No Goals Yet!
               </h3>
               <p className="text-base sm:text-lg text-gray-600">
                 Your parents will assign goals for you to complete soon! 🎉
               </p>
-            </motion.div>
+            </div>
           ) : (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"
-            >
-              {assignedGoals.map((goal, index) => (
-                <motion.div
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {assignedGoals.map(goal => (
+                <div
                   key={goal.id}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.02, y: -4 }}
-                  className={`group bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 ${
+                  className={`group bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
                     goal.completed 
                       ? 'border-2 border-green-400' 
                       : 'border-2 border-blue-200'
@@ -332,22 +243,20 @@ const Goals = () => {
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 mt-1">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
+                      <button
                         onClick={() => handleGoalToggle(goal.id)}
                         className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                           goal.completed 
                             ? 'bg-green-500 hover:bg-green-600' 
-                            : 'bg-gray-200 hover:bg-blue-500'
+                            : 'bg-gray-200 hover:bg-blue-500 hover:scale-110'
                         }`}
                       >
                         {goal.completed ? (
                           <CheckCircle size={20} className="text-white sm:w-6 sm:h-6" />
                         ) : (
-                          <Circle size={20} className="text-gray-400 sm:w-6 sm:h-6 group-hover:text-white" />
+                          <Circle size={20} className="text-gray-400 sm:w-6 sm:h-6" />
                         )}
-                      </motion.button>
+                      </button>
                     </div>
                     
                     <div className="flex-grow">
@@ -376,15 +285,13 @@ const Goals = () => {
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3 overflow-hidden">
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(goal.current / goal.target) * 100}%` }}
-                            transition={{ duration: 1, ease: "easeOut", delay: index * 0.1 }}
-                            className={`h-full rounded-full ${
+                          <div 
+                            className={`h-full rounded-full transition-all duration-500 ${
                               goal.completed 
                                 ? 'bg-gradient-to-r from-green-400 to-green-500' 
                                 : 'bg-gradient-to-r from-blue-400 to-blue-600'
                             }`}
+                            style={{ width: `${(goal.current / goal.target) * 100}%` }}
                           />
                         </div>
                       </div>
@@ -398,20 +305,15 @@ const Goals = () => {
                       )}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           )}
-        </motion.div>
+        </div>
 
         {/* Progress Overview */}
         {totalGoals > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100"
-          >
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
               Overall Progress
               <Trophy className="text-yellow-500 w-7 h-7" />
@@ -427,11 +329,9 @@ const Goals = () => {
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-4 sm:h-5 overflow-hidden mb-3">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${completionRate}%` }}
-                  transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
-                  className="bg-gradient-to-r from-green-400 to-green-500 h-full rounded-full"
+                <div 
+                  className="bg-gradient-to-r from-green-400 to-green-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${completionRate}%` }}
                 />
               </div>
               <p className="text-center text-base sm:text-lg font-bold text-gray-700">
@@ -440,12 +340,7 @@ const Goals = () => {
             </div>
 
             {/* Motivational Message */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6 }}
-              className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4 sm:p-6 text-center border-2 border-purple-200"
-            >
+            <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4 sm:p-6 text-center">
               <p className="text-lg sm:text-xl font-bold text-gray-800">
                 {completionRate === 100 
                   ? "Amazing work! You've completed all your goals! 🌟" 
@@ -455,8 +350,8 @@ const Goals = () => {
                   ? "Halfway there! You can do it! 🚀"
                   : "Every goal completed is a step forward! 🌈"}
               </p>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
       </div>
     </div>
