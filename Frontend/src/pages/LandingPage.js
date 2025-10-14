@@ -1,276 +1,393 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { Sparkles, Star, Heart, Zap, Trophy, Target, Users, Book, Volume2, Smile, ArrowRight } from 'lucide-react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { useRef, useState, useEffect } from 'react';
+import {
+  Mic,
+  Trophy,
+  Target,
+  Heart,
+  Star,
+  Zap,
+  Award,
+  TrendingUp,
+  Users,
+  BarChart3,
+  Smile,
+  Sparkles,
+  Volume2,
+  Gamepad2,
+  Baby,
+  PartyPopper
+} from 'lucide-react';
 
 const LandingPage = () => {
-  const navigate = useNavigate();
-  const { scrollY } = useScroll();
-  const y1 = useTransform(scrollY, [0, 300], [0, -50]);
-  const y2 = useTransform(scrollY, [0, 300], [0, -100]);
-  const y3 = useTransform(scrollY, [0, 300], [0, 30]);
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
+  const y1 = useTransform(smoothProgress, [0, 1], [0, -300]);
+  const y2 = useTransform(smoothProgress, [0, 1], [0, -200]);
+  const y3 = useTransform(smoothProgress, [0, 1], [0, -100]);
+  const opacity1 = useTransform(smoothProgress, [0, 0.3], [1, 0]);
+  const scale = useTransform(smoothProgress, [0, 0.5], [1, 0.8]);
 
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
+      setMousePosition({
+        x: (e.clientX / window.innerWidth - 0.5) * 20,
+        y: (e.clientY / window.innerHeight - 0.5) * 20
+      });
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const floatingAnimation = {
-    y: [0, -20, 0],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }
-  };
-
-  const characters = [
-    { emoji: '🦁', color: '#FFD700', delay: 0 },
-    { emoji: '🐼', color: '#FF69B4', delay: 0.2 },
-    { emoji: '🦊', color: '#FF6347', delay: 0.4 },
-    { emoji: '🐨', color: '#87CEEB', delay: 0.6 },
-    { emoji: '🐸', color: '#90EE90', delay: 0.8 },
-  ];
-
   const features = [
     {
-      icon: <Volume2 className="w-8 h-8" />,
-      title: "Speech Practice",
-      description: "Practice pronunciation with fun AI feedback!",
-      color: "#FF6B9D"
+      icon: Mic,
+      title: "AI Speech Practice",
+      description: "Real-time pronunciation feedback powered by advanced AI",
+      color: "from-[#f79d65] to-[#f35252]"
     },
     {
-      icon: <Trophy className="w-8 h-8" />,
-      title: "Fun Games",
-      description: "Play exciting games while learning to speak!",
-      color: "#FFA500"
+      icon: Gamepad2,
+      title: "2 Fun Games",
+      description: "Word Match and Karate Combat adventures",
+      color: "from-[#60b5ff] to-[#5ef2d5]"
     },
     {
-      icon: <Star className="w-8 h-8" />,
-      title: "Earn Rewards",
-      description: "Collect badges, stars, and level up!",
-      color: "#FFD700"
+      icon: Trophy,
+      title: "Gamification",
+      description: "Earn XP, unlock badges, and maintain streaks",
+      color: "from-[#ffe588] to-[#f79d65]"
     },
     {
-      icon: <Target className="w-8 h-8" />,
-      title: "Track Progress",
-      description: "See how awesome you're becoming!",
-      color: "#00CED1"
-    },
-    {
-      icon: <Users className="w-8 h-8" />,
-      title: "Family Support",
-      description: "Parents and therapists help you grow!",
-      color: "#9370DB"
-    },
-    {
-      icon: <Heart className="w-8 h-8" />,
-      title: "Made with Love",
-      description: "Designed specially for amazing kids like you!",
-      color: "#FF69B4"
+      icon: Sparkles,
+      title: "Animated Avatars",
+      description: "Characters that react to your child's performance",
+      color: "from-[#5ef2d5] to-[#60b5ff]"
     }
+  ];
+
+  const games = [
+    {
+      emoji: "🎯",
+      name: "Word Match",
+      description: "Match words with colorful pictures",
+      color: "bg-gradient-to-br from-[#f79d65] to-[#f35252]"
+    },
+    {
+      emoji: "🥋",
+      name: "Karate Combat",
+      description: "Master words through martial arts challenges",
+      color: "bg-gradient-to-br from-[#5ef2d5] to-[#60b5ff]"
+    }
+  ];
+
+  const userTypes = [
+    {
+      icon: Baby,
+      title: "For Children",
+      features: [
+        "Interactive speech practice",
+        "2 engaging games",
+        "Earn badges & rewards",
+        "Track your progress"
+      ],
+      color: "from-[#f79d65] to-[#f35252]"
+    },
+    {
+      icon: Heart,
+      title: "For Parents",
+      features: [
+        "Monitor progress real-time",
+        "Set practice goals",
+        "Detailed analytics",
+        "Track milestones"
+      ],
+      color: "from-[#60b5ff] to-[#5ef2d5]"
+    },
+    {
+      icon: Users,
+      title: "For Therapists",
+      features: [
+        "Manage multiple patients",
+        "Advanced analytics",
+        "Session documentation",
+        "AI recommendations"
+      ],
+      color: "from-[#ffe588] to-[#f79d65]"
+    }
+  ];
+
+  const stats = [
+    { number: "10K+", label: "Happy Children", icon: Smile },
+    { number: "95%", label: "Success Rate", icon: TrendingUp },
+    { number: "50K+", label: "Sessions", icon: Award },
+    { number: "4.9", label: "Rating", icon: Star }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-300 to-yellow-300 overflow-hidden relative font-comic">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              x: [0, Math.random() * 50 - 25, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          >
-            <div
-              className="text-2xl opacity-30"
-              style={{
-                filter: 'blur(1px)',
-              }}
-            >
-              {['⭐', '🌟', '✨', '💫', '🎈', '🎨', '🎪', '🎭'][Math.floor(Math.random() * 8)]}
-            </div>
-          </motion.div>
-        ))}
+    <div ref={containerRef} className="relative bg-gradient-to-b from-orange-50 via-green-50 to-orange-100 overflow-hidden">
+
+      {/* Floating Background Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <motion.div
+          animate={{
+            x: [0, 30, 0],
+            y: [0, -30, 0],
+            rotate: [0, 5, 0]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute top-20 left-10 w-32 h-32 bg-[#ffe588] rounded-full opacity-20 blur-xl"
+        />
+        <motion.div
+          animate={{
+            x: [0, -40, 0],
+            y: [0, 40, 0],
+            rotate: [0, -5, 0]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute top-40 right-20 w-48 h-48 bg-[#f79d65] rounded-full opacity-20 blur-xl"
+        />
+        <motion.div
+          animate={{
+            x: [0, 50, 0],
+            y: [0, -50, 0],
+            rotate: [0, 10, 0]
+          }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-40 left-1/4 w-40 h-40 bg-[#5ef2d5] rounded-full opacity-20 blur-xl"
+        />
+        <motion.div
+          animate={{
+            x: [0, -30, 0],
+            y: [0, 30, 0],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-20 right-1/3 w-36 h-36 bg-[#60b5ff] rounded-full opacity-20 blur-xl"
+        />
       </div>
 
       {/* Hero Section */}
-      <div className="relative container mx-auto px-4 pt-20 pb-32">
-        {/* Floating Characters */}
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-          {characters.map((char, index) => (
-            <motion.div
-              key={index}
-              className="absolute text-6xl"
-              style={{
-                left: `${15 + index * 17}%`,
-                top: '10%',
-              }}
-              animate={{
-                y: [0, -30, 0],
-                rotate: [0, 10, -10, 0],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                delay: char.delay,
-                ease: "easeInOut"
-              }}
-            >
-              <div
-                className="relative"
-                style={{
-                  filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))',
-                }}
-              >
-                {char.emoji}
-                <motion.div
-                  className="absolute -top-2 -right-2"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 1, repeat: Infinity, delay: char.delay }}
-                >
-                  <Sparkles className="w-6 h-6" style={{ color: char.color }} />
-                </motion.div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Main Hero Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center relative z-10 mt-32"
-        >
+      <motion.section
+        className="relative min-h-screen flex items-center justify-center px-6 py-20"
+        style={{ scale, opacity: opacity1 }}
+      >
+        <div className="max-w-7xl mx-auto text-center relative z-10">
           <motion.div
-            animate={{
-              scale: [1, 1.05, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="inline-block mb-6"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", duration: 1, delay: 0.2 }}
+            className="inline-block mb-8"
           >
-            <div className="text-8xl font-bold text-white" style={{ textShadow: '4px 4px 8px rgba(0,0,0,0.2)' }}>
-              SpeakUp! 🎤
+            <div className="relative">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 bg-gradient-to-r from-[#f79d65] via-[#5ef2d5] to-[#ffe588] rounded-full blur-2xl opacity-30"
+              />
+              <div className="relative bg-white rounded-full p-8 shadow-2xl">
+                <Mic className="w-20 h-20 text-[#f79d65]" />
+              </div>
             </div>
           </motion.div>
 
-          <motion.h2
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-4xl font-bold text-white mb-6"
-            style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}
+          <motion.h1
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="text-7xl md:text-8xl font-black mb-6 tracking-tight"
+            style={{ fontFamily: 'Comic Sans MS, cursive' }}
           >
-            Your Amazing Speech Adventure Starts Here! 🚀
-          </motion.h2>
+            <span className="bg-gradient-to-r from-[#f79d65] via-[#5ef2d5] to-[#ffe588] bg-clip-text text-transparent">
+              SpeakUp
+            </span>
+          </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-2xl text-white mb-12 max-w-2xl mx-auto"
-            style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.2)' }}
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="text-3xl md:text-4xl font-bold text-gray-800 mb-8"
+            style={{ fontFamily: 'Comic Sans MS, cursive' }}
           >
-            Practice speaking, play fun games, and become a speech superstar! 🌟
+            Make Speech Therapy Fun & Magical! ✨
           </motion.p>
 
-          {/* CTA Buttons */}
+          <motion.p
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
+            className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto"
+          >
+            An AI-powered speech therapy platform designed for children, parents, and therapists
+          </motion.p>
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="flex flex-wrap gap-6 justify-center"
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.9 }}
+            className="flex flex-col sm:flex-row gap-6 justify-center items-center"
           >
             <motion.button
-              whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
+              whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/role-selector')}
-              className="px-12 py-6 bg-gradient-to-r from-green-400 to-blue-500 text-white text-2xl font-bold rounded-full shadow-2xl flex items-center gap-3"
-              style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}
+              onClick={() => window.location.href = '/role-selector'}
+              className="px-12 py-5 bg-gradient-to-r from-[#f79d65] to-[#f35252] text-white text-xl font-bold rounded-full shadow-2xl hover:shadow-3xl transition-all relative overflow-hidden group"
             >
-              <Smile className="w-8 h-8" />
-              Start Learning!
-              <ArrowRight className="w-8 h-8" />
+              <span className="relative z-10">Get Started 🚀</span>
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-[#f35252] to-[#f79d65]"
+                initial={{ x: "100%" }}
+                whileHover={{ x: 0 }}
+                transition={{ duration: 0.3 }}
+              />
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/login')}
-              className="px-12 py-6 bg-white text-purple-600 text-2xl font-bold rounded-full shadow-2xl"
-              style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}
+              onClick={() => window.location.href = '/login'}
+              className="px-12 py-5 bg-white text-[#f79d65] text-xl font-bold rounded-full shadow-xl hover:shadow-2xl transition-all border-4 border-[#ffe588]"
             >
-              Sign In
+              Sign In 👤
             </motion.button>
           </motion.div>
-        </motion.div>
-      </div>
+
+          {/* Floating Elements */}
+          <motion.div
+            animate={{
+              y: [0, -20, 0],
+              rotate: [0, 10, 0]
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-20 left-10 text-6xl"
+            style={{ x: mousePosition.x, y: mousePosition.y }}
+          >
+            🎨
+          </motion.div>
+          <motion.div
+            animate={{
+              y: [0, 20, 0],
+              rotate: [0, -10, 0]
+            }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            className="absolute top-40 right-20 text-6xl"
+            style={{ x: -mousePosition.x, y: -mousePosition.y }}
+          >
+            🌟
+          </motion.div>
+          <motion.div
+            animate={{
+              y: [0, -15, 0],
+              rotate: [0, 15, 0]
+            }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute bottom-40 left-20 text-6xl"
+            style={{ x: mousePosition.x * 0.5, y: mousePosition.y * 0.5 }}
+          >
+            🥋
+          </motion.div>
+          <motion.div
+            animate={{
+              y: [0, 15, 0],
+              rotate: [0, -15, 0]
+            }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+            className="absolute bottom-20 right-32 text-6xl"
+            style={{ x: -mousePosition.x * 0.5, y: -mousePosition.y * 0.5 }}
+          >
+            🏆
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* Stats Section */}
+      <motion.section
+        style={{ y: y3 }}
+        className="relative py-20 px-6"
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ scale: 0, rotate: -180 }}
+                whileInView={{ scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                className="bg-white rounded-3xl p-8 shadow-xl text-center relative overflow-hidden group"
+              >
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-br from-[#ffe588] to-[#f79d65] opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                />
+                <div className="relative z-10">
+                  <stat.icon className="w-12 h-12 mx-auto mb-4 text-[#f79d65]" />
+                  <div className="text-5xl font-black text-gray-800 mb-2" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                    {stat.number}
+                  </div>
+                  <div className="text-lg font-semibold text-gray-600">
+                    {stat.label}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
 
       {/* Features Section */}
-      <div className="relative bg-white py-24">
-        <div className="container mx-auto px-4">
+      <motion.section
+        style={{ y: y2 }}
+        className="relative py-32 px-6"
+      >
+        <div className="max-w-7xl mx-auto">
           <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ y: 50, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
-            className="text-6xl font-bold text-center mb-16 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
+            className="text-6xl md:text-7xl font-black text-center mb-20 bg-gradient-to-r from-[#f79d65] to-[#5ef2d5] bg-clip-text text-transparent"
+            style={{ fontFamily: 'Comic Sans MS, cursive' }}
           >
-            What Makes SpeakUp Awesome? ✨
+            Amazing Features! 🎉
           </motion.h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ y: 100, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.05, rotate: [0, -2, 2, 0] }}
-                className="relative"
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                whileHover={{ y: -10, scale: 1.05 }}
+                className="relative group"
               >
-                <div
-                  className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-3xl shadow-xl cursor-pointer"
-                  style={{
-                    border: `4px solid ${feature.color}`,
-                    boxShadow: `0 10px 30px ${feature.color}40`
-                  }}
-                >
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-20 group-hover:opacity-30 rounded-3xl blur-xl transition-all duration-300`} />
+                <div className="relative bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300">
                   <motion.div
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="inline-block mb-4 p-4 rounded-2xl"
-                    style={{ backgroundColor: feature.color + '20' }}
+                    whileHover={{ rotate: 360, scale: 1.2 }}
+                    transition={{ duration: 0.6 }}
+                    className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 shadow-lg`}
                   >
-                    <div style={{ color: feature.color }}>
-                      {feature.icon}
-                    </div>
+                    <feature.icon className="w-8 h-8 text-white" />
                   </motion.div>
-                  <h3 className="text-2xl font-bold mb-3" style={{ color: feature.color }}>
+                  <h3 className="text-2xl font-black mb-4 text-gray-800" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
                     {feature.title}
                   </h3>
-                  <p className="text-gray-700 text-lg">
+                  <p className="text-gray-600 text-lg leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
@@ -278,97 +395,234 @@ const LandingPage = () => {
             ))}
           </div>
         </div>
-      </div>
+      </motion.section>
 
-      {/* User Roles Section */}
-      <div className="relative py-24 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400">
-        <div className="container mx-auto px-4">
+      {/* Games Section */}
+      <motion.section
+        style={{ y: y1 }}
+        className="relative py-32 px-6 bg-gradient-to-br from-[#ffe588] via-[#5ef2d5] to-[#f79d65]"
+      >
+        <div className="max-w-7xl mx-auto">
           <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ scale: 0 }}
+            whileInView={{ scale: 1 }}
             viewport={{ once: true }}
-            className="text-6xl font-bold text-center mb-16 text-white"
-            style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}
+            className="text-6xl md:text-7xl font-black text-center mb-8 text-gray-800"
+            style={{ fontFamily: 'Comic Sans MS, cursive' }}
           >
-            Who Can Join? 👨‍👩‍👧‍👦
+            2 Super Fun Games! 🎮
           </motion.h2>
+          <motion.p
+            initial={{ y: 20, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-2xl text-center text-gray-700 mb-20 max-w-3xl mx-auto"
+          >
+            Learn while playing exciting adventures!
+          </motion.p>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { emoji: '👶', title: 'Kids', desc: 'Learn and play!', color: '#FF6B9D' },
-              { emoji: '👨‍👩‍👧', title: 'Parents', desc: 'Track progress!', color: '#FFD700' },
-              { emoji: '👩‍⚕️', title: 'Therapists', desc: 'Guide learning!', color: '#00CED1' }
-            ].map((role, index) => (
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {games.map((game, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ scale: 0, rotate: -180 }}
+                whileInView={{ scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.2 }}
-                whileHover={{ scale: 1.1, rotate: [0, 5, -5, 0] }}
-                className="bg-white rounded-3xl p-12 text-center shadow-2xl cursor-pointer"
+                transition={{ type: "spring", duration: 0.8, delay: index * 0.2 }}
+                whileHover={{ scale: 1.05, rotate: 3 }}
+                className="relative group cursor-pointer"
               >
-                <div className="text-8xl mb-6">{role.emoji}</div>
-                <h3 className="text-3xl font-bold mb-3" style={{ color: role.color }}>
-                  {role.title}
-                </h3>
-                <p className="text-xl text-gray-600">{role.desc}</p>
+                <div className={`${game.color} rounded-3xl p-10 shadow-2xl hover:shadow-3xl transition-all duration-300 relative overflow-hidden`}>
+                  <motion.div
+                    className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+                  />
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-8xl mb-6 text-center"
+                  >
+                    {game.emoji}
+                  </motion.div>
+                  <h3 className="text-3xl font-black text-white text-center mb-4" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                    {game.name}
+                  </h3>
+                  <p className="text-white text-lg text-center font-semibold">
+                    {game.description}
+                  </p>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="mt-8 bg-white text-gray-800 px-8 py-4 rounded-full text-center font-black text-lg cursor-pointer shadow-lg"
+                  >
+                    Play Now! →
+                  </motion.div>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
-      </div>
+      </motion.section>
 
-      {/* Final CTA */}
-      <div className="relative py-24 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400">
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="mb-8"
-          >
-            <div className="text-9xl">🎉</div>
-          </motion.div>
-          
+      {/* User Types Section */}
+      <motion.section className="relative py-32 px-6">
+        <div className="max-w-7xl mx-auto">
           <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ y: 50, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
-            className="text-6xl font-bold text-white mb-6"
-            style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}
+            className="text-6xl md:text-7xl font-black text-center mb-20 bg-gradient-to-r from-[#5ef2d5] to-[#f79d65] bg-clip-text text-transparent"
+            style={{ fontFamily: 'Comic Sans MS, cursive' }}
           >
-            Ready to Become a Speech Star? 🌟
+            Built For Everyone! 👨‍👩‍👧‍👦
           </motion.h2>
 
-          <motion.button
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/role-selector')}
-            animate={{
-              boxShadow: [
-                '0 10px 30px rgba(0,0,0,0.3)',
-                '0 15px 40px rgba(0,0,0,0.4)',
-                '0 10px 30px rgba(0,0,0,0.3)'
-              ]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="px-16 py-8 bg-white text-purple-600 text-3xl font-bold rounded-full shadow-2xl"
-          >
-            Join SpeakUp Today! 🚀
-          </motion.button>
+          <div className="grid md:grid-cols-3 gap-8">
+            {userTypes.map((type, index) => (
+              <motion.div
+                key={index}
+                initial={{ x: index % 2 === 0 ? -100 : 100, opacity: 0 }}
+                whileInView={{ x: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: index * 0.2 }}
+                whileHover={{ y: -15 }}
+                className="relative group"
+              >
+                <div className="bg-white rounded-3xl p-10 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
+                  <motion.div
+                    className={`absolute inset-0 bg-gradient-to-br ${type.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
+                  />
+                  <div className="relative z-10">
+                    <motion.div
+                      whileHover={{ scale: 1.2, rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                      className={`w-20 h-20 bg-gradient-to-br ${type.color} rounded-full flex items-center justify-center mb-6 shadow-lg mx-auto`}
+                    >
+                      <type.icon className="w-10 h-10 text-white" />
+                    </motion.div>
+                    <h3 className="text-3xl font-black text-center mb-8 text-gray-800" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                      {type.title}
+                    </h3>
+                    <ul className="space-y-4">
+                      {type.features.map((feature, idx) => (
+                        <motion.li
+                          key={idx}
+                          initial={{ x: -20, opacity: 0 }}
+                          whileInView={{ x: 0, opacity: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.1 * idx }}
+                          className="flex items-start gap-3"
+                        >
+                          <motion.div
+                            animate={{ scale: [1, 1.3, 1] }}
+                            transition={{ duration: 2, repeat: Infinity, delay: idx * 0.2 }}
+                          >
+                            <Star className="w-6 h-6 text-[#ffe588] flex-shrink-0" fill="currentColor" />
+                          </motion.div>
+                          <span className="text-gray-700 text-lg font-semibold">
+                            {feature}
+                          </span>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
+      </motion.section>
 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
-        .font-comic {
-          font-family: 'Comic Neue', 'Comic Sans MS', cursive;
-        }
-      `}</style>
+      {/* CTA Section */}
+      <motion.section className="relative py-32 px-6 bg-gradient-to-r from-[#f79d65] via-[#5ef2d5] to-[#ffe588] overflow-hidden">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-40 -left-40 w-80 h-80 bg-white rounded-full opacity-10"
+        />
+        <motion.div
+          animate={{ rotate: -360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-40 -right-40 w-96 h-96 bg-white rounded-full opacity-10"
+        />
+
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          <motion.div
+            initial={{ scale: 0 }}
+            whileInView={{ scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ type: "spring", duration: 1 }}
+            className="mb-8"
+          >
+            <PartyPopper className="w-24 h-24 text-white mx-auto" />
+          </motion.div>
+
+          <motion.h2
+            initial={{ y: 50, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-6xl md:text-7xl font-black text-white mb-8"
+            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          >
+            Ready to Start the Adventure?
+          </motion.h2>
+
+          <motion.p
+            initial={{ y: 30, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-2xl md:text-3xl text-white mb-12 font-semibold"
+          >
+            Join thousands of happy families today! 🌈
+          </motion.p>
+
+          <motion.div
+            initial={{ scale: 0 }}
+            whileInView={{ scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ type: "spring", duration: 0.8 }}
+            className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+          >
+            <motion.button
+              whileHover={{ scale: 1.1, rotate: 3 }}
+              whileTap={{ scale: 0.9 }}
+              className="px-16 py-6 bg-white text-[#f79d65] text-2xl font-black rounded-full shadow-2xl hover:shadow-3xl transition-all"
+              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            >
+              Get Started Free! 🚀
+            </motion.button>
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* Footer */}
+      <footer className="relative py-12 px-6 bg-gray-900">
+        <div className="max-w-7xl mx-auto text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            whileInView={{ scale: 1 }}
+            viewport={{ once: true }}
+            className="mb-6"
+          >
+            <Mic className="w-12 h-12 text-[#f79d65] mx-auto" />
+          </motion.div>
+          <h3 className="text-3xl font-black text-white mb-4" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            SpeakUp
+          </h3>
+          <p className="text-gray-400 text-lg mb-8">
+            Making speech therapy magical for every child ✨
+          </p>
+          <div className="flex justify-center gap-6 flex-wrap text-gray-400">
+            <a href="#" className="hover:text-[#f79d65] transition-colors font-semibold">About</a>
+            <a href="#" className="hover:text-[#f79d65] transition-colors font-semibold">Features</a>
+            <a href="#" className="hover:text-[#f79d65] transition-colors font-semibold">Pricing</a>
+            <a href="#" className="hover:text-[#f79d65] transition-colors font-semibold">Contact</a>
+            <a href="#" className="hover:text-[#f79d65] transition-colors font-semibold">Privacy</a>
+          </div>
+          <p className="text-gray-500 mt-8">
+            © 2025 SpeakUp. Made with ❤️ for children everywhere.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };
