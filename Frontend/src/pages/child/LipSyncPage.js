@@ -4,34 +4,37 @@ import { Camera } from "@mediapipe/camera_utils";
 import { Mic, Square, Upload, Play, Pause, Loader, AlertCircle, Video as VideoIcon } from "lucide-react";
 
 // Phoneme to viseme mapping
+// Phoneme to viseme mapping with realistic ranges
 const VISEME_PATTERNS = {
-  'M': { openness: [0, 0.5], width: [3, 5], name: 'Lip Closure' },
-  'B': { openness: [0, 0.5], width: [3, 5], name: 'Lip Closure' },
-  'P': { openness: [0, 0.5], width: [3, 5], name: 'Lip Closure' },
-  'A': { openness: [4, 8], width: [4, 7], name: 'Wide Open' },
-  'AH': { openness: [4, 8], width: [4, 7], name: 'Wide Open' },
-  'O': { openness: [2, 5], width: [2, 4], name: 'Rounded' },
-  'OO': { openness: [1, 3], width: [2, 3.5], name: 'Rounded Small' },
-  'U': { openness: [1, 3], width: [2, 3.5], name: 'Rounded Small' },
-  'E': { openness: [1.5, 3.5], width: [5, 7], name: 'Spread' },
-  'EE': { openness: [1, 2.5], width: [5, 7], name: 'Spread Wide' },
-  'I': { openness: [1, 2.5], width: [5, 7], name: 'Spread Wide' },
-  'F': { openness: [0.5, 1.5], width: [4, 6], name: 'Teeth Lower Lip' },
-  'V': { openness: [0.5, 1.5], width: [4, 6], name: 'Teeth Lower Lip' },
-  'T': { openness: [0.5, 2], width: [4, 6], name: 'Neutral' },
-  'D': { openness: [0.5, 2], width: [4, 6], name: 'Neutral' },
-  'N': { openness: [0.5, 2], width: [4, 6], name: 'Neutral' },
-  'L': { openness: [1, 3], width: [4, 6], name: 'Neutral' },
-  'S': { openness: [0.5, 1.5], width: [4, 6], name: 'Teeth Close' },
-  'Z': { openness: [0.5, 1.5], width: [4, 6], name: 'Teeth Close' },
+  'M': { openness: [0, 1.5], width: [2, 6], name: 'Lip Closure' },
+  'B': { openness: [0, 1.5], width: [2, 6], name: 'Lip Closure' },
+  'P': { openness: [0, 1.5], width: [2, 6], name: 'Lip Closure' },
+  'A': { openness: [2.5, 10], width: [3, 8], name: 'Wide Open' },
+  'AH': { openness: [2.5, 10], width: [3, 8], name: 'Wide Open' },
+  'O': { openness: [1.5, 6], width: [2, 5], name: 'Rounded' },
+  'OO': { openness: [0.5, 4], width: [1.5, 4.5], name: 'Rounded Small' },
+  'U': { openness: [0.5, 4], width: [1.5, 4.5], name: 'Rounded Small' },
+  'E': { openness: [1, 4.5], width: [3.5, 8], name: 'Spread' },
+  'EE': { openness: [0.5, 3.5], width: [4, 8], name: 'Spread Wide' },
+  'I': { openness: [0.5, 3.5], width: [4, 8], name: 'Spread Wide' },
+  'F': { openness: [0.3, 2.5], width: [3, 7], name: 'Teeth Lower Lip' },
+  'V': { openness: [0.3, 2.5], width: [3, 7], name: 'Teeth Lower Lip' },
+  'T': { openness: [0.3, 3], width: [3, 7], name: 'Neutral' },
+  'D': { openness: [0.3, 3], width: [3, 7], name: 'Neutral' },
+  'N': { openness: [0.3, 3], width: [3, 7], name: 'Neutral' },
+  'L': { openness: [0.5, 4], width: [3, 7], name: 'Neutral' },
+  'S': { openness: [0.3, 2.5], width: [3.5, 7], name: 'Teeth Close' },
+  'Z': { openness: [0.3, 2.5], width: [3.5, 7], name: 'Teeth Close' },
+  'H': { openness: [1, 5], width: [3, 7], name: 'Open' },
+  'K': { openness: [0.5, 3], width: [3, 7], name: 'Neutral' },
 };
 
 const PRACTICE_WORDS = [
-  { word: "HELLO", phonemes: ['H', 'E', 'L', 'O'], timing: [0, 200, 400, 600], duration: 800 },
-  { word: "APPLE", phonemes: ['A', 'P', 'L'], timing: [0, 300, 500], duration: 700 },
-  { word: "MOON", phonemes: ['M', 'OO', 'N'], timing: [0, 200, 500], duration: 700 },
-  { word: "SMILE", phonemes: ['S', 'M', 'I', 'L'], timing: [0, 200, 400, 600], duration: 800 },
-  { word: "BOOK", phonemes: ['B', 'OO', 'K'], timing: [0, 200, 500], duration: 700 },
+  { word: "HELLO", phonemes: ['H', 'E', 'L', 'O'], timing: [0, 380, 670, 900], duration: 900 },
+  { word: "APPLE", phonemes: ['A', 'P', 'L'], timing: [0, 500, 900], duration: 900 },
+  { word: "MOON", phonemes: ['M', 'OO', 'N'], timing: [0, 300, 900], duration: 900 },
+  { word: "SMILE", phonemes: ['S', 'M', 'I', 'L'], timing: [0, 200, 400, 600], duration: 600 },
+  { word: "BOOK", phonemes: ['B', 'OO', 'K'], timing: [0, 200, 500], duration: 500 },
 ];
 
 const TIPS = [
@@ -175,7 +178,14 @@ const LipSyncPage = () => {
 
   const calculatePhonemeScore = useCallback((recordedLipData, phoneme) => {
     if (!recordedLipData || recordedLipData.length === 0) return 0;
-    
+
+    // If the recorded frames exist but show no measurable lip movement,
+    // return 0 so the UI displays a zero score for no-motion cases.
+    const maxOpenness = Math.max(...recordedLipData.map(d => d.openness || 0));
+    const maxWidth = Math.max(...recordedLipData.map(d => d.width || 0));
+    const NO_MOVEMENT_THRESHOLD = 0.6; // threshold on same scale as openness/width
+    if (maxOpenness < NO_MOVEMENT_THRESHOLD && maxWidth < NO_MOVEMENT_THRESHOLD) return 0;
+
     const pattern = VISEME_PATTERNS[phoneme];
     if (!pattern) return 50;
     
