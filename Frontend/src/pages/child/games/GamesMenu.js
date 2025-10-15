@@ -72,7 +72,7 @@ const GamesMenu = () => {
     {
       id: 'maingame',
       title: 'Huge Kombat',
-      description: 'Arcade-style combat game built with PixiJS',
+      description: 'Arcade-style combat game to be played with your voice',
       icon: '🥋',
       color: '#2ECC71',
       gradient: 'from-green-400 to-emerald-600',
