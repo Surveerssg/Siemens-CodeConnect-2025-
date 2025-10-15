@@ -2,6 +2,8 @@ import React, { useRef, useEffect, useState, useCallback, useMemo } from "react"
 import { FaceMesh as MediaPipeFaceMesh } from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
 import { Mic, Square, Upload, Play, Pause, Loader, AlertCircle, Video as VideoIcon } from "lucide-react";
+import { ArrowLeft, TrendingUp, Calendar, Award, Trophy, Flame, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Phoneme to viseme mapping
 const VISEME_PATTERNS = {
@@ -58,7 +60,8 @@ const LipSyncPage = () => {
   const [currentPhonemeIndex, setCurrentPhonemeIndex] = useState(0);
   const [customWordInput, setCustomWordInput] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
-  
+    const navigate = useNavigate();
+
   // Lip Sync Generation States
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
@@ -553,6 +556,13 @@ const LipSyncPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-6">
       <div className="max-w-7xl mx-auto">
+        <button
+                    onClick={() => navigate('/dashboard')}
+                    className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>Back to Dashboard</span>
+                  </button>
         <h1 className="text-4xl font-bold text-white text-center mb-2">🎯 LipSync Studio</h1>
         <p className="text-gray-300 text-center mb-8">Practice pronunciation & generate AI lip-synced videos</p>
         
