@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { therapistAPI, parentAPI } from '../../services/api';
 import { motion } from 'framer-motion';
 import { 
-  ArrowLeft, Plus, Send, User, Calendar, FileText, Sparkles, Mail, BookOpen, Users
+  ArrowLeft, Plus, FileText, Calendar, User, MessageSquare, BookOpen, Loader
 } from 'lucide-react';
 
 const Notes = () => {
@@ -16,7 +16,6 @@ const Notes = () => {
   const [loading, setLoading] = useState(false);
   const [notesList, setNotesList] = useState([]);
   const [notesLoading, setNotesLoading] = useState(false);
-  const [expandedNotes, setExpandedNotes] = useState({});
 
   const therapistEmail = "therapist@example.com";
 
@@ -100,9 +99,13 @@ const Notes = () => {
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
-    if (timestamp.toDate) return timestamp.toDate().toLocaleString();
-    if (timestamp.seconds) return new Date(timestamp.seconds * 1000).toLocaleString();
-    return new Date(timestamp).toLocaleString();
+    try {
+      if (timestamp.toDate) return timestamp.toDate().toLocaleString();
+      if (timestamp.seconds) return new Date(timestamp.seconds * 1000).toLocaleString();
+      return new Date(timestamp).toLocaleString();
+    } catch {
+      return 'Invalid Date';
+    }
   };
 
   const containerVariants = {
@@ -116,37 +119,58 @@ const Notes = () => {
   };
 
   const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
-      y: 0,
       opacity: 1,
+      y: 0,
       transition: {
-        type: "spring",
-        stiffness: 100
+        duration: 0.5,
+        ease: "easeOut"
       }
     }
   };
 
+  const getInitials = (email) => {
+    if (!email) return '?';
+    return email.charAt(0).toUpperCase();
+  };
+
+  const avatarColors = [
+    'from-cyan-500 to-blue-600',
+    'from-violet-500 to-purple-600',
+    'from-fuchsia-500 to-pink-600',
+    'from-emerald-500 to-teal-600',
+    'from-amber-500 to-orange-600',
+  ];
+
+  const getColorForEmail = (email) => {
+    if (!email) return avatarColors[0];
+    const index = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return avatarColors[index % avatarColors.length];
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-[Arial,sans-serif]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-4 mb-8"
+          transition={{ duration: 0.5 }}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
         >
-          <button
-            onClick={() => navigate('/therapist')}
-            className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
-          >
-            <ArrowLeft size={20} />
-            <span className="hidden sm:inline">Back to Dashboard</span>
-          </button>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 flex items-center gap-3">
-            Therapist Notes
-            <Sparkles className="text-yellow-500 w-7 h-7" />
-          </h1>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/therapist')}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
+            >
+              <ArrowLeft size={20} />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
+              Send Notes
+            </h1>
+          </div>
         </motion.div>
 
         {/* Note Form */}
@@ -154,24 +178,28 @@ const Notes = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100 mb-8"
+          className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 mb-8"
         >
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-            <Send className="text-blue-500 w-7 h-7" />
-            Send New Note
-          </h2>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+              <Plus className="text-white w-7 h-7" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+              Create New Note
+            </h2>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Select Child */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Select Child
               </label>
               <div className="relative">
                 <select
                   value={selectedChild}
                   onChange={(e) => setSelectedChild(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl font-semibold text-gray-800 focus:border-blue-500 focus:outline-none transition-colors appearance-none cursor-pointer"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl font-semibold text-slate-800 focus:border-indigo-500 focus:outline-none transition-colors appearance-none cursor-pointer hover:border-slate-300"
                 >
                   {children.map(child => (
                     <option key={child.value} value={child.value}>
@@ -179,13 +207,13 @@ const Notes = () => {
                     </option>
                   ))}
                 </select>
-                <User className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                <User className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" />
               </div>
             </div>
 
             {/* Parent Email */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Parent Email
               </label>
               <div className="relative">
@@ -193,16 +221,15 @@ const Notes = () => {
                   type="text"
                   value={parentEmail}
                   disabled
-                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-semibold text-gray-600 cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl font-semibold text-slate-600 cursor-not-allowed"
                 />
-                <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               </div>
             </div>
           </div>
 
           {/* Note Title */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
               Note Title
             </label>
             <input
@@ -210,13 +237,13 @@ const Notes = () => {
               value={note.title}
               onChange={(e) => setNote(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Enter note title..."
-              className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl font-semibold text-gray-800 focus:border-blue-500 focus:outline-none transition-colors"
+              className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl font-semibold text-slate-800 focus:border-indigo-500 focus:outline-none transition-colors"
             />
           </div>
 
           {/* Note Content */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
               Note Content
             </label>
             <textarea
@@ -224,7 +251,7 @@ const Notes = () => {
               onChange={(e) => setNote(prev => ({ ...prev, content: e.target.value }))}
               placeholder="Write your note here..."
               rows={6}
-              className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl font-semibold text-gray-800 focus:border-blue-500 focus:outline-none transition-colors resize-none"
+              className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl font-semibold text-slate-800 focus:border-indigo-500 focus:outline-none transition-colors resize-none"
             />
           </div>
 
@@ -236,8 +263,8 @@ const Notes = () => {
             disabled={loading || !note.title || !note.content || !selectedChild}
             className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-lg transition-all duration-200 ${
               loading || !note.title || !note.content || !selectedChild
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-green-400 to-green-600 hover:shadow-xl hover:-translate-y-1'
+                ? 'bg-slate-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-indigo-500 to-blue-600 hover:shadow-xl hover:-translate-y-1'
             }`}
           >
             <Plus size={20} />
@@ -245,174 +272,130 @@ const Notes = () => {
           </motion.button>
         </motion.div>
 
-        {/* Notes Table */}
+        {/* Notes List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100 mb-8"
+          className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200"
         >
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-            <FileText className="text-purple-500 w-7 h-7" />
-            All Notes Sent to Parent
-          </h2>
-          
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <MessageSquare className="text-white w-7 h-7" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+              All Notes Sent
+            </h2>
+          </div>
+
           {notesLoading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-              <p className="text-gray-600 font-semibold">Loading notes...</p>
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                <Loader className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600" size={24} />
+              </div>
+              <p className="mt-6 text-lg text-slate-600 font-medium">Loading notes...</p>
+            </div>
+          ) : notesList.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FileText className="text-slate-400" size={48} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-700 mb-2">No Notes Yet</h3>
+              <p className="text-slate-600 max-w-md mx-auto">
+                Start by creating and sending a note to a parent. Your notes will appear here.
+              </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gradient-to-r from-purple-50 to-pink-50 border-b-2 border-purple-100">
-                    <th className="px-4 py-4 text-left">
-                      <div className="flex items-center gap-2 font-bold text-gray-800">
-                        <User size={16} />
-                        Child Email
+            <div className="space-y-4">
+              {notesList.map((note, index) => (
+                <motion.div
+                  key={note.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      <div className={`w-16 h-16 bg-gradient-to-br ${getColorForEmail(note.child_email)} rounded-xl flex items-center justify-center text-2xl font-bold text-white shadow-lg`}>
+                        {getInitials(note.child_email)}
                       </div>
-                    </th>
-                    <th className="px-4 py-4 text-left font-bold text-gray-800">
-                      Title
-                    </th>
-                    <th className="px-4 py-4 text-left font-bold text-gray-800">
-                      Content
-                    </th>
-                    <th className="px-4 py-4 text-left">
-                      <div className="flex items-center gap-2 font-bold text-gray-800">
-                        <Calendar size={16} />
-                        Date
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {notesList.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="px-4 py-12 text-center text-gray-600 font-semibold">
-                        No notes sent yet. 📝
-                      </td>
-                    </tr>
-                  ) : (
-                    notesList.map((n, index) => (
-                      <motion.tr
-                        key={n.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className={`border-b border-gray-100 hover:bg-purple-50 transition-colors ${
-                          index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                        }`}
-                      >
-                        <td className="px-4 py-4 font-semibold text-blue-600">
-                          {n.child_email || 'N/A'}
-                        </td>
-                        <td className="px-4 py-4 font-bold text-gray-800">
-                          {n.title || 'Untitled'}
-                        </td>
-                        <td className="px-4 py-4 text-gray-700 max-w-md">
-                          {(() => {
-                            const content = n.notes || '';
-                            const isExpanded = !!expandedNotes[n.id];
-                            const previewLength = 80;
-                            if (!content) return '-';
-                            if (isExpanded) {
-                              return (
-                                <div>
-                                  <p className="whitespace-pre-wrap">{content}</p>
-                                  {content.length > previewLength && (
-                                    <button
-                                      onClick={() => setExpandedNotes(prev => ({ ...prev, [n.id]: false }))}
-                                      className="mt-2 text-blue-600 font-semibold hover:text-blue-700 text-sm"
-                                    >
-                                      Show less
-                                    </button>
-                                  )}
-                                </div>
-                              );
-                            }
+                    </div>
 
-                            const preview = content.length > previewLength ? `${content.slice(0, previewLength)}...` : content;
-                            return (
-                              <div>
-                                <p className="whitespace-pre-wrap">{preview}</p>
-                                {content.length > previewLength && (
-                                  <button
-                                    onClick={() => setExpandedNotes(prev => ({ ...prev, [n.id]: true }))}
-                                    className="mt-2 text-blue-600 font-semibold hover:text-blue-700 text-sm"
-                                  >
-                                    Show more
-                                  </button>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </td>
-                        <td className="px-4 py-4 text-gray-600 font-medium">
-                          {formatDate(n.createdAt)}
-                        </td>
-                      </motion.tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+                        <h3 className="text-xl font-bold text-slate-800">
+                          {note.title || 'Untitled Note'}
+                        </h3>
+                        <div className="flex items-center text-sm text-slate-600 flex-shrink-0">
+                          <Calendar size={14} className="mr-2" />
+                          {formatDate(note.createdAt)}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="inline-flex items-center gap-2 px-3 py-1 bg-white border-2 border-blue-200 rounded-lg text-sm font-semibold text-blue-700">
+                          <User size={14} />
+                          {note.child_email || 'Unknown'}
+                        </span>
+                      </div>
+
+                      <div className="bg-white rounded-xl p-4 border border-slate-200">
+                        <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
+                          {note.notes || 'No content provided'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           )}
         </motion.div>
 
-        {/* Summary Card */}
+        {/* Stats Overview */}
         {notesList.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-8"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-              <BookOpen className="text-orange-500 w-7 h-7" />
-              Notes Summary
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {/* Total Notes */}
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-3xl p-6 shadow-lg text-white text-center relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 text-8xl opacity-10 -mt-4 -mr-4">📝</div>
-                <div className="relative">
-                  <p className="text-5xl font-black mb-2">{notesList.length}</p>
-                  <p className="text-lg font-semibold opacity-90">Total Notes</p>
+            <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 group">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <FileText className="text-white w-8 h-8" />
                 </div>
-              </motion.div>
+                <h3 className="text-lg font-semibold text-slate-700 mb-2">Total Notes</h3>
+                <p className="text-4xl font-bold text-indigo-600">{notesList.length}</p>
+              </div>
+            </div>
 
-              {/* Children */}
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="bg-gradient-to-br from-green-400 to-teal-500 rounded-3xl p-6 shadow-lg text-white text-center relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 text-8xl opacity-10 -mt-4 -mr-4">👶</div>
-                <div className="relative">
-                  <p className="text-5xl font-black mb-2">
-                    {new Set(notesList.map(n => n.child_email)).size}
-                  </p>
-                  <p className="text-lg font-semibold opacity-90">Children</p>
+            <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 group">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <User className="text-white w-8 h-8" />
                 </div>
-              </motion.div>
+                <h3 className="text-lg font-semibold text-slate-700 mb-2">Children</h3>
+                <p className="text-4xl font-bold text-emerald-600">
+                  {new Set(notesList.map(n => n.child_email)).size}
+                </p>
+              </div>
+            </div>
 
-              {/* Titled Notes */}
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-6 shadow-lg text-white text-center relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 text-8xl opacity-10 -mt-4 -mr-4">✍️</div>
-                <div className="relative">
-                  <p className="text-5xl font-black mb-2">
-                    {notesList.filter(n => n.title && n.title.length > 0).length}
-                  </p>
-                  <p className="text-lg font-semibold opacity-90">Titled Notes</p>
+            <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 group">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <BookOpen className="text-white w-8 h-8" />
                 </div>
-              </motion.div>
+                <h3 className="text-lg font-semibold text-slate-700 mb-2">Titled Notes</h3>
+                <p className="text-4xl font-bold text-violet-600">
+                  {notesList.filter(n => n.title && n.title.length > 0).length}
+                </p>
+              </div>
             </div>
           </motion.div>
         )}

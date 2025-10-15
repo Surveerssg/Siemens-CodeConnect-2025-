@@ -1,22 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  Container, 
-  Typography, 
-  Box, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Button,
-  Switch,
-  FormControlLabel,
-  Slider,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel
-} from '@mui/material';
+import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
   Save,
@@ -24,7 +9,8 @@ import {
   Bell,
   Palette,
   Accessibility,
-  Shield
+  Shield,
+  X
 } from 'lucide-react';
 
 const Settings = () => {
@@ -38,6 +24,8 @@ const Settings = () => {
     privacy: { dataSharing: false, analytics: true, personalizedAds: false }
   });
 
+  const [saved, setSaved] = useState(false);
+
   const handleSettingChange = (category, setting, value) => {
     setSettings(prev => ({
       ...prev,
@@ -46,237 +34,278 @@ const Settings = () => {
         [setting]: value
       }
     }));
+    setSaved(false);
   };
 
   const handleSave = () => {
     console.log('Settings saved:', settings);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
   };
 
-  // Role-specific settings (example for future customization)
-  const getRoleSpecificSettings = () => {
-    if (userRole === 'parent') {
-      return (
-        <Card sx={{ mb: 4 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>Parent Controls</Typography>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={settings.notifications.weeklyReports}
-                  onChange={(e) => handleSettingChange('notifications', 'weeklyReports', e.target.checked)}
-                />
-              }
-              label="Weekly Progress Reports"
-            />
-          </CardContent>
-        </Card>
-      );
-    }
-    return null; // No extra settings for other roles
+  const formatLabel = (key) => {
+    return key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
   };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: "easeOut" }
+    }
+  };
+
+  const SettingCard = ({ icon: Icon, title, children }) => (
+    <motion.div
+      variants={itemVariants}
+      className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300"
+    >
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center">
+          <Icon className="text-white w-6 h-6" />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
+      </div>
+      {children}
+    </motion.div>
+  );
+
+  const ToggleSetting = ({ label, value, onChange }) => (
+    <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-b-0">
+      <label className="text-slate-700 font-medium cursor-pointer">{label}</label>
+      <button
+        onClick={() => onChange(!value)}
+        className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+          value ? 'bg-indigo-600' : 'bg-slate-300'
+        }`}
+      >
+        <span
+          className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+            value ? 'translate-x-7' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    </div>
+  );
+
+  const SelectSetting = ({ label, value, onChange, options }) => (
+    <div className="py-4 border-b border-slate-100 last:border-b-0">
+      <label className="block text-slate-700 font-medium mb-2">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-2 bg-white border-2 border-slate-200 rounded-lg text-slate-800 focus:border-indigo-500 focus:outline-none transition-colors"
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 
   return (
-    <Container maxWidth="md" sx={{ minHeight: '100vh', py: 4 }}>
-      <Box display="flex" alignItems="center" mb={4}>
-        <Button
-          startIcon={<ArrowLeft size={20} />}
-          onClick={() => navigate(-1)}
-          sx={{ color: '#4ECDC4', mr: 2 }}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-[Arial,sans-serif]">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center gap-4 mb-8"
         >
-          Back
-        </Button>
-        <Typography variant="h4" sx={{ color: '#2C3E50', fontWeight: 'bold' }}>
-          Settings ⚙️
-        </Typography>
-      </Box>
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
+          >
+            <ArrowLeft size={20} />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-800">
+            Settings
+          </h1>
+        </motion.div>
 
-      {getRoleSpecificSettings()}
+        {/* Success Message */}
+        {saved && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-6 p-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl flex items-center gap-3"
+          >
+            <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-bold">✓</span>
+            </div>
+            <p className="text-emerald-700 font-semibold">Settings saved successfully!</p>
+          </motion.div>
+        )}
 
-      {/* Notifications Card */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            <Bell size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-            Notifications
-          </Typography>
-          {Object.keys(settings.notifications).map((key) => (
-            <FormControlLabel
-              key={key}
-              control={
-                <Switch
-                  checked={settings.notifications[key]}
-                  onChange={(e) => handleSettingChange('notifications', key, e.target.checked)}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-6"
+        >
+
+          {/* Parent-Specific Settings */}
+          {userRole === 'parent' && (
+            <SettingCard icon={Bell} title="Parent Controls">
+              <ToggleSetting
+                label="Weekly Progress Reports"
+                value={settings.notifications.weeklyReports}
+                onChange={(val) => handleSettingChange('notifications', 'weeklyReports', val)}
+              />
+            </SettingCard>
+          )}
+
+          {/* Notifications Card */}
+          <SettingCard icon={Bell} title="Notifications">
+            {Object.entries(settings.notifications).map(([key, value]) => (
+              <ToggleSetting
+                key={key}
+                label={formatLabel(key)}
+                value={value}
+                onChange={(val) => handleSettingChange('notifications', key, val)}
+              />
+            ))}
+          </SettingCard>
+
+          {/* Audio Card */}
+          <SettingCard icon={Volume2} title="Audio">
+            <ToggleSetting
+              label="Enable Audio"
+              value={settings.audio.enabled}
+              onChange={(val) => handleSettingChange('audio', 'enabled', val)}
+            />
+            
+            <div className="py-4 border-b border-slate-100">
+              <label className="block text-slate-700 font-medium mb-3">Volume</label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={settings.audio.volume}
+                  onChange={(e) => handleSettingChange('audio', 'volume', parseInt(e.target.value))}
+                  className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                 />
-              }
-              label={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
-            />
-          ))}
-        </CardContent>
-      </Card>
+                <span className="text-slate-700 font-semibold min-w-12 text-right">{settings.audio.volume}%</span>
+              </div>
+            </div>
 
-      {/* Audio Card */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            <Volume2 size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-            Audio
-          </Typography>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={settings.audio.enabled}
-                onChange={(e) => handleSettingChange('audio', 'enabled', e.target.checked)}
-              />
-            }
-            label="Enable Audio"
-          />
-          <Box sx={{ mt: 2 }}>
-            <Typography gutterBottom>Volume</Typography>
-            <Slider
-              value={settings.audio.volume}
-              onChange={(e, val) => handleSettingChange('audio', 'volume', val)}
-              min={0}
-              max={100}
+            <ToggleSetting
+              label="Sound Effects"
+              value={settings.audio.soundEffects}
+              onChange={(val) => handleSettingChange('audio', 'soundEffects', val)}
             />
-          </Box>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={settings.audio.soundEffects}
-                onChange={(e) => handleSettingChange('audio', 'soundEffects', e.target.checked)}
-              />
-            }
-            label="Sound Effects"
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={settings.audio.voiceFeedback}
-                onChange={(e) => handleSettingChange('audio', 'voiceFeedback', e.target.checked)}
-              />
-            }
-            label="Voice Feedback"
-          />
-        </CardContent>
-      </Card>
+            
+            <ToggleSetting
+              label="Voice Feedback"
+              value={settings.audio.voiceFeedback}
+              onChange={(val) => handleSettingChange('audio', 'voiceFeedback', val)}
+            />
+          </SettingCard>
 
-      {/* Display Card */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            <Palette size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-            Display
-          </Typography>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Theme</InputLabel>
-            <Select
-              value={settings.display.theme}
-              onChange={(e) => handleSettingChange('display', 'theme', e.target.value)}
+          {/* Display Card */}
+          <SettingCard icon={Palette} title="Display">
+            <SelectSetting
               label="Theme"
-            >
-              <MenuItem value="light">Light</MenuItem>
-              <MenuItem value="dark">Dark</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Font Size</InputLabel>
-            <Select
-              value={settings.display.fontSize}
-              onChange={(e) => handleSettingChange('display', 'fontSize', e.target.value)}
+              value={settings.display.theme}
+              onChange={(val) => handleSettingChange('display', 'theme', val)}
+              options={[
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' }
+              ]}
+            />
+
+            <SelectSetting
               label="Font Size"
+              value={settings.display.fontSize}
+              onChange={(val) => handleSettingChange('display', 'fontSize', val)}
+              options={[
+                { value: 'small', label: 'Small' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'large', label: 'Large' }
+              ]}
+            />
+
+            <ToggleSetting
+              label="Animations"
+              value={settings.display.animations}
+              onChange={(val) => handleSettingChange('display', 'animations', val)}
+            />
+
+            <ToggleSetting
+              label="High Contrast"
+              value={settings.display.highContrast}
+              onChange={(val) => handleSettingChange('display', 'highContrast', val)}
+            />
+          </SettingCard>
+
+          {/* Accessibility Card */}
+          <SettingCard icon={Accessibility} title="Accessibility">
+            {Object.entries(settings.accessibility).map(([key, value]) => (
+              <ToggleSetting
+                key={key}
+                label={formatLabel(key)}
+                value={value}
+                onChange={(val) => handleSettingChange('accessibility', key, val)}
+              />
+            ))}
+          </SettingCard>
+
+          {/* Privacy & Security Card */}
+          <SettingCard icon={Shield} title="Privacy & Security">
+            {Object.entries(settings.privacy).map(([key, value]) => (
+              <ToggleSetting
+                key={key}
+                label={formatLabel(key)}
+                value={value}
+                onChange={(val) => handleSettingChange('privacy', key, val)}
+              />
+            ))}
+          </SettingCard>
+
+          {/* Action Buttons */}
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row gap-4 justify-center pt-6"
+          >
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSave}
+              className="flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              <MenuItem value="small">Small</MenuItem>
-              <MenuItem value="medium">Medium</MenuItem>
-              <MenuItem value="large">Large</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={settings.display.animations}
-                onChange={(e) => handleSettingChange('display', 'animations', e.target.checked)}
-              />
-            }
-            label="Animations"
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={settings.display.highContrast}
-                onChange={(e) => handleSettingChange('display', 'highContrast', e.target.checked)}
-              />
-            }
-            label="High Contrast"
-          />
-        </CardContent>
-      </Card>
+              <Save size={20} />
+              Save Settings
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate(-1)}
+              className="flex items-center justify-center gap-2 px-8 py-3 bg-white text-slate-700 rounded-xl font-bold border-2 border-slate-200 shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <X size={20} />
+              Cancel
+            </motion.button>
+          </motion.div>
 
-      {/* Accessibility Card */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            <Accessibility size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-            Accessibility
-          </Typography>
-          {Object.keys(settings.accessibility).map((key) => (
-            <FormControlLabel
-              key={key}
-              control={
-                <Switch
-                  checked={settings.accessibility[key]}
-                  onChange={(e) => handleSettingChange('accessibility', key, e.target.checked)}
-                />
-              }
-              label={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
-            />
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Privacy & Security Card */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            <Shield size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-            Privacy & Security
-          </Typography>
-          {Object.keys(settings.privacy).map((key) => (
-            <FormControlLabel
-              key={key}
-              control={
-                <Switch
-                  checked={settings.privacy[key]}
-                  onChange={(e) => handleSettingChange('privacy', key, e.target.checked)}
-                />
-              }
-              label={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
-            />
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Save / Cancel Buttons */}
-      <Box display="flex" justifyContent="center" gap={2}>
-        <Button
-          variant="contained"
-          startIcon={<Save size={20} />}
-          onClick={handleSave}
-          sx={{
-            background: 'linear-gradient(45deg, #4CAF50, #45A049)',
-            '&:hover': { background: 'linear-gradient(45deg, #45A049, #4CAF50)' },
-          }}
-        >
-          Save Settings
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={() => navigate(-1)}
-          sx={{ color: '#FF6B6B' }}
-        >
-          Cancel
-        </Button>
-      </Box>
-    </Container>
+        </motion.div>
+      </div>
+    </div>
   );
 };
 
