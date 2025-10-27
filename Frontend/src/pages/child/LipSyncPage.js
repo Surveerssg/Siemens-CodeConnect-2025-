@@ -782,8 +782,7 @@ const LipSyncPage = () => {
   onPause={() => setIsPlayingDemo(false)}
   onEnded={() => setIsPlayingDemo(false)}
 >
-  <source src="https://api.sync.so/v2/generations/3da1ce3a-32ae-4a93-8174-216e587ea95c/result?token=7206ba96-827a-4043-a853-cff25b227fbd" type="video/mp4" />
-  Your browser does not support the video tag.
+ <source src="https://private-sync-user-generations-v2.s3.amazonaws.com/generations/f78bda99-c01c-4c20-bbbf-0c147cdb319b/2da8b5e7-8e45-4ca7-afa1-cb6175a526f1_stitcher/result.mp4" type="video/mp4" />  Your browser does not support the video tag.
 </video>
             </div>
 
