@@ -774,16 +774,14 @@ const LipSyncPage = () => {
                 Demo Video
               </h2>
               <p className="text-gray-300 mb-4">See what our AI can do with lip-sync technology</p>
-            <video
+            <iframe
   ref={demoVideoRef}
   className="w-full rounded-lg shadow-xl"
-  controls
-  onPlay={() => setIsPlayingDemo(true)}
-  onPause={() => setIsPlayingDemo(false)}
-  onEnded={() => setIsPlayingDemo(false)}
->
- <source src="https://private-sync-user-generations-v2.s3.amazonaws.com/generations/f78bda99-c01c-4c20-bbbf-0c147cdb319b/2da8b5e7-8e45-4ca7-afa1-cb6175a526f1_stitcher/result.mp4" type="video/mp4" />  Your browser does not support the video tag.
-</video>
+  style={{ aspectRatio: '16/9', minHeight: '400px' }}
+  src="https://drive.google.com/file/d/1-04ji6bsYImPwLL0MgYMe88K3JgA6d_L/preview"
+  allow="autoplay"
+  allowFullScreen
+></iframe>
             </div>
 
             {/* Audio Recording Section */}
