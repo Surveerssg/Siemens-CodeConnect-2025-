@@ -782,7 +782,7 @@ const LipSyncPage = () => {
   onPause={() => setIsPlayingDemo(false)}
   onEnded={() => setIsPlayingDemo(false)}
 >
-  <source src="https://drive.google.com/uc?export=download&id=1-04ji6bsYImPwLL0MgYMe88K3JgA6d_L" type="video/mp4" />
+  <source src="https://api.sync.so/v2/generations/3da1ce3a-32ae-4a93-8174-216e587ea95c/result?token=7206ba96-827a-4043-a853-cff25b227fbd" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
             </div>
