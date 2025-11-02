@@ -82,25 +82,30 @@ const Progress = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Dashboard</span>
-          </button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800">
+        <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 mb-8">
+          <div className="justify-self-start">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
+            >
+              <ArrowLeft size={20} />
+              <span>Back to Dashboard</span>
+            </button>
+          </div>
+
+          <div className="justify-self-center flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800">
               Progress Tracking
             </h1>
-            <span className="text-4xl sm:text-5xl animate-bounce">📈</span>
+            <span className="text-3xl sm:text-4xl animate-bounce">📈</span>
           </div>
+
+          <div className="justify-self-end" />
         </div>
 
         {/* Level Progress Card */}
         {selectedChildData && (
-          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg mb-8 border border-gray-100 hover:shadow-xl transition-all duration-300">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md mb-8 border border-gray-100 hover:shadow-lg transition-all duration-300">
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl sm:text-5xl font-bold shadow-lg">
                 {selectedChildData.label.charAt(0).toUpperCase()}
@@ -109,16 +114,16 @@ const Progress = () => {
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
                   {selectedChildData.label}
                 </h2>
-                <p className="text-xl sm:text-2xl font-bold text-blue-600 mb-3">
+                <p className="text-lg sm:text-xl font-semibold text-blue-600 mb-3">
                   Level {currentLevel} • {totalXP} XP Total
                 </p>
-                <div className="w-full bg-gray-200 rounded-full h-4 sm:h-5 overflow-hidden mb-2">
+                <div className="w-full bg-gray-200 rounded-full h-3 sm:h-4 overflow-hidden mb-2">
                   <div 
                     className="bg-gradient-to-r from-green-400 to-green-500 h-full rounded-full transition-all duration-500"
                     style={{ width: `${levelProgress}%` }}
                   />
                 </div>
-                <p className="text-sm sm:text-base font-semibold text-gray-600">
+                <p className="text-sm sm:text-sm font-medium text-gray-600">
                   {1000 - (totalXP % 1000)} XP to Level {currentLevel + 1}
                 </p>
               </div>
@@ -129,18 +134,18 @@ const Progress = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
           {/* Average Score Card */}
-          <div className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">📊</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 relative overflow-hidden">
+            <div className="absolute top-4 right-4 text-12xl sm:text-9xl opacity-20 select-none pointer-events-none hidden sm:block">📊</div>
             <div className="relative">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <TrendingUp size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Average Score</h3>
+                <TrendingUp size={20} className="text-green-600" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Average Score</h3>
               </div>
-              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+              <p className="text-3xl sm:text-4xl font-extrabold mb-2 text-gray-800">
                 {avgScore}
               </p>
-              <div className="pt-4 border-t-2 border-white/30">
-                <p className="text-sm sm:text-base font-semibold">
+              <div className="mt-4">
+                <p className="text-sm sm:text-base font-medium text-gray-700">
                   Per session 🎯
                 </p>
               </div>
@@ -148,18 +153,18 @@ const Progress = () => {
           </div>
 
           {/* Best Score Card */}
-          <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🏆</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 relative overflow-hidden">
+            <div className="absolute top-4 right-4 text-12xl sm:text-9xl opacity-20 select-none pointer-events-none hidden sm:block">🏆</div>
             <div className="relative">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <Award size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Best Score</h3>
+                <Award size={20} className="text-orange-500" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Best Score</h3>
               </div>
-              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+              <p className="text-3xl sm:text-4xl font-extrabold mb-2 text-gray-800">
                 {bestScore}
               </p>
-              <div className="pt-4 border-t-2 border-white/30">
-                <p className="text-sm sm:text-base font-semibold">
+              <div className="mt-4">
+                <p className="text-sm sm:text-base font-medium text-gray-700">
                   Highest achievement ⭐
                 </p>
               </div>
@@ -167,18 +172,18 @@ const Progress = () => {
           </div>
 
           {/* Practice Days Card */}
-          <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">📅</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 relative overflow-hidden">
+            <div className="absolute top-4 right-4 text-12xl sm:text-9xl opacity-20 select-none pointer-events-none hidden sm:block">📅</div>
             <div className="relative">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <Calendar size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Practice Days</h3>
+                <Calendar size={20} className="text-blue-600" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Practice Days</h3>
               </div>
-              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+              <p className="text-3xl sm:text-4xl font-extrabold mb-2 text-gray-800">
                 {practiceDays}
               </p>
-              <div className="pt-4 border-t-2 border-white/30">
-                <p className="text-sm sm:text-base font-semibold">
+              <div className="mt-4">
+                <p className="text-sm sm:text-base font-medium text-gray-700">
                   This month 🔥
                 </p>
               </div>

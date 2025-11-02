@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, StopCircle, Play, Volume2, RefreshCw, Star } from 'lucide-react';
+import { Mic, StopCircle, Play, Volume2, RefreshCw, Star, ArrowLeft, Sparkles, Trophy, Flame } from 'lucide-react';
 import api from '../../services/api';
 
 // Convert base64 to array buffer
@@ -54,6 +54,51 @@ const createWavFromPCM = (pcmData, sampleRate = 22050) => {
   }
   
   return new Blob([arrayBuffer], { type: 'audio/wav' });
+};
+
+// Convert an AudioBuffer to a WAV Blob (16-bit PCM)
+const audioBufferToWavBlob = (audioBuffer) => {
+  const numOfChan = audioBuffer.numberOfChannels;
+  const length = audioBuffer.length * numOfChan * 2; // 16-bit
+  const buffer = new ArrayBuffer(44 + length);
+  const view = new DataView(buffer);
+
+  const writeString = (offset, string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+
+  /* RIFF identifier */ writeString(0, 'RIFF');
+  /* file length */ view.setUint32(4, 36 + length, true);
+  /* RIFF type */ writeString(8, 'WAVE');
+  /* format chunk identifier */ writeString(12, 'fmt ');
+  /* format chunk length */ view.setUint32(16, 16, true);
+  /* sample format (raw) */ view.setUint16(20, 1, true);
+  /* channel count */ view.setUint16(22, numOfChan, true);
+  /* sample rate */ view.setUint32(24, audioBuffer.sampleRate, true);
+  /* byte rate (sample rate * block align) */ view.setUint32(28, audioBuffer.sampleRate * numOfChan * 2, true);
+  /* block align (channel count * bytes per sample) */ view.setUint16(32, numOfChan * 2, true);
+  /* bits per sample */ view.setUint16(34, 16, true);
+  /* data chunk identifier */ writeString(36, 'data');
+  /* data chunk length */ view.setUint32(40, length, true);
+
+  // write interleaved PCM samples
+  let offset = 44;
+  const channelData = [];
+  for (let ch = 0; ch < numOfChan; ch++) {
+    channelData.push(audioBuffer.getChannelData(ch));
+  }
+
+  for (let i = 0; i < audioBuffer.length; i++) {
+    for (let ch = 0; ch < numOfChan; ch++) {
+      const sample = Math.max(-1, Math.min(1, channelData[ch][i]));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+      offset += 2;
+    }
+  }
+
+  return new Blob([view], { type: 'audio/wav' });
 };
 
 // Generate audio using Sarvam AI API
@@ -302,10 +347,10 @@ function OverlappingWaveform({ referenceBlob, userBlob }) {
       />
       {similarity !== null && (
         <div className="text-center mt-6">
-          <div className="text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             {similarity.toFixed(1)}%
           </div>
-          <div className="text-lg text-gray-600 mt-2">
+          <div className="text-sm sm:text-base text-gray-600 mt-2">
             {similarity >= 80 ? 'Excellent match!' : 
              similarity >= 60 ? 'Good! Keep practicing' : 
              'Try to match the reference more closely'}
@@ -320,16 +365,16 @@ function OverlappingWaveform({ referenceBlob, userBlob }) {
 function LoadingModal({ tips, currentTip }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+      <div className="bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl sm:rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mb-6"></div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-4">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-white mb-6"></div>
+          <h3 className="text-2xl font-bold text-white mb-4">
             Analyzing Your Pronunciation...
           </h3>
-          <div className="text-lg text-gray-600 mb-6 min-h-[60px] flex items-center justify-center">
+          <div className="text-lg text-gray-200 mb-6 min-h-[60px] flex items-center justify-center">
             {tips[currentTip]}
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-300">
             This may take a few moments
           </p>
         </div>
@@ -467,10 +512,18 @@ export default function Practice() {
       })();
     }
 
+    // set which assignment is active
     setSelectedAssignmentId(assignment.id);
+
+    // Automatically switch the practice mode based on assignment type:
+    // - word  => Word Practice (scoringMode = false)
+    // - sentence => Sentence Scoring (scoringMode = true)
+    setScoringMode(assignment.type === 'sentence');
+
     if (assignment.type === 'word') {
       const w = { id: assignment.id, text: assignment.text };
       setSelectedWord(w);
+      // Generate the AI reference audio for the selected word immediately
       handleGenerateReferenceAudio(w);
     } else {
       // for sentence: don't auto-create attempts on select; just set the sample text
@@ -534,12 +587,34 @@ export default function Practice() {
         URL.revokeObjectURL(url);
       };
       
-      audio.onerror = (e) => {
-        console.error('Audio playback error:', e);
-        if (blob === referenceAudioBlob && selectedWord) {
-          const utterance = new SpeechSynthesisUtterance(selectedWord.text);
-          utterance.rate = 0.9;
-          speechSynthesis.speak(utterance);
+      audio.onerror = async (e) => {
+        console.error('Audio playback error:', e, 'Attempting decode fallback...');
+        // Try to decode the blob and convert to WAV for playback as a fallback
+        try {
+          const arrayBuffer = await blob.arrayBuffer();
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const decoded = await audioContext.decodeAudioData(arrayBuffer);
+          const wavBlob = audioBufferToWavBlob(decoded);
+          const wavUrl = URL.createObjectURL(wavBlob);
+          const wavAudio = new Audio(wavUrl);
+          wavAudio.onended = () => URL.revokeObjectURL(wavUrl);
+          await wavAudio.play().catch(err => {
+            console.error('Fallback WAV play failed:', err);
+            URL.revokeObjectURL(wavUrl);
+            // final fallback: if reference, speak text
+            if (blob === referenceAudioBlob && selectedWord) {
+              const utterance = new SpeechSynthesisUtterance(selectedWord.text);
+              utterance.rate = 0.9;
+              speechSynthesis.speak(utterance);
+            }
+          });
+        } catch (decodeErr) {
+          console.error('Decode fallback failed:', decodeErr);
+          if (blob === referenceAudioBlob && selectedWord) {
+            const utterance = new SpeechSynthesisUtterance(selectedWord.text);
+            utterance.rate = 0.9;
+            speechSynthesis.speak(utterance);
+          }
         }
       };
       
@@ -682,66 +757,70 @@ export default function Practice() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-8">
-      {showLoadingModal && <LoadingModal tips={pronunciationTips} currentTip={currentTip} />}
-      
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif] transition-colors duration-700">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-start justify-between mb-4">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="text-sm text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100 hover:bg-indigo-100"
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Volume2 size={48} className="text-indigo-600" />
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Pronunciation Practice
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold flex items-center gap-3">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-pink-500">
+                Pronunciation Practice
+              </span>
+              <span className="text-3xl sm:text-4xl transform-gpu motion-safe:animate-bounce">🎯</span>
             </h1>
+            <p className="text-base sm:text-lg text-blue-600 font-medium">
+              Choose a practice mode: Word pronunciation or sentence scoring!
+            </p>
           </div>
-          <p className="text-gray-600 text-lg">
-            Choose a practice mode: Word pronunciation or sentence scoring!
-          </p>
-          {apiStatus && (
-            <div className="mt-4 text-sm text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full inline-block">
-              {apiStatus}
-            </div>
-          )}
-          {submissionMessage && (
-            <div className="mt-4 text-sm text-green-700 bg-green-50 px-4 py-2 rounded-full inline-block">
-              {submissionMessage}
-            </div>
-          )}
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200 ring-1 ring-white/30 backdrop-blur-sm"
+          >
+            <ArrowLeft size={20} />
+            <span>Back to Dashboard</span>
+          </button>
         </div>
 
-        {/* Mode Selection */}
         {/* Assigned Items */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Your Assigned Practice</h2>
+        <div className="relative bg-white rounded-2xl sm:rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 mb-8 overflow-hidden">
+          <div className="absolute -top-8 -right-8 w-40 h-40 bg-gradient-to-tr from-purple-100 to-pink-100 rounded-full opacity-40 blur-3xl pointer-events-none"></div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <Trophy className="w-6 h-6" />
+            Your Assigned Practice
+          </h2>
           {assignedItems.length === 0 ? (
             <p className="text-gray-600">No assigned words or sentences yet.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {assignedItems.map(ai => (
-                <div key={ai.id} className={`p-3 rounded-lg border ${selectedAssignmentId === ai.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>
+                <div 
+                  key={ai.id} 
+                  className={`p-4 rounded-xl border-2 transition-transform duration-300 will-change-transform cursor-pointer hover:scale-105 ${
+                    selectedAssignmentId === ai.id 
+                      ? 'border-blue-500 bg-blue-50 shadow-md transform-gpu scale-105 ring-1 ring-blue-50' 
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                  onClick={() => handleSelectAssignment(selectedAssignmentId === ai.id ? null : ai)}
+                >
                   <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-semibold text-gray-800">{ai.type === 'sentence' ? 'Sentence' : 'Word'}</div>
-                      <div className="text-sm text-gray-700">{ai.text}</div>
+                    <div className="flex-1">
+                      <div className="font-bold text-gray-800 text-lg">{ai.type === 'sentence' ? 'Sentence' : 'Word'}</div>
+                      <div className="text-base text-gray-700 mt-1">{ai.text}</div>
                       {ai.latestScore !== null && ai.latestScore !== undefined && (
-                        <div className="text-xs text-gray-500 mt-1">Latest score: {ai.latestScore}%</div>
+                        <div className="text-sm text-gray-500 mt-2">Latest score: <span className="font-bold">{ai.latestScore}%</span></div>
                       )}
                     </div>
-                    <div>
+                    <div className="flex flex-col items-end gap-2">
                       <button
-                        onClick={() => handleSelectAssignment(selectedAssignmentId === ai.id ? null : ai)}
-                        className={`px-3 py-1 rounded-full text-sm ${selectedAssignmentId === ai.id ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                        className={`px-4 py-2 rounded-lg font-semibold text-sm transition-transform duration-200 transform-gpu flex items-center gap-2 ${
+                          selectedAssignmentId === ai.id 
+                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg' 
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                         disabled={refreshingAssignments}
                       >
-                        {refreshingAssignments ? 'Refreshing...' : (selectedAssignmentId === ai.id ? 'Selected' : 'Select')}
+                        {selectedAssignmentId === ai.id && <div className="w-2 h-2 rounded-full bg-white/80 animate-pulse" />}
+                        <span>{refreshingAssignments ? 'Refreshing...' : (selectedAssignmentId === ai.id ? 'Selected' : 'Select')}</span>
                       </button>
                     </div>
                   </div>
@@ -750,45 +829,67 @@ export default function Practice() {
             </div>
           )}
         </div>
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
+
+        {/* Mode Selection */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <Sparkles className="w-6 h-6" />
             Select Practice Mode
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <button
               onClick={() => { setScoringMode(false); reset(); }}
-              className={`p-8 rounded-xl border-4 transition-all duration-300 ${
+              className={`group p-6 rounded-xl border-2 transition-transform duration-300 text-left transform-gpu ${
                 !scoringMode 
-                  ? 'border-indigo-500 bg-indigo-50 shadow-lg scale-105' 
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  ? 'border-blue-500 bg-white shadow-md scale-105 ring-1 ring-blue-50' 
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:scale-105'
               }`}
             >
-              <div className="text-5xl mb-4">🎯</div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Word Practice</h3>
-              <p className="text-gray-600">Compare your pronunciation with AI reference</p>
+              <div className="text-3xl mb-4 transform-gpu group-hover:scale-105 transition-all">🎯</div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">Word Practice</h3>
+              <p className="text-sm text-gray-600">Compare your pronunciation with AI reference</p>
             </button>
             
             <button
               onClick={() => { setScoringMode(true); reset(); }}
-              className={`p-8 rounded-xl border-4 transition-all duration-300 ${
+              className={`group p-6 rounded-xl border-2 transition-transform duration-300 text-left transform-gpu ${
                 scoringMode 
-                  ? 'border-purple-500 bg-purple-50 shadow-lg scale-105' 
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  ? 'border-purple-500 bg-white shadow-md scale-105 ring-1 ring-purple-50' 
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:scale-105'
               }`}
             >
-              <div className="text-5xl mb-4">⭐</div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Sentence Scoring</h3>
-              <p className="text-gray-600">Get scored on your pronunciation accuracy</p>
+              <div className="text-3xl mb-4 transform-gpu group-hover:scale-105 transition-all">⭐</div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">Sentence Scoring</h3>
+              <p className="text-sm text-gray-600">Get scored on your pronunciation accuracy</p>
             </button>
           </div>
         </div>
 
+        {/* Status Messages */}
+        {(apiStatus || submissionMessage) && (
+          <div className="mb-8">
+            {apiStatus && (
+              <div className="bg-blue-50 text-blue-700 px-6 py-3 rounded-xl border border-blue-200 text-center">
+                {apiStatus}
+              </div>
+            )}
+            {submissionMessage && (
+              <div className="bg-green-50 text-green-700 px-6 py-3 rounded-xl border border-green-200 text-center">
+                {submissionMessage}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Loading Modal */}
+        {showLoadingModal && <LoadingModal tips={pronunciationTips} currentTip={currentTip} />}
+
         {/* Scoring Mode */}
         {scoringMode && (
-          <>
+          <div className="space-y-6">
             {/* Sample Text Display */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <span className="bg-purple-100 text-purple-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                   1
                 </span>
@@ -802,8 +903,8 @@ export default function Practice() {
             </div>
 
             {/* Recording Section */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <span className="bg-purple-100 text-purple-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                   2
                 </span>
@@ -814,16 +915,7 @@ export default function Practice() {
                 <button
                   onClick={handleScoringRecord}
                   disabled={showLoadingModal}
-                  className={`
-                    relative px-8 py-4 rounded-full font-semibold text-lg
-                    border-none cursor-pointer transition-all duration-300
-                    flex items-center gap-3 outline-none
-                    hover:scale-105 active:scale-95 disabled:opacity-50
-                    ${scoringRecording 
-                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/50' 
-                      : 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                    }
-                  `}
+                  className={`relative px-8 py-4 rounded-xl font-bold text-lg border-none cursor-pointer transition-transform duration-300 transform-gpu flex items-center gap-3 outline-none shadow-2xl hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 ${scoringRecording ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' : 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'}`}
                 >
                   {scoringRecording ? (
                     <>
@@ -836,10 +928,12 @@ export default function Practice() {
                       Start Recording
                     </>
                   )}
+                  {/* pulsing ring when recording */}
+                  {scoringRecording && <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-red-400 shadow-lg animate-pulse" />}
                 </button>
 
                 {scoringRecording && (
-                  <p className="text-red-500 text-sm animate-pulse">
+                  <p className="text-red-500 text-sm animate-pulse font-semibold">
                     Recording... Say "{sampleText}"
                   </p>
                 )}
@@ -847,9 +941,9 @@ export default function Practice() {
                 {scoringAudioBlob && !scoringRecording && (
                   <button
                     onClick={() => playAudio(scoringAudioBlob)}
-                    className="px-5 py-2 rounded-full border-none cursor-pointer transition-all duration-300 flex items-center gap-2 font-medium text-sm bg-blue-600 text-white hover:bg-blue-700 hover:scale-105"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 hover:scale-105 shadow-lg hover:shadow-xl"
                   >
-                    <Play size={16} />
+                    <Play size={20} />
                     Play Your Recording
                   </button>
                 )}
@@ -858,8 +952,8 @@ export default function Practice() {
 
             {/* Results Section */}
             {scoringResult && !scoringResult.error && (
-              <div className="bg-white rounded-2xl shadow-xl p-8">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+              <div className="bg-white rounded-2xl sm:rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                   <span className="bg-purple-100 text-purple-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                     3
                   </span>
@@ -869,13 +963,13 @@ export default function Practice() {
                 {/* Final Score */}
                 <div className={`${getScoringFeedback(scoringResult.final_score).bgColor} rounded-xl p-8 mb-6 border-2 border-gray-200`}>
                   <div className="text-center">
-                    <div className="text-8xl mb-4">{getScoringFeedback(scoringResult.final_score).emoji}</div>
-                    <div className={`text-3xl font-bold mb-2 ${getScoringFeedback(scoringResult.final_score).color}`}>
-                      {getScoringFeedback(scoringResult.final_score).text}
-                    </div>
-                    <div className="text-6xl font-bold text-gray-800 mb-2">
-                      {scoringResult.final_score.toFixed(1)}%
-                    </div>
+                    <div className="text-6xl mb-4">{getScoringFeedback(scoringResult.final_score).emoji}</div>
+                        <div className={`text-2xl font-bold mb-2 ${getScoringFeedback(scoringResult.final_score).color}`}>
+                          {getScoringFeedback(scoringResult.final_score).text}
+                        </div>
+                        <div className="text-4xl font-bold text-gray-800 mb-2">
+                          {scoringResult.final_score.toFixed(1)}%
+                        </div>
                     <div className="text-lg text-gray-600">Overall Score</div>
                   </div>
                 </div>
@@ -925,7 +1019,7 @@ export default function Practice() {
                       setScoringResult(null);
                       setScoringAudioBlob(null);
                     }}
-                    className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-full border-none cursor-pointer transition-all duration-300 flex items-center gap-2 text-base hover:bg-purple-700 hover:scale-105"
+                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold rounded-xl border-none cursor-pointer transition-all duration-300 flex items-center gap-2 text-base hover:scale-105 shadow-lg hover:shadow-xl"
                   >
                     <RefreshCw size={18} />
                     Try Again
@@ -946,7 +1040,7 @@ export default function Practice() {
                       setScoringResult(null);
                       setScoringAudioBlob(null);
                     }}
-                    className="px-6 py-3 bg-red-600 text-white font-semibold rounded-full border-none cursor-pointer transition-all duration-300 flex items-center gap-2 text-base hover:bg-red-700 hover:scale-105 mx-auto"
+                    className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold rounded-xl border-none cursor-pointer transition-all duration-300 flex items-center gap-2 text-base hover:scale-105 shadow-lg hover:shadow-xl"
                   >
                     <RefreshCw size={18} />
                     Try Again
@@ -954,60 +1048,59 @@ export default function Practice() {
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
 
         {/* Word Practice Mode */}
         {!scoringMode && (
-          <>
-            {/* Word Selection */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                <span className="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
+          <div className="space-y-6">
+            {/* Selected Word (show only the chosen word) */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                   1
                 </span>
-                Choose a Word
+                Selected Word
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {wordsToShow.map(word => (
+              <div className="grid grid-cols-1 gap-4">
+                {selectedWord ? (
                   <button
-                    key={word.id}
-                    onClick={() => handleGenerateReferenceAudio(word)}
+                    key={selectedWord.id}
+                    onClick={() => handleGenerateReferenceAudio(selectedWord)}
                     disabled={isGeneratingReference}
                     className={`
-                      relative p-6 rounded-xl border-4 bg-white cursor-pointer
+                      relative p-6 rounded-xl border-2 bg-white cursor-pointer
                       transition-all duration-300 outline-none
                       hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
-                      ${selectedWord?.id === word.id 
-                        ? `${word.borderColor} ${word.bgColor} shadow-lg` 
-                        : 'border-gray-200 hover:border-gray-300'
-                      }
+                      ${selectedWord?.borderColor || 'border-gray-200'} ${selectedWord?.bgColor || 'bg-white'} shadow-lg
                     `}
                   >
                     <div className="flex items-center justify-between">
                       <div className="text-left">
-                        <div className="text-3xl font-bold text-gray-800">{word.text}</div>
+                        <div className="text-3xl font-bold text-gray-800">{selectedWord.text}</div>
                         <div className="text-sm text-gray-500 mt-1">
-                          {isGeneratingReference && selectedWord?.id === word.id ? 
-                            'Generating audio...' : 
-                            'Click to play'}
+                          {isGeneratingReference ? 'Generating audio...' : 'Play reference'}
                         </div>
                       </div>
-                      <Volume2 size={32} className={word.color} />
+                      <Volume2 size={32} className={selectedWord?.color || 'text-indigo-500'} />
                     </div>
-                    {selectedWord?.id === word.id && !isGeneratingReference && (
+                    {!isGeneratingReference && (
                       <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                     )}
                   </button>
-                ))}
+                ) : (
+                  <div className="p-6 rounded-xl border-2 bg-white text-center text-gray-600">
+                    No word selected. Please select an assigned word above to begin practice.
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Recording Section */}
             {selectedWord && (
-              <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                  <span className="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
+              <div className="bg-white rounded-2xl sm:rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                  <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                     2
                   </span>
                   Record Your Pronunciation
@@ -1015,19 +1108,10 @@ export default function Practice() {
                 
                 <div className="flex flex-col items-center gap-6">
                   <button
-                    onClick={handleRecord}
-                    disabled={isGeneratingReference}
-                    className={`
-                      relative px-8 py-4 rounded-full font-semibold text-lg
-                      border-none cursor-pointer transition-all duration-300
-                      flex items-center gap-3 outline-none
-                      hover:scale-105 active:scale-95 disabled:opacity-50
-                      ${recording 
-                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/50' 
-                        : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                      }
-                    `}
-                  >
+                      onClick={handleRecord}
+                      disabled={isGeneratingReference}
+                      className={`relative px-8 py-4 rounded-xl font-bold text-lg border-none cursor-pointer transition-transform duration-300 transform-gpu flex items-center gap-3 outline-none shadow-2xl hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 ${recording ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'}`}
+                    >
                     {recording ? (
                       <>
                         <StopCircle size={24} />
@@ -1039,10 +1123,11 @@ export default function Practice() {
                         Start Recording
                       </>
                     )}
+                      {recording && <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-red-400 shadow-lg animate-pulse" />}
                   </button>
 
                   {recording && (
-                    <p className="text-red-500 text-sm animate-pulse">
+                    <p className="text-red-500 text-sm animate-pulse font-semibold">
                       Recording... Say "{selectedWord.text}"
                     </p>
                   )}
@@ -1052,21 +1137,24 @@ export default function Practice() {
 
             {/* Waveform Comparison */}
             {(referenceAudioBlob || userAudioBlob) && (
-              <div className="bg-white rounded-2xl shadow-xl p-8">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                  <span className="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
+              <div className="bg-white rounded-2xl sm:rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                  <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                     3
                   </span>
                   Waveform Comparison
                 </h2>
                 
                 <div className="bg-white p-6 rounded-xl border-2 border-gray-200">
-                  <div className="relative w-full h-48 bg-gray-50 rounded-lg overflow-hidden">
-                    <OverlappingWaveform 
-                      referenceBlob={referenceAudioBlob} 
-                      userBlob={userAudioBlob} 
-                    />
-                  </div>
+                    <div className="relative w-full h-48 bg-gradient-to-r from-indigo-50 to-sky-50 rounded-lg overflow-hidden shadow-inner">
+                      <OverlappingWaveform 
+                        referenceBlob={referenceAudioBlob} 
+                        userBlob={userAudioBlob} 
+                      />
+                      <div className="absolute top-3 left-3 w-10 h-10 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center shadow-md">
+                        🎧
+                      </div>
+                    </div>
                   
                   <div className="flex gap-6 mt-4 justify-center flex-wrap">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -1085,18 +1173,18 @@ export default function Practice() {
                     {referenceAudioBlob && (
                       <button
                         onClick={() => playAudio(referenceAudioBlob)}
-                        className="px-5 py-2 rounded-full border-none cursor-pointer transition-all duration-300 flex items-center gap-2 font-medium text-sm bg-purple-600 text-white hover:bg-purple-700 hover:scale-105"
+                        className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 hover:scale-105 shadow-lg hover:shadow-xl"
                       >
-                        <Play size={16} />
+                        <Play size={20} />
                         Play Reference
                       </button>
                     )}
                     {userAudioBlob && (
                       <button
                         onClick={() => playAudio(userAudioBlob)}
-                        className="px-5 py-2 rounded-full border-none cursor-pointer transition-all duration-300 flex items-center gap-2 font-medium text-sm bg-blue-600 text-white hover:bg-blue-700 hover:scale-105"
+                        className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 hover:scale-105 shadow-lg hover:shadow-xl"
                       >
-                        <Play size={16} />
+                        <Play size={20} />
                         Play Recording
                       </button>
                     )}
@@ -1106,7 +1194,7 @@ export default function Practice() {
                 <div className="flex gap-3 justify-center mt-6">
                   <button 
                     onClick={reset} 
-                    className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-full border-none cursor-pointer transition-all duration-300 flex items-center gap-2 text-base hover:bg-gray-300 hover:scale-105"
+                    className="px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-xl border-none cursor-pointer transition-all duration-300 flex items-center gap-2 text-base hover:scale-105 shadow-lg hover:shadow-xl"
                   >
                     <RefreshCw size={18} />
                     Try Another Word
@@ -1114,7 +1202,7 @@ export default function Practice() {
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

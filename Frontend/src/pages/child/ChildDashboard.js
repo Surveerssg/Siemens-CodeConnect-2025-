@@ -36,6 +36,10 @@ const ChildDashboard = () => {
   const { gameProgress, loading, refreshData } = useGame();
   const navigate = useNavigate();
 
+  // Small derived values for UI (avoid dividing by zero)
+  const streakGoal = Math.max(7, (gameProgress?.bestStreak || 7));
+  const streakPercent = gameProgress && gameProgress.currentStreak ? Math.min(100, (gameProgress.currentStreak / streakGoal) * 100) : 0;
+
   const handleLogout = async () => {
     try {
       console.log('Logging out...');
@@ -170,11 +174,11 @@ const ChildDashboard = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="space-y-2">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 flex items-center gap-3">
-              Welcome back, {user?.displayName || 'Super Star'}! 
-              <span className="text-4xl sm:text-5xl animate-bounce">🌟</span>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 flex items-center gap-3">
+              Welcome back, {user?.displayName || 'Super Star'}!
+              <span className="text-3xl sm:text-4xl transform-gpu motion-safe:animate-bounce">🌟</span>
             </h1>
-            <p className="text-lg sm:text-xl text-blue-600 font-medium">
+            <p className="text-base sm:text-lg text-blue-600 font-medium">
               Ready for another amazing day of learning?
             </p>
           </div>
@@ -199,19 +203,19 @@ const ChildDashboard = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
           {/* Level Card */}
-          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-blue-100">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100">
             <div className="text-center">
               <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-lg">
                 👶
               </div>
               {loading ? (
-                <p className="text-2xl sm:text-3xl font-bold text-gray-400">Loading...</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-400">Loading...</p>
               ) : (
                 <>
-                  <h3 className="text-3xl sm:text-4xl font-bold text-blue-600 mb-2">
+                  <h3 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">
                     Level {gameProgress.currentLevel}
                   </h3>
-                  <p className="text-base sm:text-lg font-semibold text-gray-700 mb-4">
+                  <p className="text-sm sm:text-base font-semibold text-gray-700 mb-4">
                     {gameProgress.totalXP} XP Total
                   </p>
                   <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3 mb-3 overflow-hidden">
@@ -229,25 +233,37 @@ const ChildDashboard = () => {
           </div>
 
           {/* Streak Card */}
-          <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🔥</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-5xl sm:text-7xl opacity-40 select-none pointer-events-none hidden sm:block">🔥</div>
             <div className="relative">
-              <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <Flame size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Current Streak</h3>
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <Flame size={20} className="text-orange-500" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Current Streak</h3>
               </div>
               {loading ? (
-                <p className="text-4xl sm:text-5xl font-bold">...</p>
+                <p className="text-2xl sm:text-3xl font-bold">...</p>
               ) : (
                 <>
-                  <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
-                    {gameProgress.currentStreak}
-                  </p>
-                  <p className="text-lg sm:text-xl font-semibold mb-4">days in a row!</p>
-                  <div className="pt-4 border-t-2 border-white/30">
-                    <p className="text-sm sm:text-base font-semibold">
-                      Best streak: {gameProgress.bestStreak} days 🏆
-                    </p>
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 shadow-md">
+                      <div className="text-2xl sm:text-3xl font-extrabold text-white">{gameProgress.currentStreak}</div>
+                    </div>
+                    <div>
+                      <p className="text-lg sm:text-xl font-semibold text-gray-800">days in a row!</p>
+                    </div>
+                  </div>
+                  {/* Replace thin divider with an inline progress row to utilize space */}
+                  <div className="mt-4 flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-orange-400 to-red-500 rounded-full transition-all duration-500" style={{ width: `${streakPercent}%` }} />
+                      </div>
+                      <div className="text-xs text-gray-500 mt-2">Progress toward {streakGoal}-day goal</div>
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className="text-sm font-semibold text-gray-700">Best: {gameProgress.bestStreak}d</div>
+                      <button onClick={() => navigate('/practice')} className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-600 rounded-md text-sm font-semibold border border-orange-100 hover:bg-orange-100 transition">Practice</button>
+                    </div>
                   </div>
                 </>
               )}
@@ -255,27 +271,33 @@ const ChildDashboard = () => {
           </div>
 
           {/* Badges Card */}
-          <div className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden sm:col-span-2 lg:col-span-1">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🏆</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden sm:col-span-2 lg:col-span-1 border border-gray-100">
+            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-5xl sm:text-7xl opacity-40 select-none pointer-events-none hidden sm:block">🏆</div>
             <div className="relative">
-              <div className="flex items-center gap-2 mb-4">
-                <Trophy size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Recent Badges</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <Trophy size={20} className="text-green-600" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Recent Badges</h3>
               </div>
-              <div className="flex flex-wrap gap-2 mb-4 mt-4">
-                {gameProgress.badges.slice(0, 3).map((badge, index) => (
-                  <span 
-                    key={index}
-                    className="px-3 sm:px-4 py-2 bg-white/25 backdrop-blur-sm rounded-xl font-bold text-xs sm:text-sm border border-white/40"
-                  >
-                    {badge}
-                  </span>
-                ))}
+              <div className="flex items-center gap-4 mb-3">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-gradient-to-br from-green-400 to-teal-500 shadow-md">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-white">{gameProgress.badges.length}</div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-wrap gap-2">
+                    {gameProgress.badges.slice(0, 3).map((badge, index) => (
+                      <span 
+                        key={index}
+                        className="px-3 sm:px-4 py-2 bg-gray-50 rounded-xl font-semibold text-xs sm:text-sm border border-gray-100 text-gray-700"
+                      >
+                        {badge}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="pt-4 border-t-2 border-white/30">
-                <p className="text-sm sm:text-base font-semibold">
-                  {gameProgress.badges.length} badges earned ⭐
-                </p>
+              <div className="mt-3 flex items-center justify-between">
+                <div className="text-sm font-medium text-gray-700">{gameProgress.badges.length} badges earned ⭐</div>
+                <button onClick={() => navigate('/achievements')} className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-md text-sm font-semibold border border-green-100 hover:bg-green-100 transition">View All</button>
               </div>
             </div>
           </div>

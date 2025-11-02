@@ -178,68 +178,74 @@ const GamesMenu = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Dashboard</span>
-          </button>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 flex items-center gap-3">
-            Game Center 
-            <span className="text-4xl sm:text-5xl animate-bounce">🎮</span>
-          </h1>
+        <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 mb-8">
+          <div className="justify-self-start">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
+            >
+              <ArrowLeft size={20} />
+              <span>Back to Dashboard</span>
+            </button>
+          </div>
+
+          <div className="justify-self-center">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 text-center">
+              Game Center
+            </h1>
+          </div>
+
+          <div className="justify-self-end" />
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
           {/* Total XP */}
-          <div className="bg-gradient-to-br from-blue-400 to-purple-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">⚡</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-5xl sm:text-7xl opacity-8 select-none pointer-events-none hidden sm:block">⚡</div>
             <div className="relative">
-              <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <Zap size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Total XP</h3>
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <Zap size={20} className="sm:w-6 sm:h-6 text-indigo-600" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Total XP</h3>
               </div>
-              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+              <p className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-pink-500">
                 {gameProgress.totalXP}
               </p>
-              <p className="text-lg sm:text-xl font-semibold">
+              <p className="text-base sm:text-lg text-gray-600 font-medium">
                 Keep playing to earn more!
               </p>
             </div>
           </div>
 
           {/* Games Played */}
-          <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🎮</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-5xl sm:text-7xl opacity-8 select-none pointer-events-none hidden sm:block">🎮</div>
             <div className="relative">
-              <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <Gamepad2 size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Games Played</h3>
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <Gamepad2 size={20} className="sm:w-6 sm:h-6 text-orange-500" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Games Played</h3>
               </div>
-              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+              <p className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-red-500">
                 {loading ? '—' : gamesPlayed}
               </p>
-              <p className="text-lg sm:text-xl font-semibold">
+              <p className="text-base sm:text-lg text-gray-600 font-medium">
                 Start playing to increase!
               </p>
             </div>
           </div>
 
           {/* Achievements */}
-          <div className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden sm:col-span-2 lg:col-span-1">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🏆</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden sm:col-span-2 lg:col-span-1">
+            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-5xl sm:text-7xl opacity-8 select-none pointer-events-none hidden sm:block">🏆</div>
             <div className="relative">
-              <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <Trophy size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Achievements</h3>
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <Trophy size={20} className="sm:w-6 sm:h-6 text-green-600" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Achievements</h3>
               </div>
-              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+              <p className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-green-500 to-emerald-500">
                 {loading ? '—' : achievements.filter(a => a.earned).length}
               </p>
-              <p className="text-lg sm:text-xl font-semibold">
+              <p className="text-base sm:text-lg text-gray-600 font-medium">
                 out of {loading ? '—' : achievements.length} total
               </p>
             </div>
@@ -260,7 +266,7 @@ const GamesMenu = () => {
                 onClick={() => !loading && game.unlocked && navigate(`/games/${game.id}`)}
                 className={`group bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 ${
                   !loading && game.unlocked 
-                    ? 'cursor-pointer hover:-translate-y-2 border-2 border-transparent hover:border-blue-400' 
+          ? 'cursor-pointer hover:-translate-y-1 border border-transparent hover:border-blue-200' 
                     : 'opacity-60 cursor-not-allowed border-2 border-gray-200'
                 }`}
               >
@@ -283,12 +289,10 @@ const GamesMenu = () => {
 
                 {/* Badges */}
                 <div className="flex justify-center gap-2 mb-4 flex-wrap">
-                  <span className={`px-3 py-1 bg-gradient-to-r ${
-                    loading ? 'from-gray-400 to-gray-600' : getDifficultyColor(game.difficulty)
-                  } text-white rounded-full text-xs font-bold`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold text-gray-700 bg-gray-100 ${loading ? '' : ''}`}>
                     {loading ? 'Easy' : game.difficulty}
                   </span>
-                  <span className="px-3 py-1 bg-gradient-to-r from-cyan-400 to-blue-500 text-white rounded-full text-xs font-bold">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold text-gray-700 bg-gray-100">
                     {loading ? '—' : game.xp} XP
                   </span>
                 </div>
@@ -317,8 +321,8 @@ const GamesMenu = () => {
                   disabled={loading || !game.unlocked}
                   className={`w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
                     loading || !game.unlocked
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : `bg-gradient-to-r ${game.gradient} text-white hover:scale-105 shadow-md hover:shadow-lg`
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      : `bg-gradient-to-r ${game.gradient} text-white hover:scale-102 shadow-sm`
                   }`}
                 >
                   {loading ? (
@@ -351,26 +355,26 @@ const GamesMenu = () => {
             {(loading ? [1,2,3,4,5] : achievements).map((achievement, index) => (
               <div
                 key={achievement?.key || index}
-                className={`bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 text-center ${
+                className={`bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-transform duration-200 text-center ${
                   achievement?.earned 
-                    ? 'border-2 border-yellow-400 hover:scale-105' 
-                    : 'opacity-60 border-2 border-gray-200'
+                    ? 'border border-yellow-400 hover:scale-105' 
+                    : 'opacity-80 border border-gray-100'
                 }`}
               >
                 {/* Achievement Icon */}
-                <div className={`text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4 ${
+                <div className={`text-3xl sm:text-4xl lg:text-4xl mb-3 sm:mb-4 ${
                   achievement?.earned ? '' : 'grayscale opacity-50'
                 }`}>
                   {loading ? '🏆' : achievement.icon}
                 </div>
 
                 {/* Achievement Name */}
-                <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-2">
+                <h3 className="text-sm sm:text-sm font-semibold text-gray-800 mb-2">
                   {loading ? 'Loading...' : achievement.name}
                 </h3>
 
                 {/* Achievement Status */}
-                <p className={`text-xs sm:text-sm font-semibold mb-2 ${
+                <p className={`text-xs sm:text-xs font-medium mb-2 ${
                   achievement?.earned ? 'text-green-600' : 'text-gray-500'
                 }`}>
                   {loading ? '' : (achievement.earned ? 'Earned! 🎉' : 'Keep trying!')}

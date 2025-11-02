@@ -137,37 +137,42 @@ const Goals = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Dashboard</span>
-          </button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800">
-              My Goals
-            </h1>
-            <span className="text-4xl sm:text-5xl animate-bounce">🎯</span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4 mb-8">
+          <div className="justify-self-start">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
+            >
+              <ArrowLeft size={20} />
+              <span
+              >Back to Dashboard</span>
+            </button>
           </div>
+
+            <div className="justify-self-center">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 text-center">
+                My Goals
+              </h1>
+            </div>
+
+          <div className="justify-self-end" />
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
           {/* Goals Completed Card */}
-          <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">🎯</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden border border-gray-100">
+            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-5xl sm:text-6xl opacity-30 select-none pointer-events-none hidden sm:block">🎯</div>
             <div className="relative">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <Target size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Goals Completed</h3>
+                <Target size={20} className="text-blue-600" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Goals Completed</h3>
               </div>
-              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
-                {completedGoals}<span className="text-3xl sm:text-4xl opacity-75">/{totalGoals}</span>
+              <p className="text-3xl sm:text-4xl font-extrabold mb-2 text-gray-800">
+                {completedGoals}<span className="text-base sm:text-lg opacity-75">/{totalGoals}</span>
               </p>
-              <div className="pt-4 border-t-2 border-white/30">
-                <p className="text-sm sm:text-base font-semibold">
+              <div className="mt-4">
+                <p className="text-sm sm:text-base font-medium text-gray-700">
                   {Math.round(completionRate)}% Complete 🌟
                 </p>
               </div>
@@ -175,18 +180,18 @@ const Goals = () => {
           </div>
 
           {/* XP Earned Card */}
-          <div className="bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">⭐</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden border border-gray-100">
+            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-5xl sm:text-6xl opacity-30 select-none pointer-events-none hidden sm:block">⭐</div>
             <div className="relative">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <Award size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Total XP Earned</h3>
+                <Award size={20} className="text-green-600" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Total XP Earned</h3>
               </div>
-              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+              <p className="text-3xl sm:text-4xl font-extrabold mb-2 text-gray-800">
                 {totalXPEarned}
               </p>
-              <div className="pt-4 border-t-2 border-white/30">
-                <p className="text-sm sm:text-base font-semibold">
+              <div className="mt-4">
+                <p className="text-sm sm:text-base font-medium text-gray-700">
                   From completed goals 🏆
                 </p>
               </div>
@@ -194,18 +199,18 @@ const Goals = () => {
           </div>
 
           {/* Assigned Goals Card */}
-          <div className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 text-white relative overflow-hidden sm:col-span-2 lg:col-span-1">
-            <div className="absolute top-0 right-0 text-8xl sm:text-9xl opacity-10 -mt-4 -mr-4">👨‍👦</div>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden sm:col-span-2 lg:col-span-1 border border-gray-100">
+            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-5xl sm:text-6xl opacity-30 select-none pointer-events-none hidden sm:block">👨‍👦</div>
             <div className="relative">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <User size={24} className="sm:w-7 sm:h-7" />
-                <h3 className="text-xl sm:text-2xl font-bold">Assigned Goals</h3>
+                <User size={20} className="text-purple-600" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Assigned Goals</h3>
               </div>
-              <p className="text-5xl sm:text-6xl lg:text-7xl font-black mb-2">
+              <p className="text-3xl sm:text-4xl font-extrabold mb-2 text-gray-800">
                 {assignedGoals.length}
               </p>
-              <div className="pt-4 border-t-2 border-white/30">
-                <p className="text-sm sm:text-base font-semibold">
+              <div className="mt-4">
+                <p className="text-sm sm:text-base font-medium text-gray-700">
                   From your parents 💜
                 </p>
               </div>
@@ -261,12 +266,12 @@ const Goals = () => {
                     
                     <div className="flex-grow">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className={`text-lg sm:text-xl font-bold ${
+                        <h3 className={`text-base sm:text-lg font-semibold ${
                           goal.completed ? 'text-green-600 line-through' : 'text-gray-800'
                         }`}>
                           {goal.title}
                         </h3>
-                        <span className="text-2xl flex-shrink-0">👨‍👦</span>
+                        <span className="text-xl flex-shrink-0 opacity-80 hidden sm:inline-block">👨‍👦</span>
                       </div>
                       
                       <p className="text-sm sm:text-base text-gray-600 mb-4">
