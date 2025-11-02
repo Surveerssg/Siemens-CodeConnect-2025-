@@ -1,17 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Container, 
-  Paper, 
-  Typography, 
-  Box, 
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Button
-} from '@mui/material';
-import { Mic, Users, Hospital, ArrowRight, User, Heart, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Mic, Users, Hospital, ArrowRight, Sparkles, Star } from 'lucide-react';
 
 const RoleSelector = () => {
   const roles = [
@@ -19,8 +9,8 @@ const RoleSelector = () => {
       id: 'child',
       title: 'I\'m a Child',
       description: 'Practice speaking with fun games and activities!',
-      icon: <Mic size={48} color="#5B7C99" />,
-      color: '#5B7C99',
+      icon: Mic,
+      color: 'from-[#f79d65] to-[#f35252]',
       link: '/signup/child',
       emoji: '👶'
     },
@@ -28,8 +18,8 @@ const RoleSelector = () => {
       id: 'parent',
       title: 'I\'m a Parent',
       description: 'Track your child\'s progress and support their journey!',
-      icon: <Users size={48} color="#8FA998" />,
-      color: '#8FA998',
+      icon: Users,
+      color: 'from-[#60b5ff] to-[#5ef2d5]',
       link: '/signup/parent',
       emoji: '👨‍👩‍👧‍👦'
     },
@@ -37,304 +27,215 @@ const RoleSelector = () => {
       id: 'therapist',
       title: 'I\'m a Therapist',
       description: 'Monitor progress and provide professional guidance!',
-      icon: <Hospital size={48} color="#C67B5C" />,
-      color: '#C67B5C',
+      icon: Hospital,
+      color: 'from-[#ffe588] to-[#f79d65]',
       link: '/signup/therapist',
       emoji: '👩‍⚕️'
     }
   ];
 
   return (
-    <Box sx={{ backgroundColor: '#FAF8F5', minHeight: '100vh', width: '100%' }}>
-      <Container
-        maxWidth="lg"
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: { xs: 'flex-start', md: 'center' },
-          position: 'relative',
-          zIndex: 10,
-          py: 6,
-          overflowY: 'auto'
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-green-50 to-orange-100 flex items-center justify-center px-4 py-8 relative overflow-hidden">
+      {/* Animated Background Blobs */}
+      <motion.div
+        animate={{
+          x: [0, 30, 0],
+          y: [0, -30, 0],
+          scale: [1, 1.1, 1]
         }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        className="absolute top-20 left-10 w-40 h-40 bg-gradient-to-br from-[#ffe588] to-[#f79d65] rounded-full opacity-20 blur-3xl"
+      />
+      <motion.div
+        animate={{
+          x: [0, -40, 0],
+          y: [0, 40, 0],
+          scale: [1, 1.2, 1]
+        }}
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        className="absolute top-40 right-20 w-56 h-56 bg-gradient-to-br from-[#60b5ff] to-[#5ef2d5] rounded-full opacity-20 blur-3xl"
+      />
+      <motion.div
+        animate={{
+          x: [0, 50, 0],
+          y: [0, -50, 0],
+          scale: [1, 1.15, 1]
+        }}
+        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        className="absolute bottom-40 left-1/4 w-48 h-48 bg-gradient-to-br from-[#f79d65] to-[#f35252] rounded-full opacity-15 blur-3xl"
+      />
+
+      {/* Floating Emojis */}
+      <motion.div
+        animate={{ y: [0, -20, 0], rotate: [0, 10, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-10 left-[15%] text-5xl"
       >
-        <Box width="100%">
+        🎨
+      </motion.div>
+      <motion.div
+        animate={{ y: [0, 20, 0], rotate: [0, -10, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+        className="absolute top-32 right-[20%] text-5xl"
+      >
+        ✨
+      </motion.div>
+      <motion.div
+        animate={{ y: [0, -15, 0], rotate: [0, 15, 0] }}
+        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute bottom-32 left-[10%] text-5xl"
+      >
+        🌟
+      </motion.div>
+      <motion.div
+        animate={{ y: [0, 15, 0], rotate: [0, -15, 0] }}
+        transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+        className="absolute bottom-20 right-[15%] text-5xl"
+      >
+        🚀
+      </motion.div>
+
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-4xl relative z-10"
+      >
+        <div className="bg-white/95 backdrop-blur-lg rounded-[32px] shadow-2xl p-8 md:p-10 border-2 border-white/80 relative overflow-hidden">
+          {/* Decorative Corner Elements */}
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-[#ffe588] to-[#f79d65] rounded-full opacity-30 blur-2xl" />
+          <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-gradient-to-br from-[#5ef2d5] to-[#60b5ff] rounded-full opacity-30 blur-2xl" />
+
           {/* Header */}
-          <Box textAlign="center" mb={7}>
-            <Box sx={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: 2, 
-              mb: 2,
-            }}>
-              <Typography variant="h2" component="h1" sx={{ 
-                color: '#3A3D42',
-                fontWeight: 700,
-                fontSize: { xs: '2.5rem', md: '3.5rem' },
-                fontFamily: '"Outfit", "Inter", sans-serif',
-                textAlign: 'center'
-              }}>
-                Welcome to SpeakUp 🎤
-              </Typography>
-            </Box>
-            <Typography variant="h6" sx={{ 
-              maxWidth: 580, 
-              mx: 'auto',
-              color: '#5B7C99',
-              fontWeight: 400,
-              lineHeight: 1.6,
-              fontSize: { xs: '1rem', md: '1.15rem' },
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-            }}>
-              Choose your role to get started on your speech practice journey
-            </Typography>
-          </Box>
+          <div className="text-center mb-10 relative">
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", duration: 0.8 }}
+              className="inline-flex items-center justify-center mb-4"
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#f79d65] via-[#5ef2d5] to-[#ffe588] rounded-full blur-xl opacity-30" />
+                <div className="relative bg-gradient-to-br from-[#f79d65] to-[#f35252] rounded-full p-5 shadow-xl">
+                  <Mic className="w-10 h-10 text-white" />
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.h1
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-4xl md:text-5xl font-black mb-3 bg-gradient-to-r from-[#f79d65] via-[#5ef2d5] to-[#ffe588] bg-clip-text text-transparent"
+              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            >
+              Choose Your Role!
+            </motion.h1>
+            <motion.p
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-gray-600 text-lg font-semibold"
+            >
+              Let's get you started on your journey
+            </motion.p>
+          </div>
 
           {/* Role Cards */}
-          <Grid container spacing={3} justifyContent="center" sx={{ position: 'relative', zIndex: 15, mb: 5 }}>
-            {roles.map((role) => (
-              <Grid item xs={12} sm={6} md={4} key={role.id} sx={{ display: 'flex' }}>
-                <Card 
-                  elevation={0}
-                  sx={{ 
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    backgroundColor: 'white',
-                    border: '1px solid #E8E6E1',
-                    borderRadius: 3,
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                    transition: 'all 0.3s ease',
-                    position: 'relative',
-                    zIndex: 15,
-                    pointerEvents: 'auto',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 16px 40px rgba(0,0,0,0.12)',
-                      border: `1px solid ${role.color}`
-                    }
-                  }}
-                >
-                  <CardContent sx={{ textAlign: 'center', flexGrow: 1, p: 4, pb: 2 }}>
-                    <Box mb={2.5} sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 1.5
-                    }}>
-                      <Box sx={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: '50%',
-                        backgroundColor: `${role.color}15`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '2.5rem',
-                        mb: 1,
-                        border: `2px solid ${role.color}20`
-                      }}>
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            {roles.map((role, index) => (
+              <motion.div
+                key={role.id}
+                initial={{ y: 50, opacity: 0, scale: 0.9 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+                whileHover={{ y: -8, scale: 1.03 }}
+                className="relative group"
+              >
+                <Link to={role.link} className="block">
+                  <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-gray-100 hover:border-transparent relative overflow-hidden h-full">
+                    {/* Hover Gradient Overlay */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${role.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                    
+                    {/* Content */}
+                    <div className="relative z-10 text-center flex flex-col h-full">
+                      {/* Emoji */}
+                      <motion.div
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: index * 0.3 }}
+                        className="text-5xl mb-3"
+                      >
                         {role.emoji}
-                      </Box>
-                      <Box sx={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 2,
-                        backgroundColor: `${role.color}10`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: `1px solid ${role.color}20`
-                      }}>
-                        {role.icon}
-                      </Box>
-                    </Box>
-                    <Typography variant="h5" component="h2" gutterBottom sx={{ 
-                      color: '#3A3D42',
-                      fontWeight: 600,
-                      mb: 1.5,
-                      fontSize: '1.5rem',
-                      fontFamily: '"Outfit", "Inter", sans-serif'
-                    }}>
-                      {role.title}
-                    </Typography>
-                    <Typography variant="body1" sx={{ 
-                      fontSize: '0.95rem',
-                      lineHeight: 1.6,
-                      color: '#5B7C99',
-                      fontWeight: 400,
-                      fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                    }}>
-                      {role.description}
-                    </Typography>
-                  </CardContent>
-                  <CardActions sx={{ p: 3, pt: 0 }}>
-                    <Button
-                      component={Link}
-                      to={role.link}
-                      fullWidth
-                      variant="contained"
-                      endIcon={<ArrowRight size={18} />}
-                      sx={{
-                        height: 50,
-                        fontSize: '1rem',
-                        fontWeight: 600,
-                        backgroundColor: role.color,
-                        borderRadius: 2,
-                        position: 'relative',
-                        zIndex: 20,
-                        pointerEvents: 'auto',
-                        cursor: 'pointer',
-                        textTransform: 'none',
-                        boxShadow: 'none',
-                        letterSpacing: '0.01em',
-                        fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                        '&:hover': {
-                          backgroundColor: role.color,
-                          filter: 'brightness(0.9)',
-                          boxShadow: `0 6px 20px -6px ${role.color}40`,
-                          transform: 'translateY(-2px)',
-                        }
-                      }}
-                    >
-                      Get Started
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+                      </motion.div>
 
-          {/* Features Section */}
-          <Grid container spacing={3} sx={{ mb: 6 }}>
-            <Grid item xs={12} md={4}>
-              <Box textAlign="center" sx={{ p: 3 }}>
-                <Box sx={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: '50%',
-                  backgroundColor: '#5B7C9915',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 16px',
-                  border: '1px solid #5B7C9920'
-                }}>
-                  <Star size={28} color="#5B7C99" />
-                </Box>
-                <Typography variant="h6" sx={{ 
-                  color: '#3A3D42',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  Expert Designed
-                </Typography>
-                <Typography variant="body2" sx={{ 
-                  color: '#5B7C99',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                }}>
-                  Activities created by speech therapy professionals
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Box textAlign="center" sx={{ p: 3 }}>
-                <Box sx={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: '50%',
-                  backgroundColor: '#8FA99815',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 16px',
-                  border: '1px solid #8FA99820'
-                }}>
-                  <Heart size={28} color="#8FA998" />
-                </Box>
-                <Typography variant="h6" sx={{ 
-                  color: '#3A3D42',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  Child-Friendly
-                </Typography>
-                <Typography variant="body2" sx={{ 
-                  color: '#5B7C99',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                }}>
-                  Engaging games that make learning fun
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Box textAlign="center" sx={{ p: 3 }}>
-                <Box sx={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: '50%',
-                  backgroundColor: '#C67B5C15',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 16px',
-                  border: '1px solid #C67B5C20'
-                }}>
-                  <User size={28} color="#C67B5C" />
-                </Box>
-                <Typography variant="h6" sx={{ 
-                  color: '#3A3D42',
-                  fontFamily: '"Outfit", "Inter", sans-serif',
-                  fontWeight: 600,
-                  mb: 1
-                }}>
-                  Progress Tracking
-                </Typography>
-                <Typography variant="body2" sx={{ 
-                  color: '#5B7C99',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-                }}>
-                  Monitor improvement with detailed analytics
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
+                      {/* Icon */}
+                      <div className={`w-14 h-14 bg-gradient-to-br ${role.color} rounded-xl flex items-center justify-center mb-4 shadow-md mx-auto`}>
+                        <role.icon className="w-7 h-7 text-white" />
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="text-xl font-black mb-2 text-gray-800" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                        {role.title}
+                      </h3>
+
+                      {/* Description */}
+                      <p className="text-gray-600 text-sm font-semibold mb-4 leading-relaxed flex-grow">
+                        {role.description}
+                      </p>
+
+                      {/* Button */}
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`w-full py-3 bg-gradient-to-r ${role.color} text-white font-black text-base rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer`}
+                        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      >
+                        <span>Select</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </motion.div>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
 
           {/* Login Link */}
-          <Box textAlign="center" mt={4}>
-            <Typography variant="body1" sx={{ 
-              color: '#5B7C99', 
-              fontSize: '0.95rem',
-              fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif'
-            }}>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-center pt-6 border-t-2 border-gray-100"
+          >
+            <p className="text-gray-600 font-semibold">
               Already have an account?{' '}
-              <Button 
-                component={Link} 
+              <Link
                 to="/login"
-                sx={{ 
-                  color: '#5B7C99', 
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  textTransform: 'none',
-                  padding: '4px 8px',
-                  minWidth: 'auto',
-                  fontFamily: '"Nunito Sans", "Source Sans Pro", sans-serif',
-                  '&:hover': {
-                    backgroundColor: '#5B7C9910',
-                    textDecoration: 'underline'
-                  }
-                }}
+                className="text-[#f79d65] font-black hover:text-[#f35252] transition-colors hover:underline"
               >
-                Sign in here
-              </Button>
-            </Typography>
-          </Box>
-        </Box>
-      </Container>
-    </Box>
+                Sign in here! 👤
+              </Link>
+            </p>
+          </motion.div>
+
+          {/* Decorative Stars */}
+          <motion.div
+            animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-8 right-8"
+          >
+            <Sparkles className="w-6 h-6 text-[#ffe588]" fill="currentColor" />
+          </motion.div>
+          <motion.div
+            animate={{ rotate: -360, scale: [1, 1.3, 1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute bottom-8 left-8"
+          >
+            <Star className="w-5 h-5 text-[#5ef2d5]" fill="currentColor" />
+          </motion.div>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 
