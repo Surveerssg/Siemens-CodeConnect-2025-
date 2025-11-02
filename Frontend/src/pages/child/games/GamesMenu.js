@@ -37,37 +37,15 @@ const GamesMenu = () => {
   // Static game templates (definitions live on the frontend)
   const gameTemplates = [
     {
-      id: 'word-match',
-      title: 'Word Match',
-      description: 'Match the spoken word with the correct picture!',
-      icon: '🎯',
-      color: '#FF6B6B',
-      gradient: 'from-red-400 to-pink-600',
-      difficulty: 'Easy',
-      xp: 25,
-      unlockXP: 0
-    },
-    {
-      id: 'balloon-pop',
-      title: 'Balloon Pop',
-      description: 'Pop balloons by saying the words correctly!',
-      icon: '🎈',
-      color: '#4ECDC4',
-      gradient: 'from-cyan-400 to-teal-600',
-      difficulty: 'Medium',
-      xp: 50,
-      unlockXP: 100
-    },
-    {
       id: 'treasure-hunt',
-      title: 'Treasure Hunt',
-      description: 'Find the treasure by speaking the magic words!',
-      icon: '🏴‍☠️',
+      title: 'Word Puzzle',
+      description: 'Solve the crossword by speaking words correctly!',
+      icon: '🧩',
       color: '#9B59B6',
       gradient: 'from-purple-400 to-indigo-600',
-      difficulty: 'Hard',
+      difficulty: 'Medium',
       xp: 100,
-      unlockXP: 250
+      unlockXP: 0
     },
     {
       id: 'maingame',
@@ -259,8 +237,8 @@ const GamesMenu = () => {
             <Star className="text-yellow-500 w-7 h-7 sm:w-8 sm:h-8" />
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {(loading ? [1,2,3,4] : games).map((game, idx) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            {(loading ? [1,2] : games).map((game, idx) => (
               <div
                 key={game.id || idx}
                 onClick={() => !loading && game.unlocked && navigate(`/games/${game.id}`)}
