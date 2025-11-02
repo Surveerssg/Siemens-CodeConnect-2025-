@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Star, Trophy, Volume2, ArrowRight, RefreshCw, Sparkles } from 'lucide-react';
+import { Mic, Star, Trophy, Volume2, ArrowRight, RefreshCw, Sparkles, ArrowLeft } from 'lucide-react';
 
 const CrosswordGame = () => {
   const [gameState, setGameState] = useState('menu'); // menu, playing, complete
@@ -13,20 +13,22 @@ const CrosswordGame = () => {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
-  // Crossword puzzle data - 5x5 grid
+  // Crossword puzzle data - 6x6 grid
   const [puzzle] = useState({
     grid: [
-      ['C', 'A', 'T', '', ''],
-      ['', '', 'R', '', ''],
-      ['D', 'O', 'G', '', ''],
-      ['', '', 'E', '', ''],
-      ['', '', 'E', 'G', 'G']
+      ['D', 'O', 'G', '', 'B', ''],
+      ['', '', '', '', 'R', 'K'],
+      ['L', 'O', 'G', '', 'I', 'I'],
+      ['', '', '', '', 'C', 'N'],
+      ['C', 'A', 'T', '', 'K', 'D'],
+      ['', '', '', '', '', '']
     ],
     clues: [
-      { id: 1, word: 'CAT', row: 0, col: 0, direction: 'across', hint: '🐱 Meow! A furry pet', filled: false },
-      { id: 2, word: 'DOG', row: 2, col: 0, direction: 'across', hint: '🐕 Woof! Man\'s best friend', filled: false },
-      { id: 3, word: 'EGG', row: 4, col: 2, direction: 'across', hint: '🥚 Chickens lay these', filled: false },
-      { id: 4, word: 'TREE', row: 0, col: 2, direction: 'down', hint: '🌳 It has leaves and branches', filled: false }
+      { id: 1, word: 'DOG', row: 0, col: 0, direction: 'across', hint: '🐕 Woof! Man\'s best friend', filled: false },
+      { id: 2, word: 'LOG', row: 2, col: 0, direction: 'across', hint: '🪵 A piece of wood from a tree', filled: false },
+      { id: 3, word: 'CAT', row: 4, col: 0, direction: 'across', hint: '🐱 Meow! A furry pet', filled: false },
+      { id: 4, word: 'BRICK', row: 0, col: 4, direction: 'down', hint: '🧱 A block used to build walls', filled: false },
+      { id: 5, word: 'KIND', row: 1, col: 5, direction: 'down', hint: '❤️ Being nice and caring to others', filled: false }
     ]
   });
 
@@ -45,7 +47,7 @@ const CrosswordGame = () => {
     if (solvedClues.includes(clue.id)) return;
     setCurrentClue(clue);
     setFeedback(null);
-    setShowWord(false); // Hide word when selecting new clue
+    setShowWord(false);
   };
 
   const startRecording = async () => {
@@ -97,20 +99,61 @@ const CrosswordGame = () => {
         body: formData
       });
 
-      if (!response.ok) throw new Error('Analysis failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        throw new Error('Analysis failed');
+      }
 
       const result = await response.json();
-      const pronunciationScore = result.final_score;
+      console.log('API Response:', result);
+      const phonemeScore = result.phoneme_score;
+      const predictedWord = result.predicted_text.trim().toLowerCase();
+      const expectedWord = currentClue.word.toLowerCase();
 
-      if (pronunciationScore >= 60) {
+      // Function to calculate similarity between two words
+      const calculateSimilarity = (word1, word2) => {
+        const len1 = word1.length;
+        const len2 = word2.length;
+        const maxLen = Math.max(len1, len2);
+        
+        // Levenshtein distance
+        const matrix = Array(len2 + 1).fill(null).map(() => Array(len1 + 1).fill(null));
+        
+        for (let i = 0; i <= len1; i++) matrix[0][i] = i;
+        for (let j = 0; j <= len2; j++) matrix[j][0] = j;
+        
+        for (let j = 1; j <= len2; j++) {
+          for (let i = 1; i <= len1; i++) {
+            const indicator = word1[i - 1] === word2[j - 1] ? 0 : 1;
+            matrix[j][i] = Math.min(
+              matrix[j][i - 1] + 1,
+              matrix[j - 1][i] + 1,
+              matrix[j - 1][i - 1] + indicator
+            );
+          }
+        }
+        
+        const distance = matrix[len2][len1];
+        return ((maxLen - distance) / maxLen) * 100;
+      };
+
+      const similarity = calculateSimilarity(predictedWord, expectedWord);
+      const isExactMatch = predictedWord === expectedWord;
+      const isCloseMatch = similarity >= 70; // 70% similarity threshold
+
+      // Check if phoneme score is >= 35 and word is close enough
+      if (phonemeScore >= 35 && (isExactMatch || isCloseMatch)) {
         // Success!
         setSolvedClues(prev => [...prev, currentClue.id]);
-        const earnedScore = Math.round(pronunciationScore);
+        const earnedScore = Math.round(phonemeScore);
         setScore(prev => prev + earnedScore);
         setFeedback({
           type: 'success',
-          message: `Perfect! +${earnedScore} points! 🎉`,
-          score: pronunciationScore
+          message: isExactMatch 
+            ? `Perfect! +${earnedScore} points! 🎉`
+            : `Good! (heard "${predictedWord}") +${earnedScore} points! 🎉`,
+          score: phonemeScore
         });
 
         // Check if game is complete
@@ -123,11 +166,17 @@ const CrosswordGame = () => {
             setShowWord(false);
           }, 2000);
         }
+      } else if (!isCloseMatch && similarity < 70) {
+        setFeedback({
+          type: 'retry',
+          message: `Wrong word! You said "${predictedWord}". Try saying "${expectedWord}"!`,
+          score: phonemeScore
+        });
       } else {
         setFeedback({
           type: 'retry',
-          message: `Score: ${Math.round(pronunciationScore)}%. Try again! Need 60% or higher.`,
-          score: pronunciationScore
+          message: `Score: ${Math.round(phonemeScore)}%. Try again! Need 35% or higher.`,
+          score: phonemeScore
         });
       }
     } catch (error) {
@@ -219,6 +268,18 @@ const CrosswordGame = () => {
   const GameScreen = () => (
     <div className="min-h-screen bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 p-4">
       <div className="max-w-6xl mx-auto">
+        {/* Back Button */}
+        <div className="mb-4">
+          <button
+            onClick={() => window.location.href = '/dashboard'}
+            className="bg-white text-gray-800 px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2"
+            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to Dashboard
+          </button>
+        </div>
+        
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-4 mb-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
