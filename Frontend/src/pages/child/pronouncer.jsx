@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Volume2, Loader2, Gauge, Pause, Play, RotateCcw, Sparkles, Mic } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Volume2, Loader2, Gauge, Pause, Play, RotateCcw, Sparkles, Mic, ArrowLeft } from 'lucide-react';
 
 import viseme0 from "../../images/viseme-id-0.jpg";
 import viseme1 from "../../images/viseme-id-1.jpg";
@@ -75,6 +76,7 @@ const LipsDisplay = ({ visemeId }) => {
 };
 
 export default function PronunciationTool() {
+  const navigate = useNavigate();
   const [text, setText] = useState('Hello, how are you today?');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -309,14 +311,30 @@ export default function PronunciationTool() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 font-[Arial,sans-serif] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 flex items-center justify-center gap-3">
-            Pronunciation Practice
-            <Sparkles className="text-yellow-500 w-8 h-8 sm:w-10 sm:h-10" />
-          </h1>
-          <p className="text-base sm:text-lg text-blue-600 font-medium">
-            Watch the lips move and practice speaking!
-          </p>
+        <div className="mb-6 sm:mb-8">
+          <div className="grid grid-cols-3 items-center gap-4">
+            <div className="justify-self-start">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
+              >
+                <ArrowLeft size={20} />
+                <span>Back to Dashboard</span>
+              </button>
+            </div>
+
+            <div className="text-center">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 flex items-center justify-center gap-3">
+                Pronunciation Practice
+                <Sparkles className="text-yellow-500 w-8 h-8 sm:w-10 sm:h-10" />
+              </h1>
+              <p className="text-base sm:text-lg text-blue-600 font-medium">
+                Watch the lips move and practice speaking!
+              </p>
+            </div>
+
+            <div className="justify-self-end" />
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
@@ -483,35 +501,7 @@ export default function PronunciationTool() {
               </div>
             </div>
 
-            {/* Status Card */}
-            <div className="bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-2xl sm:rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 p-6 sm:p-8 border border-gray-100">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="text-2xl">📈</span>
-                Status
-              </h3>
-              <div className="space-y-3">
-                <div className="bg-white rounded-xl p-3 flex justify-between items-center shadow-sm">
-                  <span className="text-sm font-semibold text-gray-600">Current Viseme</span>
-                  <span className="text-xl font-bold text-blue-600">{currentVisemeId}</span>
-                </div>
-                <div className="bg-white rounded-xl p-3 flex justify-between items-center shadow-sm">
-                  <span className="text-sm font-semibold text-gray-600">Total Visemes</span>
-                  <span className="text-xl font-bold text-purple-600">
-                    {visemesRef.current.length}
-                  </span>
-                </div>
-                <div className="bg-white rounded-xl p-3 flex justify-between items-center shadow-sm">
-                  <span className="text-sm font-semibold text-gray-600">Words</span>
-                  <span className="text-xl font-bold text-green-600">
-                    {words.length}
-                  </span>
-                </div>
-                <div className="bg-white rounded-xl p-3 flex justify-between items-center shadow-sm">
-                  <span className="text-sm font-semibold text-gray-600">Speed</span>
-                  <span className="text-xl font-bold text-orange-600">{speed}x</span>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
 
