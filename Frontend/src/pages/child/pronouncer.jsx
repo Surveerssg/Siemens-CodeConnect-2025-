@@ -96,7 +96,7 @@ export default function PronunciationTool() {
   const isPlayingRef = useRef(false);
   const audioUrlRef = useRef(null);
 
-  const API_URL = 'http://localhost:3000/api';
+  const API_URL = 'https://siemens-codeconnect-2025.onrender.com/api';
 
   const speedOptions = [
     { value: 1.0, label: 'Normal', icon: '▶️', ssmlRate: 'medium', gradient: 'from-blue-400 to-blue-600' },
