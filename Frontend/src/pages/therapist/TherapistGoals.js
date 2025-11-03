@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { goalsAPI } from '../../services/api';
 import { motion } from 'framer-motion';
@@ -19,6 +19,7 @@ import {
 const Goals = () => {
   const { gameProgress } = useGame();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -170,11 +171,11 @@ const Goals = () => {
           className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8"
         >
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(location?.state?.returnTo || '/therapist')}
             className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200"
           >
             <ArrowLeft size={20} />
-            <span>Back to Dashboard</span>
+            <span>Back</span>
           </button>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800">

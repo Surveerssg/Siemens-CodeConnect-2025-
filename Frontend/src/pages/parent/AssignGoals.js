@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { parentGoalsAPI, parentAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
@@ -18,6 +18,7 @@ import {
 const AssignGoals = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const location = useLocation();
   const [parentGoals, setParentGoals] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +38,14 @@ const AssignGoals = () => {
       try {
         setLoading(true);
         const childrenRes = await parentAPI.listChildren();
-        setChildren(childrenRes.data || []);
+        const fetchedChildren = childrenRes.data || [];
+        setChildren(fetchedChildren);
+
+        // If navigated from child detail, prefill selected child for new goal
+        const preselectedEmail = location?.state?.selectedChildEmail;
+        if (preselectedEmail) {
+          setNewGoal(prev => ({ ...prev, children_email: preselectedEmail }));
+        }
 
         const goalsRes = await parentGoalsAPI.list();
         const normalized = (goalsRes.data || []).map(g => ({
@@ -181,7 +189,7 @@ const AssignGoals = () => {
         >
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/parent')}
+              onClick={() => navigate(location?.state?.returnTo || '/parent')}
               className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
             >
               <ArrowLeft size={20} />

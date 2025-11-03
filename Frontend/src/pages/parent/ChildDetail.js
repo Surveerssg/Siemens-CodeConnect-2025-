@@ -52,21 +52,21 @@ const ChildDetail = () => {
       description: 'See detailed progress reports', 
       icon: TrendingUp, 
       gradient: 'from-indigo-500 to-blue-600',
-      action: () => navigate('/parent/progress') 
+      action: () => navigate('/parent/progress', { state: { returnTo: `/parent/child/${childId}`, selectedChildId: childId, selectedChildEmail: summary?.email || summary?.child_email || childId } })
     },
     { 
       title: 'Set Goals', 
       description: 'Assign practice goals', 
       icon: Target, 
       gradient: 'from-emerald-500 to-teal-600',
-      action: () => navigate('/parent/goals') 
+      action: () => navigate('/parent/goals', { state: { returnTo: `/parent/child/${childId}`, selectedChildId: childId, selectedChildEmail: summary?.email || summary?.child_email || childId } })
     },
     { 
       title: 'Add Notes', 
       description: 'Record observations', 
       icon: Award, 
       gradient: 'from-amber-500 to-orange-600',
-      action: () => navigate('/parent/notes') 
+      action: () => navigate('/parent/notes', { state: { returnTo: `/parent/child/${childId}`, selectedChildId: childId, selectedChildEmail: summary?.email || summary?.child_email || childId } })
     }
   ];
 

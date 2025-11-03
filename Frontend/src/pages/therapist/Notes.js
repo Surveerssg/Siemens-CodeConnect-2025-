@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { therapistAPI, parentAPI } from '../../services/api';
 import { motion } from 'framer-motion';
 import { 
@@ -8,6 +8,7 @@ import {
 
 const Notes = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState('');
@@ -161,7 +162,7 @@ const Notes = () => {
         >
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/therapist')}
+              onClick={() => navigate(location?.state?.returnTo || '/therapist')}
               className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
             >
               <ArrowLeft size={20} />

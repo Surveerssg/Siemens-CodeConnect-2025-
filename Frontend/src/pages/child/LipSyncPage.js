@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { useNavigate } from 'react-router-dom';
 import { FaceMesh as MediaPipeFaceMesh } from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
 import { Mic, Square, Upload, Play, Pause, Loader, AlertCircle, Video as VideoIcon, ArrowLeft, Sparkles, Trophy, Flame } from "lucide-react";
@@ -45,6 +46,7 @@ const TIPS = [
 
 const LipSyncPage = () => {
   const [activeTab, setActiveTab] = useState("practice");
+  const navigate = useNavigate();
   
   // Face Mesh States
   const videoRef = useRef(null);
@@ -610,12 +612,18 @@ const LipSyncPage = () => {
           <div className="space-y-2">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold flex items-center gap-3">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-pink-500">LipSync Studio</span>
-              <span className="text-4xl sm:text-5xl transform-gpu motion-safe:animate-bounce">🎯</span>
             </h1>
             <p className="text-lg sm:text-xl text-blue-600 font-medium">
               Practice pronunciation & generate AI lip-synced videos
             </p>
           </div>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border border-gray-200 ring-1 ring-white/30 backdrop-blur-sm"
+          >
+            <ArrowLeft size={20} />
+            <span>Back to Dashboard</span>
+          </button>
         </div>
 
         {/* Tab Switcher */}
