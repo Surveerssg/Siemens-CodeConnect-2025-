@@ -185,19 +185,24 @@ const AssignGoals = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
+          className="mb-8"
         >
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(location?.state?.returnTo || '/parent')}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
-            >
-              <ArrowLeft size={20} />
-              <span className="hidden sm:inline">Back</span>
-            </button>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
-              Assign Goals to Children
-            </h1>
+          <div className="grid grid-cols-3 items-center gap-4">
+            <div>
+              <button
+                onClick={() => navigate(location?.state?.returnTo || '/parent')}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
+              >
+                <ArrowLeft size={20} />
+                <span className="hidden sm:inline">Back</span>
+              </button>
+            </div>
+            <div className="text-center">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
+                Assign Goals to Children
+              </h1>
+            </div>
+            <div />
           </div>
         </motion.div>
 

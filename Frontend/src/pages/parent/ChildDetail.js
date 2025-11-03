@@ -14,7 +14,8 @@ import {
   Activity,
   CheckCircle,
   Gamepad2,
-  BookOpen
+  BookOpen,
+  FileText
 } from 'lucide-react';
 
 const ChildDetail = () => {
@@ -62,10 +63,10 @@ const ChildDetail = () => {
       action: () => navigate('/parent/goals', { state: { returnTo: `/parent/child/${childId}`, selectedChildId: childId, selectedChildEmail: summary?.email || summary?.child_email || childId } })
     },
     { 
-      title: 'Add Notes', 
-      description: 'Record observations', 
-      icon: Award, 
-      gradient: 'from-amber-500 to-orange-600',
+      title: 'View Notes', 
+      description: "View notes from your child's therapist", 
+      icon: FileText, 
+      gradient: 'from-violet-500 to-purple-600',
       action: () => navigate('/parent/notes', { state: { returnTo: `/parent/child/${childId}`, selectedChildId: childId, selectedChildEmail: summary?.email || summary?.child_email || childId } })
     }
   ];
@@ -120,19 +121,24 @@ const ChildDetail = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
+          className="mb-8"
         >
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/parent')}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
-            >
-              <ArrowLeft size={20} />
-              <span className="hidden sm:inline">Back to Dashboard</span>
-            </button>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
-              Child Overview
-            </h1>
+          <div className="grid grid-cols-3 items-center gap-4">
+            <div>
+              <button
+                onClick={() => navigate('/parent')}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
+              >
+                <ArrowLeft size={20} />
+                <span className="hidden sm:inline">Back to Dashboard</span>
+              </button>
+            </div>
+            <div className="text-center">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
+                Child Overview
+              </h1>
+            </div>
+            <div />
           </div>
         </motion.div>
 

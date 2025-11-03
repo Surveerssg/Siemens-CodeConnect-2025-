@@ -102,6 +102,37 @@ const Notes = () => {
   // If a selected child email was passed in navigation state, filter notes to that child
   const filteredByChild = location?.state?.selectedChildEmail;
 
+  const [modalNote, setModalNote] = useState(null);
+
+  const getSnippet = (text, len = 420) => {
+    if (!text) return '';
+    if (text.length <= len) return text;
+    return text.substring(0, len).trim() + '...';
+  };
+
+  // Make filtering robust: the navigation state may contain an email OR a childId fallback.
+  // Try matching by email first (case-insensitive), then by common id fields. If no matches, show all notes.
+  const displayedNotes = (() => {
+    if (!filteredByChild) return notes;
+    const fb = String(filteredByChild || '').trim();
+    if (!fb) return notes;
+
+    const fbLower = fb.toLowerCase();
+
+    const byEmail = notes.filter(n => String(n.child_email || '').toLowerCase() === fbLower);
+    if (byEmail.length > 0) return byEmail;
+
+    // try matching common id fields if email match failed
+    const byId = notes.filter(n => {
+      const idCandidates = [n.child_id, n.childId, n.id, n.child_id?.toString(), n.childId?.toString()].map(x => String(x || ''));
+      return idCandidates.some(x => x === fb);
+    });
+    if (byId.length > 0) return byId;
+
+    // fallback: return all notes (so the user still sees data instead of an empty view)
+    return notes;
+  })();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-[Arial,sans-serif]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
@@ -110,19 +141,24 @@ const Notes = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
+          className="mb-8"
         >
-            <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(location?.state?.returnTo || '/parent')}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
-            >
-              <ArrowLeft size={20} />
-              <span className="hidden sm:inline">Back</span>
-            </button>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
-              Therapist Notes
-            </h1>
+          <div className="grid grid-cols-3 items-center gap-4">
+            <div>
+              <button
+                onClick={() => navigate(location?.state?.returnTo || '/parent')}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
+              >
+                <ArrowLeft size={20} />
+                <span className="hidden sm:inline">Back</span>
+              </button>
+            </div>
+            <div className="text-center">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
+                Notes from Therapist
+              </h1>
+            </div>
+            <div />
           </div>
         </motion.div>
 
@@ -200,7 +236,7 @@ const Notes = () => {
                 </h2>
               </div>
 
-              { (filteredByChild ? notes.filter(n => n.child_email === filteredByChild) : notes).length === 0 ? (
+              { displayedNotes.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <FileText className="text-slate-400" size={48} />
@@ -212,7 +248,7 @@ const Notes = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {(filteredByChild ? notes.filter(n => n.child_email === filteredByChild) : notes).map((note, index) => (
+                  {displayedNotes.map((note, index) => (
                     <motion.div
                       key={note.id}
                       initial={{ opacity: 0, x: -20 }}
@@ -249,8 +285,19 @@ const Notes = () => {
 
                           <div className="bg-white rounded-xl p-4 border border-slate-200">
                             <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
-                              {note.notes || 'No content provided'}
+                              {note.notes ? (
+                                note.notes.length > 420 ? (
+                                  getSnippet(note.notes, 420)
+                                ) : (
+                                  note.notes
+                                )
+                              ) : 'No content provided'}
                             </p>
+                            {note.notes && note.notes.length > 420 && (
+                              <div className="mt-3 text-right">
+                                <button onClick={() => setModalNote(note)} className="text-indigo-600 font-semibold hover:underline">Read full note</button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -261,7 +308,7 @@ const Notes = () => {
             </motion.div>
 
             {/* Desktop Table View (Hidden on Mobile) */}
-            {notes.length > 0 && (
+            {displayedNotes.length > 0 && (
               <motion.div
                 variants={itemVariants}
                 className="hidden xl:block bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 mt-8"
@@ -286,13 +333,15 @@ const Notes = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
-                      {notes.map((note, index) => (
+                      {displayedNotes.map((note, index) => (
                         <motion.tr
                           key={note.id}
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ duration: 0.3, delay: index * 0.05 }}
-                          className="hover:bg-blue-50 transition-colors duration-200"
+                          className="cursor-pointer hover:bg-blue-50 transition-colors duration-200"
+                          onClick={() => setModalNote(note)}
+                          title="Click to view full note"
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-3">
@@ -327,6 +376,29 @@ const Notes = () => {
               </motion.div>
             )}
           </motion.div>
+        )}
+
+        {modalNote && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div className="fixed inset-0 bg-black/40" onClick={() => setModalNote(null)} />
+            <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full p-6 z-50">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-800">{modalNote.title || 'Note'}</h3>
+                  <p className="text-sm text-slate-600">{modalNote.child_email}</p>
+                </div>
+                <div>
+                  <button onClick={() => setModalNote(null)} className="text-slate-600 px-3 py-2 rounded-md hover:bg-slate-100">Close</button>
+                </div>
+              </div>
+              <div className="prose max-h-[60vh] overflow-auto text-slate-700">
+                <p className="whitespace-pre-wrap">{modalNote.notes}</p>
+              </div>
+              <div className="mt-4 text-right">
+                <button onClick={() => setModalNote(null)} className="px-4 py-2 rounded-xl bg-indigo-600 text-white">Close</button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
