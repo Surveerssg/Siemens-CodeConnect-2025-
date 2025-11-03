@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { therapistAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
@@ -7,6 +7,7 @@ import { ArrowLeft, Plus, BookOpen, Zap, CheckCircle } from 'lucide-react';
 
 export default function TherapistPractice() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -88,11 +89,11 @@ export default function TherapistPractice() {
           className="flex items-center gap-4 mb-10"
         >
           <button
-            onClick={() => navigate('/therapist')}
+            onClick={() => navigate(location?.state?.returnTo || '/therapist')}
             className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
           >
             <ArrowLeft size={20} />
-            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="hidden sm:inline">Back</span>
           </button>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800">
             Assign Practice

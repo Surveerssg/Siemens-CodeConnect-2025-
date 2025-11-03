@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { therapistAPI } from '../../services/api';
 import { motion } from 'framer-motion';
 import { 
@@ -16,6 +16,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 const ChildAnalytics = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState('');
   const [summary, setSummary] = useState(null);
@@ -144,11 +145,11 @@ const ChildAnalytics = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/therapist')}
+            onClick={() => navigate(location?.state?.returnTo || '/therapist')}
             className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200 border border-gray-200"
           >
             <ArrowLeft size={20} />
-            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="hidden sm:inline">Back</span>
           </motion.button>
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 flex items-center gap-3">
             Child Analytics

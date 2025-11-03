@@ -145,7 +145,7 @@ const Goals = () => {
             >
               <ArrowLeft size={20} />
               <span
-              >Back to Dashboard</span>
+               >Back to Dashboard</span>
             </button>
           </div>
 

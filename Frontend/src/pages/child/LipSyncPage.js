@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { useNavigate } from 'react-router-dom';
 import { FaceMesh as MediaPipeFaceMesh } from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
 import { Mic, Square, Upload, Play, Pause, Loader, AlertCircle, Video as VideoIcon, ArrowLeft, Sparkles, Trophy, Flame } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
 
 // Phoneme to viseme mapping
 const VISEME_PATTERNS = {
@@ -46,6 +46,7 @@ const TIPS = [
 
 const LipSyncPage = () => {
   const [activeTab, setActiveTab] = useState("practice");
+  const navigate = useNavigate();
   
   // Face Mesh States
   const videoRef = useRef(null);
@@ -59,7 +60,6 @@ const LipSyncPage = () => {
   const [currentPhonemeIndex, setCurrentPhonemeIndex] = useState(0);
   const [customWordInput, setCustomWordInput] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
-  const navigate = useNavigate();
 
   // Lip Sync Generation States
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
@@ -132,7 +132,7 @@ const LipSyncPage = () => {
 
   const drawLips = useCallback((ctx, landmarks, canvas) => {
     ctx.strokeStyle = isRecordingRef.current ? "#FF0000" : "#00FF00";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     
     OUTER_LIP.forEach((idx, i) => {
@@ -147,7 +147,7 @@ const LipSyncPage = () => {
     ctx.stroke();
 
     ctx.strokeStyle = "#FFFF00";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     ctx.beginPath();
     
     INNER_LIP.forEach((idx, i) => {
@@ -202,8 +202,40 @@ const LipSyncPage = () => {
     const dataToAnalyze = recordedDataRef.current;
     const startTime = recordingStartTimeRef.current;
 
-    if (dataToAnalyze.length === 0) {
-      setScore({ overall: 0, phonemes: [], message: "No data recorded" });
+    // Validate that we have meaningful data
+    if (dataToAnalyze.length < 10) {
+      setScore({ overall: 0, phonemes: [], message: "No audio detected. Please speak clearly and try again." });
+      return;
+    }
+
+    // Calculate significant lip movement (check for actual speaking)
+    let significantMovements = 0;
+    let totalOpennessChange = 0;
+    let totalWidthChange = 0;
+    
+    for (let i = 1; i < dataToAnalyze.length; i++) {
+      const current = dataToAnalyze[i];
+      const prev = dataToAnalyze[i - 1];
+      const opennessChange = Math.abs(current.openness - prev.openness);
+      const widthChange = Math.abs(current.width - prev.width);
+      
+      totalOpennessChange += opennessChange;
+      totalWidthChange += widthChange;
+      
+      // Significant movement threshold
+      if (opennessChange > 0.3 || widthChange > 0.3) {
+        significantMovements++;
+      }
+    }
+
+    const avgOpennessChange = totalOpennessChange / (dataToAnalyze.length - 1);
+    const avgWidthChange = totalWidthChange / (dataToAnalyze.length - 1);
+
+    // If less than 20% of frames show movement or average change is too small, no audio detected
+    const movementPercentage = (significantMovements / (dataToAnalyze.length - 1)) * 100;
+    
+    if (movementPercentage < 20 || (avgOpennessChange < 0.15 && avgWidthChange < 0.15)) {
+      setScore({ overall: 0, phonemes: [], message: "No audio detected. Please speak clearly and try again." });
       return;
     }
 
@@ -220,6 +252,16 @@ const LipSyncPage = () => {
         return relativeTime >= phonemeStartTime && relativeTime < phonemeEndTime;
       });
       
+      // Only calculate score if we have enough data for this phoneme
+      if (phonemeData.length < 3) {
+        phonemeScores.push({
+          phoneme,
+          score: 0,
+          pattern: VISEME_PATTERNS[phoneme]?.name || 'Unknown'
+        });
+        return;
+      }
+      
       const score = calculatePhonemeScore(phonemeData, phoneme);
       phonemeScores.push({
         phoneme,
@@ -228,7 +270,20 @@ const LipSyncPage = () => {
       });
     });
     
+    // Check if we have enough valid scores
+    const validScores = phonemeScores.filter(p => p.score > 10);
+    if (validScores.length < phonemes.length * 0.5) {
+      setScore({ overall: 0, phonemes: [], message: "No audio detected. Please speak clearly and try again." });
+      return;
+    }
+    
     const overallScore = phonemeScores.reduce((sum, p) => sum + p.score, 0) / phonemeScores.length;
+    
+    // If overall score is too low, likely no audio
+    if (overallScore < 15) {
+      setScore({ overall: 0, phonemes: [], message: "No audio detected. Please speak clearly and try again." });
+      return;
+    }
     
     let message = "";
     if (overallScore >= 85) message = "Excellent! 🌟";
@@ -316,13 +371,13 @@ const LipSyncPage = () => {
 
     // fmt chunk
     writeString(view, 12, 'fmt ');
-    view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
-    view.setUint16(20, 1, true);  // AudioFormat (1 = PCM)
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
     view.setUint16(22, numChannels, true);
     view.setUint32(24, sampleRate, true);
     view.setUint32(28, byteRate, true);
     view.setUint16(32, blockAlign, true);
-    view.setUint16(34, 16, true); // BitsPerSample
+    view.setUint16(34, 16, true);
 
     // data chunk
     writeString(view, 36, 'data');
@@ -360,7 +415,6 @@ const LipSyncPage = () => {
       };
 
       mediaRecorder.onstop = () => {
-        // Keep the original recorded type; we'll convert to WAV at upload time if needed
         const recordedType = mediaRecorder.mimeType || 'audio/webm';
         const audioBlob = new Blob(audioChunksRef.current, { type: recordedType });
         setAudioBlob(audioBlob);
@@ -394,7 +448,6 @@ const LipSyncPage = () => {
     setCurrentTipIndex(0);
 
     const formData = new FormData();
-    // Ensure server-supported format. Convert to WAV client-side if needed.
     let uploadBlob = audioBlob;
     const supportedServerTypes = ['audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/ogg', 'audio/m4a', 'audio/aac', 'audio/wma', 'audio/flac', 'audio/mp4'];
     const typeLower = (audioBlob.type || '').toLowerCase();
@@ -419,7 +472,6 @@ const LipSyncPage = () => {
       });
 
       if (!response.ok) {
-        // Try to surface error details from FastAPI (e.g., 422 validation errors)
         let message = 'Generation failed';
         try {
           const err = await response.json();
@@ -560,7 +612,6 @@ const LipSyncPage = () => {
           <div className="space-y-2">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold flex items-center gap-3">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-pink-500">LipSync Studio</span>
-              <span className="text-4xl sm:text-5xl transform-gpu motion-safe:animate-bounce">🎯</span>
             </h1>
             <p className="text-lg sm:text-xl text-blue-600 font-medium">
               Practice pronunciation & generate AI lip-synced videos
@@ -771,37 +822,47 @@ const LipSyncPage = () => {
             {/* Score Display */}
             {score && (
               <div className="bg-white rounded-2xl sm:rounded-3xl p-6 shadow-2xl transition-all duration-300 border border-gray-100">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <Flame className="w-6 h-6" />
-                    Your Score: {score.overall}%
-                  </h3>
-                  <div className="text-lg font-semibold text-gray-700">{score.message}</div>
-                </div>
-                
-                <div className="grid grid-cols-1 gap-3">
-                  {score.phonemes.map((p, idx) => (
-                    <div key={idx} className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-gray-800 font-bold text-lg">{p.phoneme}</span>
-                        <span className="text-gray-600 text-sm">{p.pattern}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              p.score >= 80 ? 'bg-green-500' :
-                              p.score >= 60 ? 'bg-yellow-500' :
-                              'bg-red-500'
-                            } transition-all duration-700`}
-                            style={{ width: `${p.score}%` }}
-                          />
-                        </div>
-                        <span className="text-gray-800 font-mono font-bold w-12">{p.score}%</span>
-                      </div>
+                {score.phonemes.length > 0 ? (
+                  <>
+                    <div className="mb-4 flex items-center justify-between">
+                      <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                        <Flame className="w-6 h-6" />
+                        Your Score: {score.overall}%
+                      </h3>
+                      <div className="text-lg font-semibold text-gray-700">{score.message}</div>
                     </div>
-                  ))}
-                </div>
+                    
+                    <div className="grid grid-cols-1 gap-3">
+                      {score.phonemes.map((p, idx) => (
+                        <div key={idx} className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-gray-800 font-bold text-lg">{p.phoneme}</span>
+                            <span className="text-gray-600 text-sm">{p.pattern}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  p.score >= 80 ? 'bg-green-500' :
+                                  p.score >= 60 ? 'bg-yellow-500' :
+                                  'bg-red-500'
+                                } transition-all duration-700`}
+                                style={{ width: `${p.score}%` }}
+                              />
+                            </div>
+                            <span className="text-gray-800 font-mono font-bold w-12">{p.score}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">{score.message}</h3>
+                    <p className="text-gray-600">Make sure to speak clearly into the camera while recording.</p>
+                  </div>
+                )}
               </div>
             )}
 

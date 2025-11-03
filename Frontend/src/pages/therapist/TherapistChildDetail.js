@@ -43,7 +43,7 @@ const TherapistChildDetail = () => {
     { activity: 'Practiced consonant blends', time: '3 days ago', score: 78, type: 'practice' }
   ];
 
-  const quickActions = [
+    const quickActions = [
     { 
       title: 'View Progress', 
       description: 'See detailed progress reports', 
@@ -52,7 +52,7 @@ const TherapistChildDetail = () => {
       hoverColor: 'hover:shadow-blue-200',
       iconBg: 'bg-blue-100',
       iconColor: 'text-blue-600',
-      action: () => navigate('/therapist/analytics') 
+      action: () => navigate('/therapist/analytics', { state: { returnTo: `/therapist/child/${childId}` } }) 
     },
     { 
       title: 'Set Goals', 
@@ -62,7 +62,7 @@ const TherapistChildDetail = () => {
       hoverColor: 'hover:shadow-green-200',
       iconBg: 'bg-green-100',
       iconColor: 'text-green-600',
-      action: () => navigate('/therapist/goals') 
+      action: () => navigate('/therapist/goals', { state: { returnTo: `/therapist/child/${childId}` } }) 
     },
     { 
       title: 'Add Notes', 
@@ -72,7 +72,7 @@ const TherapistChildDetail = () => {
       hoverColor: 'hover:shadow-orange-200',
       iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600',
-      action: () => navigate('/therapist/notes') 
+      action: () => navigate('/therapist/notes', { state: { returnTo: `/therapist/child/${childId}` } }) 
     }
   ];
 

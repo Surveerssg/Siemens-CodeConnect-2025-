@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { parentAPI } from '../../services/api';
@@ -16,6 +16,7 @@ import {
 const Notes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const location = useLocation();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,6 +99,9 @@ const Notes = () => {
     return avatarColors[index % avatarColors.length];
   };
 
+  // If a selected child email was passed in navigation state, filter notes to that child
+  const filteredByChild = location?.state?.selectedChildEmail;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-[Arial,sans-serif]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
@@ -108,9 +112,9 @@ const Notes = () => {
           transition={{ duration: 0.5 }}
           className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
         >
-          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/parent')}
+              onClick={() => navigate(location?.state?.returnTo || '/parent')}
               className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
             >
               <ArrowLeft size={20} />
@@ -196,7 +200,7 @@ const Notes = () => {
                 </h2>
               </div>
 
-              {notes.length === 0 ? (
+              { (filteredByChild ? notes.filter(n => n.child_email === filteredByChild) : notes).length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <FileText className="text-slate-400" size={48} />
@@ -208,7 +212,7 @@ const Notes = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {notes.map((note, index) => (
+                  {(filteredByChild ? notes.filter(n => n.child_email === filteredByChild) : notes).map((note, index) => (
                     <motion.div
                       key={note.id}
                       initial={{ opacity: 0, x: -20 }}
@@ -239,7 +243,7 @@ const Notes = () => {
                           <div className="flex items-center gap-2 mb-3">
                             <span className="inline-flex items-center gap-2 px-3 py-1 bg-white border-2 border-blue-200 rounded-lg text-sm font-semibold text-blue-700">
                               <User size={14} />
-                              {note.child_email || 'Unknown'}
+                              {note.child_email || 'Unknown' }
                             </span>
                           </div>
 

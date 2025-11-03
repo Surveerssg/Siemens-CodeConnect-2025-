@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { parentAPI } from '../../services/api';
 import { motion } from 'framer-motion';
 import { 
@@ -17,6 +17,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 const ChildProgress = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState('');
   const [summary, setSummary] = useState(null);
@@ -29,7 +30,16 @@ const ChildProgress = () => {
         const res = await parentAPI.listChildren();
         const list = (res.data || []).map(c => ({ value: c.id, label: c.name || c.email || c.id }));
         setChildren(list);
-        if (list.length > 0) setSelectedChild(list[0].value);
+        // If navigation state provided a selected child (from child detail), use it
+        const preselected = location?.state?.selectedChildId;
+        if (preselected) {
+          // only set if it exists in list
+          const exists = list.find(l => l.value === preselected);
+          if (exists) setSelectedChild(preselected);
+          else if (list.length > 0) setSelectedChild(list[0].value);
+        } else if (list.length > 0) {
+          setSelectedChild(list[0].value);
+        }
       } catch (e) {
         console.error('Failed to load children:', e);
       } finally {
@@ -120,16 +130,16 @@ const ChildProgress = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-[Arial,sans-serif]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        {/* Header */}
+            {/* Header */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
         >
-          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/parent')}
+              onClick={() => navigate(location?.state?.returnTo || '/parent')}
               className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 border border-slate-200"
             >
               <ArrowLeft size={20} />
