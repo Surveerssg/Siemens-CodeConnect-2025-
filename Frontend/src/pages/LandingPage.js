@@ -618,9 +618,7 @@ const LandingPage = () => {
             <a href="#" className="hover:text-[#f79d65] transition-colors font-semibold">Contact</a>
             <a href="#" className="hover:text-[#f79d65] transition-colors font-semibold">Privacy</a>
           </div>
-          <p className="text-gray-500 mt-8">
-            © 2025 SpeakUp. Made with ❤️ for children everywhere.
-          </p>
+          
         </div>
       </footer>
     </div>

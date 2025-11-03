@@ -280,7 +280,6 @@ const Login = () => {
           transition={{ delay: 1.2 }}
           className="text-center mt-6 text-gray-600 font-semibold"
         >
-          Made with <Heart className="w-4 h-4 inline text-red-500" fill="currentColor" /> for children everywhere ✨
         </motion.p>
       </motion.div>
     </div>

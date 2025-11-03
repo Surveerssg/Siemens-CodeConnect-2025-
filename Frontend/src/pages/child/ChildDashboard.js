@@ -74,6 +74,16 @@ const ChildDashboard = () => {
       action: () => navigate('/lipsync')
     },
     {
+      title: 'Pronouncer',
+      description: 'View visemes with lip movement',
+      icon: Mic,
+      color: 'from-yellow-400 to-yellow-600',
+      hoverColor: 'hover:shadow-yellow-200',
+      iconBg: 'bg-yellow-100',
+      iconColor: 'text-yellow-600',
+      action: () => navigate('/pronounce')
+    },
+    {
       title: 'Play Games',
       description: 'Have fun while learning!',
       icon: Gamepad2,

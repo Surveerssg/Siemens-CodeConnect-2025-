@@ -44,6 +44,7 @@ import TherapistGoals from './pages/therapist/TherapistGoals';
 // Common Pages
 import Profile from './pages/common/Profile';
 import Settings from './pages/common/Settings';
+import PronunciationTool from './pages/child/pronouncer';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, userRole } = useAuth();
@@ -103,7 +104,11 @@ const AppRoutes = () => {
           <Practice />
         </ProtectedRoute>
       } />
-      
+      <Route path="/pronounce" element={
+        <ProtectedRoute allowedRoles={[ROLES.CHILD]}>
+          <PronunciationTool/>
+        </ProtectedRoute>
+      }/>
       <Route path="/lipsync" element={
         <ProtectedRoute allowedRoles={[ROLES.CHILD]}>
           <LipSyncPage />
