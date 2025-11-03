@@ -17,6 +17,7 @@
     "express-validator": "^7.0.1",
     "firebase-admin": "^12.7.0",
     "helmet": "^7.1.0",
+    "microsoft-cognitiveservices-speech-sdk": "^1.46.0",
     "morgan": "^1.10.0"
   },
   "devDependencies": {

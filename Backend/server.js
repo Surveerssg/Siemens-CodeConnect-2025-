@@ -4,12 +4,13 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const sdk = require('microsoft-cognitiveservices-speech-sdk');
+
 require('dotenv').config();
 
 const { initializeFirebase } = require('./config/firebase');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
-// Import routes
 const userRoutes = require('./routes/users');
 const progressRoutes = require('./routes/progress');
 const gameRoutes = require('./routes/games');
@@ -44,7 +45,8 @@ app.use(cors(corsOptions));
 
 // Use the same options for preflight requests
 app.options('*', cors(corsOptions));
-
+app.use(cors())
+app.use(express.json());
 
 
 // Rate limiting
@@ -68,8 +70,99 @@ app.use(morgan('combined'));
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+const SPEECH_KEY = process.env.AZURE_SPEECH_KEY;
+const SPEECH_REGION = process.env.AZURE_SPEECH_REGION;
 
-// Health check endpoint
+app.post('/api/synthesize', async (req, res) => {
+  const { text, rate = 'medium' } = req.body;
+
+  if (!text) {
+    return res.status(400).json({ error: 'Text is required' });
+  }
+
+  try {
+    const speechConfig = sdk.SpeechConfig.fromSubscription(SPEECH_KEY, SPEECH_REGION);
+    
+    // Set the voice
+    speechConfig.speechSynthesisVoiceName = 'en-US-JennyNeural';
+    
+    // Use MP3 format for better compatibility
+    speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3;
+
+    const synthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+
+    const visemes = [];
+    const words = [];
+
+    // Subscribe to viseme events
+    synthesizer.visemeReceived = (s, e) => {
+      visemes.push({
+        audioOffset: e.audioOffset / 10000, // Convert to milliseconds
+        visemeId: e.visemeId
+      });
+    };
+
+    // Subscribe to word boundary events
+    synthesizer.wordBoundary = (s, e) => {
+      words.push({
+        text: e.text,
+        audioOffset: e.audioOffset / 10000, // Convert to milliseconds
+        duration: e.duration / 10000
+      });
+    };
+
+    // Create SSML with prosody rate
+    // SSML rate values: x-slow, slow, medium, fast, x-fast, or percentage like "50%"
+    const ssml = `
+      <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
+        <voice name="en-US-JennyNeural">
+          <prosody rate="${rate}">
+            ${text}
+          </prosody>
+        </voice>
+      </speak>
+    `;
+
+    // Synthesize speech
+    const result = await new Promise((resolve, reject) => {
+      synthesizer.speakSsmlAsync(
+        ssml,
+        result => {
+          if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
+            resolve(result);
+          } else {
+            reject(new Error(`Speech synthesis failed: ${result.errorDetails}`));
+          }
+          synthesizer.close();
+        },
+        error => {
+          synthesizer.close();
+          reject(error);
+        }
+      );
+    });
+
+    // Convert audio to base64
+    const audioData = result.audioData;
+    const audioBase64 = Buffer.from(audioData).toString('base64');
+
+    // Sort visemes and words by time
+    visemes.sort((a, b) => a.audioOffset - b.audioOffset);
+    words.sort((a, b) => a.audioOffset - b.audioOffset);
+
+    res.json({
+      audio: audioBase64,
+      visemes: visemes,
+      words: words,
+      duration: result.audioDuration / 10000 // in milliseconds
+    });
+
+  } catch (error) {
+    console.error('Synthesis error:', error);
+    res.status(500).json({ error: error.message || 'Speech synthesis failed' });
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({
     success: true,
